@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:krishi_sakhi/screens/main_screen.dart';
+import 'package:krishi_sakhi/screens/home_screen.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart'; // <-- correct generated file
 
 void main() {
@@ -17,7 +17,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Locale? _locale = const Locale('ml'); // default English
+  Locale? _locale = const Locale('en'); // default English
 
   void changeLocale(Locale locale) {
     if (_locale == locale) return;
@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
       ),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: const MainScreen(),
+      home: const HomeScreen(),
     );
   }
 }
