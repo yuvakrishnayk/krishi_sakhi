@@ -1,0 +1,14 @@
+{
+  "appTitle": "കൃഷി സഖി",
+  "drawerHome": "ഹോം",
+  "drawerLearningChat": "ലേണിംഗ് ചാറ്റ്",
+  "drawerCourses": "കോഴ്‌സുകൾ",
+  "drawerForum": "ഫോറം",
+  "drawerSettings": "സെറ്റിംഗ്‌സ്",
+  "userName": "രാജ് കുമാർ",
+  "projectsCount": "പ്രോജക്റ്റുകൾ: {count}",
+  "sinceDate": "ആരംഭം: ജനു 2024",
+  "signOut": "പുറത്തുകടക്കുക",
+  "signOutQuestion": "നിങ്ങൾക്ക് പുറത്തുകടക്കണമെന്ന് 확定?",
+  "cancel": "റദ്ദാക്കുക"
+}

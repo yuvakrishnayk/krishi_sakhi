@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:krishi_sakhi/main.dart'; // <-- for MyApp.of(context)
+import 'package:krishi_sakhi/l10n/app_localizations.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // make non-null
     return Drawer(
       elevation: 16,
       child: Container(
@@ -17,18 +20,45 @@ class CustomDrawer extends StatelessWidget {
         ),
         child: Column(
           children: [
-            _buildDrawerHeader(),
+            _buildDrawerHeader(context),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
                   const SizedBox(height: 8),
                   _buildDrawerSection('', [
-                    _DrawerItemData(Icons.home_filled, 'Home', () {}),
-                    _DrawerItemData(Icons.psychology, 'Learning Chat', () {}),
-                    _DrawerItemData(Icons.book_rounded, 'Courses', () {}),
-                    _DrawerItemData(Icons.forum_rounded, 'Forum', () {}),
-                    _DrawerItemData(Icons.settings_rounded, 'Settings', () {}),
+                    _DrawerItemData(Icons.home_filled, l10n.drawerHome, () {}),
+                    _DrawerItemData(
+                      Icons.psychology,
+                      l10n.drawerLearningChat,
+                      () {},
+                    ),
+                    _DrawerItemData(
+                      Icons.book_rounded,
+                      l10n.drawerCourses,
+                      () {},
+                    ),
+                    _DrawerItemData(
+                      Icons.forum_rounded,
+                      l10n.drawerForum,
+                      () {},
+                    ),
+                    _DrawerItemData(
+                      Icons.settings_rounded,
+                      l10n.drawerSettings,
+                      () {},
+                    ),
+                  ]),
+                  // Language switcher section
+                  _buildDrawerSection('Language', [
+                    _DrawerItemData(Icons.language, 'English', () {
+                      MyApp.of(context)?.changeLocale(const Locale('en'));
+                      Navigator.pop(context);
+                    }),
+                    _DrawerItemData(Icons.language, 'Malayalam', () {
+                      MyApp.of(context)?.changeLocale(const Locale('ml'));
+                      Navigator.pop(context);
+                    }),
                   ]),
                 ],
               ),
@@ -41,7 +71,7 @@ class CustomDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerHeader() {
+  Widget _buildDrawerHeader(BuildContext context) {
     return Container(
       height: 200,
       margin: const EdgeInsets.only(bottom: 8),
@@ -53,9 +83,9 @@ class CustomDrawer extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              const Color(0xFF2E7D32), // Dark green
-              const Color(0xFF388E3C), // Medium green
-              const Color(0xFF4CAF50), // Light green
+              const Color(0xFF2E7D32),
+              const Color(0xFF388E3C),
+              const Color(0xFF4CAF50),
             ],
             stops: const [0.0, 0.6, 1.0],
           ),
@@ -67,12 +97,12 @@ class CustomDrawer extends StatelessWidget {
             ),
           ],
         ),
-        child: _buildProfileContainer(),
+        child: _buildProfileContainer(context),
       ),
     );
   }
 
-  Widget _buildProfileContainer() {
+  Widget _buildProfileContainer(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
@@ -86,7 +116,7 @@ class CustomDrawer extends StatelessWidget {
           _buildProfilePhoto(),
           const SizedBox(width: 16),
           // Right side - User info
-          Expanded(child: _buildUserDetails()),
+          Expanded(child: _buildUserDetails(context)),
         ],
       ),
     );
@@ -124,15 +154,16 @@ class CustomDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildUserDetails() {
+  Widget _buildUserDetails(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         // Name
-        const Text(
-          'Raj Kumar',
-          style: TextStyle(
+        Text(
+          l10n.userName,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -152,17 +183,21 @@ class CustomDrawer extends StatelessWidget {
               size: 16,
             ),
             const SizedBox(width: 6),
-            Text(
-              'Projects: 24',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.9),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+            Flexible(
+              child: Text(
+                l10n.projectsCount('24'),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 2),
 
         // Account created date
         Row(
@@ -174,7 +209,7 @@ class CustomDrawer extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              'Since: Jan 2024',
+              l10n.sinceDate,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.9),
                 fontSize: 12,
@@ -208,10 +243,7 @@ class CustomDrawer extends StatelessWidget {
           (item) => _buildDrawerItem(
             icon: item.icon,
             title: item.title,
-            onTap: () {
-              // Navigator.pop(context);
-              item.onTap();
-            },
+            onTap: item.onTap,
           ),
         ),
       ],
@@ -269,6 +301,7 @@ class CustomDrawer extends StatelessWidget {
   }
 
   Widget _buildLogoutButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -277,9 +310,7 @@ class CustomDrawer extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         elevation: 0,
         child: InkWell(
-          onTap: () {
-            _showLogoutDialog(context);
-          },
+          onTap: () => _showLogoutDialog(context),
           borderRadius: BorderRadius.circular(12),
           child: Ink(
             decoration: BoxDecoration(
@@ -311,9 +342,9 @@ class CustomDrawer extends StatelessWidget {
                     size: 22,
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'Sign Out',
-                    style: TextStyle(
+                  Text(
+                    l10n.signOut,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -330,6 +361,7 @@ class CustomDrawer extends StatelessWidget {
   }
 
   void _showLogoutDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -337,20 +369,23 @@ class CustomDrawer extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            'Sign Out',
-            style: TextStyle(fontWeight: FontWeight.w600),
+          title: Text(
+            l10n.signOut,
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
-          content: const Text('Are you sure you want to sign out?'),
+          content: Text(l10n.signOutQuestion),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+              child: Text(
+                l10n.cancel,
+                style: TextStyle(color: Colors.grey[600]),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                // Perform logout
+                // TODO: Perform logout
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.shade600,
@@ -358,9 +393,9 @@ class CustomDrawer extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text(
-                'Sign Out',
-                style: TextStyle(color: Colors.white),
+              child: Text(
+                l10n.signOut,
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -374,6 +409,5 @@ class _DrawerItemData {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-
   _DrawerItemData(this.icon, this.title, this.onTap);
 }

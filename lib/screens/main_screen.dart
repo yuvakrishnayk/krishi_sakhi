@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:krishi_sakhi/l10n/app_localizations.dart';
 import '../components/drawer.dart';
 
 class MainScreen extends StatefulWidget {
@@ -50,7 +51,7 @@ class _MainScreenState extends State<MainScreen>
           onPressed: _toggleDrawer,
         ),
         title: Text(
-          'Krishi Sakhi',
+          AppLocalizations.of(context)!.appTitle,
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.green[700],
