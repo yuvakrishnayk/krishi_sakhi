@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:krishi_sakhi/components/drawer.dart';
 
 class ForumScreen extends StatefulWidget {
   @override
@@ -8,12 +9,13 @@ class ForumScreen extends StatefulWidget {
 
 class _ForumScreenState extends State<ForumScreen>
     with SingleTickerProviderStateMixin {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchController = TextEditingController();
   late AnimationController _animationController;
 
-  // Enhanced color theme
-  final Color primaryColor = Color(0xFF81C784);
-  final Color secondaryColor = Color(0xFF795548);
+  // Updated color theme to match home screen
+  final Color primaryColor = Color(0xFF2E7D32);
+  final Color secondaryColor = Color(0xFF388E3C);
   final Color backgroundColor = Color(0xFFFFFBF5);
   final Color cardColor = Colors.white;
   final Color textPrimaryColor = Color(0xFF212121);
@@ -219,67 +221,129 @@ class _ForumScreenState extends State<ForumScreen>
     );
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: backgroundColor,
+      drawer: const CustomDrawer(),
       appBar: AppBar(
         backgroundColor: primaryColor,
         title: Text(
           'Krishi Forum',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
         ),
-        leading: Container(
-          padding: EdgeInsets.all(8),
-          child: Icon(Icons.eco, color: Colors.white),
+        leading: IconButton(
+          icon: Icon(Icons.menu, color: Colors.white),
+          onPressed: _toggleDrawer,
+          tooltip: 'Open navigation menu',
         ),
         elevation: 4,
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(60),
-          child: Container(
-            height: 50,
-            margin: EdgeInsets.only(left: 16, right: 16, bottom: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _filterPosts,
-              style: TextStyle(color: textPrimaryColor, fontSize: 16),
-              decoration: InputDecoration(
-                hintText: 'Search posts, topics, or authors...',
-                hintStyle: TextStyle(color: textSecondaryColor, fontSize: 15),
-                prefixIcon: AnimatedSwitcher(
-                  duration: Duration(milliseconds: 300),
-                  child:
-                      _isSearching
-                          ? IconButton(
-                            icon: Icon(Icons.clear, color: primaryColor),
-                            onPressed: () {
-                              _searchController.clear();
-                              _filterPosts('');
-                            },
-                          )
-                          : Icon(Icons.search, color: primaryColor),
-                ),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
       body: SafeArea(
         child: Column(
           children: [
+            // Search bar - moved to body
+            Container(
+              height: 50,
+              margin: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: _filterPosts,
+                style: TextStyle(color: textPrimaryColor, fontSize: 16),
+                decoration: InputDecoration(
+                  hintText: 'Search posts, topics, or authors...',
+                  hintStyle: TextStyle(color: textSecondaryColor, fontSize: 15),
+                  prefixIcon: AnimatedSwitcher(
+                    duration: Duration(milliseconds: 300),
+                    child:
+                        _isSearching
+                            ? IconButton(
+                              icon: Icon(Icons.clear, color: primaryColor),
+                              onPressed: () {
+                                _searchController.clear();
+                                _filterPosts('');
+                              },
+                            )
+                            : Icon(Icons.search, color: primaryColor),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+              ),
+            ),
+
+            // Create Post Button - moved to body
+            Container(
+              margin: EdgeInsets.only(bottom: 16, left: 16, right: 16),
+              width: double.infinity,
+              child: Material(
+                borderRadius: BorderRadius.circular(15),
+                elevation: 3,
+                shadowColor: primaryColor.withOpacity(0.3),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.white, Color(0xFFF8FFF8)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: primaryColor.withOpacity(0.15)),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(15),
+                    splashColor: primaryColor.withOpacity(0.1),
+                    highlightColor: primaryColor.withOpacity(0.05),
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      // TODO: Implement create post functionality
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Create new post'),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          backgroundColor: primaryColor,
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 15),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.edit_note, size: 22, color: primaryColor),
+                          SizedBox(width: 10),
+                          Text(
+                            'Create New Post',
+                            style: TextStyle(
+                              color: primaryColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
             // Animated posts list
             Expanded(
               child:
@@ -317,7 +381,6 @@ class _ForumScreenState extends State<ForumScreen>
           ],
         ),
       ),
-      floatingActionButton: _buildFAB(),
     );
   }
 
@@ -367,37 +430,6 @@ class _ForumScreenState extends State<ForumScreen>
     );
   }
 
-  Widget _buildFAB() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [primaryColor, secondaryColor],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: primaryColor.withOpacity(0.4),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: FloatingActionButton(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: const Icon(Icons.add, size: 26),
-        onPressed: () {
-          // Add haptic feedback for better interaction
-          HapticFeedback.mediumImpact();
-          // TODO: Implement create post functionality
-        },
-      ),
-    );
-  }
-
   void _onPostTap(PostData post) {
     // Add haptic feedback
     HapticFeedback.selectionClick();
@@ -413,8 +445,17 @@ class _ForumScreenState extends State<ForumScreen>
       ),
     );
   }
+
+  void _toggleDrawer() {
+    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+      _scaffoldKey.currentState?.closeDrawer();
+    } else {
+      _scaffoldKey.currentState?.openDrawer();
+    }
+  }
 }
 
+// Update PostCard to use solid color instead of gradient
 class PostCard extends StatelessWidget {
   final PostData post;
   final VoidCallback onBookmarkToggle;
@@ -434,6 +475,7 @@ class PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasImage = post.imageUrl.isNotEmpty;
+    final Color solidColor = Color(0xFF2E7D32); // Use same green as home screen
 
     return GestureDetector(
       onTap: onTap,
@@ -499,7 +541,7 @@ class PostCard extends StatelessWidget {
                       : Container(
                         height: 200,
                         width: double.infinity,
-                        decoration: BoxDecoration(gradient: post.gradient),
+                        color: solidColor,
                         padding: EdgeInsets.all(20),
                         child: Center(
                           child: Column(
@@ -582,7 +624,7 @@ class PostCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: _getEnhancedGradient(post.gradient),
+                  color: solidColor,
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(20),
                     bottomRight: Radius.circular(20),
@@ -766,38 +808,29 @@ class PostCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  // Get enhanced gradient for better visual appeal
-  LinearGradient _getEnhancedGradient(LinearGradient original) {
-    // Create more sophisticated gradients
-    return LinearGradient(
-      colors: original.colors,
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      stops: [0.0, 1.0],
-    );
+// Get enhanced gradient for better visual appeal
+
+// Generate avatar color based on author name
+Color _getAvatarColor(String author) {
+  final List<Color> colors = [
+    Color(0xFF2E7D32), // Dark Green
+    Color(0xFF5D4037), // Brown
+    Color(0xFF7B1FA2), // Purple
+    Color(0xFF1565C0), // Blue
+    Color(0xFFD84315), // Deep Orange
+    Color(0xFF00838F), // Cyan
+    Color(0xFF6D4C41), // Brown
+  ];
+
+  // Simple hash function for consistent color
+  int hash = 0;
+  for (var i = 0; i < author.length; i++) {
+    hash = (hash + author.codeUnitAt(i)) % colors.length;
   }
 
-  // Generate avatar color based on author name
-  Color _getAvatarColor(String author) {
-    final List<Color> colors = [
-      Color(0xFF2E7D32), // Dark Green
-      Color(0xFF5D4037), // Brown
-      Color(0xFF7B1FA2), // Purple
-      Color(0xFF1565C0), // Blue
-      Color(0xFFD84315), // Deep Orange
-      Color(0xFF00838F), // Cyan
-      Color(0xFF6D4C41), // Brown
-    ];
-
-    // Simple hash function for consistent color
-    int hash = 0;
-    for (var i = 0; i < author.length; i++) {
-      hash = (hash + author.codeUnitAt(i)) % colors.length;
-    }
-
-    return colors[hash];
-  }
+  return colors[hash];
 }
 
 class _EnhancedActionButton extends StatelessWidget {

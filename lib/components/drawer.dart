@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/main.dart'; // <-- for MyApp.of(context)
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
-import 'package:krishi_sakhi/screens/forum.dart';
+import 'package:krishi_sakhi/screens/forum_screen.dart';
+import 'package:krishi_sakhi/screens/home_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({Key? key}) : super(key: key);
@@ -28,7 +29,12 @@ class CustomDrawer extends StatelessWidget {
                 children: [
                   const SizedBox(height: 8),
                   _buildDrawerSection('', [
-                    _DrawerItemData(Icons.home_filled, l10n.drawerHome, () {}),
+                    _DrawerItemData(Icons.home_filled, l10n.drawerHome, () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => HomeScreen()),
+                      );
+                    }),
                     _DrawerItemData(
                       Icons.psychology,
                       l10n.drawerLearningChat,
@@ -39,13 +45,12 @@ class CustomDrawer extends StatelessWidget {
                       l10n.drawerCourses,
                       () {},
                     ),
-                    _DrawerItemData(
-                      Icons.forum_rounded,
-                      l10n.drawerForum,
-                      () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => ForumScreen()));
-                      },
-                    ),
+                    _DrawerItemData(Icons.forum_rounded, l10n.drawerForum, () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ForumScreen()),
+                      );
+                    }),
                     _DrawerItemData(
                       Icons.settings_rounded,
                       l10n.drawerSettings,

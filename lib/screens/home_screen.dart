@@ -22,15 +22,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       key: _scaffoldKey,
       drawer: const CustomDrawer(),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF2E7D32),
+        title: Text(
+          l10n.appTitle,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.menu, color: Colors.white),
+          onPressed: _toggleDrawer,
+          tooltip: 'Open navigation menu',
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Colors.white),
+            splashRadius: 24,
+            tooltip: 'Settings',
+            onPressed: () {},
+          ),
+        ],
+        elevation: 4,
+      ),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // Custom AppBar in body
-            SliverToBoxAdapter(child: _buildCustomAppBar(context)),
-
             // Content
             SliverToBoxAdapter(
               child: Padding(
@@ -74,56 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () {},
         backgroundColor: const Color(0xFF2E7D32),
         child: const Icon(Icons.add, color: Colors.white),
-      ),
-    );
-  }
-
-  Widget _buildCustomAppBar(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF2E7D32), Color(0xFF388E3C), Color(0xFF43A047)],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x29000000),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            splashRadius: 24,
-            onPressed: _toggleDrawer,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              l10n.appTitle,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Colors.white),
-            splashRadius: 24,
-            tooltip: 'Settings',
-            onPressed: () {},
-          ),
-          const SizedBox(width: 4),
-        ],
       ),
     );
   }
