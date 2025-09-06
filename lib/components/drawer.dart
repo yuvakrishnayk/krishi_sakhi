@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/main.dart'; // <-- for MyApp.of(context)
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
+import 'package:krishi_sakhi/screens/forum.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({Key? key}) : super(key: key);
@@ -41,7 +42,9 @@ class CustomDrawer extends StatelessWidget {
                     _DrawerItemData(
                       Icons.forum_rounded,
                       l10n.drawerForum,
-                      () {},
+                      () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => ForumScreen()));
+                      },
                     ),
                     _DrawerItemData(
                       Icons.settings_rounded,
