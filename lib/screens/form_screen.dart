@@ -337,6 +337,8 @@ class _FormScreensState extends State<FormScreens>
     required List<String> items,
     required Function(String?) onChanged,
     required IconData icon,
+    String? hint,
+    String? Function(String?)? validator,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -350,25 +352,125 @@ class _FormScreensState extends State<FormScreens>
           ),
         ],
       ),
-      child: DropdownButtonFormField<String>(
-        value: value,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: Color(0xFF4CAF50)),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          inputDecorationTheme: InputDecorationTheme(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
           ),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
-        items:
-            items
-                .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-                .toList(),
-        onChanged: onChanged,
-        validator: (value) => value == null ? 'Please select an option' : null,
+        child: DropdownButtonFormField<String>(
+          value: value,
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: hint ?? 'Select an option',
+            prefixIcon: Container(
+              margin: EdgeInsets.only(left: 12, right: 8),
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Color(0xFF4CAF50).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: Color(0xFF4CAF50), size: 20),
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Color(0xFF4CAF50), width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.redAccent, width: 1),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            labelStyle: TextStyle(
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+            floatingLabelBehavior: FloatingLabelBehavior.auto,
+          ),
+          icon: Container(
+            padding: EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Color(0xFF4CAF50).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF4CAF50),
+              size: 22,
+            ),
+          ),
+          menuMaxHeight: 300,
+          itemHeight: 56,
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+          items:
+              items.map((item) {
+                return DropdownMenuItem<String>(
+                  value: item,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        margin: EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color:
+                              value == item
+                                  ? Color(0xFF4CAF50)
+                                  : Colors.transparent,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          item,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.black87,
+                            fontWeight:
+                                value == item
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+          onChanged: onChanged,
+          validator:
+              validator ??
+              (value) => value == null ? 'Please select an option' : null,
+          isExpanded: true,
+          dropdownColor: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          elevation: 8,
+          hint:
+              hint != null
+                  ? Text(
+                    hint,
+                    style: TextStyle(color: Colors.grey[400], fontSize: 15),
+                  )
+                  : null,
+        ),
       ),
     );
   }
