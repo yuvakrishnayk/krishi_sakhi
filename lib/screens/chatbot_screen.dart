@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:krishi_sakhi/components/drawer.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({Key? key}) : super(key: key);
@@ -13,6 +14,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   final TextEditingController _controller = TextEditingController();
   late AnimationController _fabAnimationController;
   late Animation<double> _fabAnimation;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<_ChatMessage> _messages = [
     _ChatMessage(
@@ -150,71 +152,31 @@ class _ChatbotScreenState extends State<ChatbotScreen>
     );
   }
 
+  void _toggleDrawer() {
+    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+      _scaffoldKey.currentState?.closeDrawer();
+    } else {
+      _scaffoldKey.currentState?.openDrawer();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: const CustomDrawer(),
       appBar: AppBar(
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.green[700]!, Colors.green[500]!],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
+        backgroundColor: const Color(0xFF2E7D32),
+        title: const Text(
+          'Krishi Assist',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
         ),
-        elevation: 8,
-        shadowColor: Colors.green.withOpacity(0.5),
-        title: Row(
-          children: [
-            Hero(
-              tag: 'chatbot_avatar',
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: CircleAvatar(
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.agriculture, color: Colors.green[700]),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Krishi Sakhi',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  'Your farming assistant',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ],
+        leading: IconButton(
+          icon: const Icon(Icons.menu, color: Colors.white),
+          onPressed: _toggleDrawer,
+          tooltip: 'Open navigation menu',
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
+        elevation: 4,
       ),
       body: Container(
         decoration: BoxDecoration(
