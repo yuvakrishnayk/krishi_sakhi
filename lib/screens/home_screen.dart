@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/components/drawer.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
+import 'package:krishi_sakhi/screens/form_screen.dart';
 import 'package:krishi_sakhi/screens/project_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -94,7 +95,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => FormScreens()),
+          );
+        },
         backgroundColor: const Color(0xFF2E7D32),
         child: const Icon(Icons.add, color: Colors.white),
       ),
