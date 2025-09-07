@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:krishi_sakhi/components/drawer.dart';
+import 'package:krishi_sakhi/screens/create_post_screen.dart';
+import 'forum_detail_screen.dart'; // Add this import
 
 class ForumScreen extends StatefulWidget {
   @override
@@ -101,8 +103,7 @@ class _ForumScreenState extends State<ForumScreen>
       likes: 67,
       comments: 15,
       isBookmarked: false,
-      imageUrl:
-          'https://images.unsplash.com/photo-1584267385427-cf4894528b38?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+
       gradient: LinearGradient(
         colors: [Color(0xFF73C8A9), Color(0xFF373B44)],
         begin: Alignment.topLeft,
@@ -309,14 +310,10 @@ class _ForumScreenState extends State<ForumScreen>
                     onTap: () {
                       HapticFeedback.mediumImpact();
                       // TODO: Implement create post functionality
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Create new post'),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          backgroundColor: primaryColor,
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CreatePostScreen(),
                         ),
                       );
                     },
@@ -434,14 +431,29 @@ class _ForumScreenState extends State<ForumScreen>
     // Add haptic feedback
     HapticFeedback.selectionClick();
 
-    // Placeholder for post detail navigation
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening post: ${post.title}'),
-        duration: Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    // Navigate to detail page
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder:
+            (context, animation, secondaryAnimation) =>
+                ForumDetailScreen(post: post),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOutCubic;
+
+          var tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: Duration(milliseconds: 400),
       ),
     );
   }
@@ -770,7 +782,7 @@ class PostCard extends StatelessWidget {
                     Row(
                       children: [
                         _EnhancedActionButton(
-                          icon: Icons.thumb_up_outlined,
+                          icon: Icons.favorite_outline_outlined,
                           count: post.likes,
                           onPressed: () {},
                         ),
@@ -779,23 +791,6 @@ class PostCard extends StatelessWidget {
                           icon: Icons.chat_bubble_outline,
                           count: post.comments,
                           onPressed: () {},
-                        ),
-                        const Spacer(),
-                        _BookmarkButton(
-                          isBookmarked: post.isBookmarked,
-                          onPressed: onBookmarkToggle,
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.share_outlined,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          splashRadius: 24,
-                          onPressed: () {
-                            HapticFeedback.selectionClick();
-                          },
-                          tooltip: 'Share post',
                         ),
                       ],
                     ),
@@ -872,67 +867,4 @@ class _EnhancedActionButton extends StatelessWidget {
       ),
     );
   }
-}
-
-class _BookmarkButton extends StatelessWidget {
-  final bool isBookmarked;
-  final VoidCallback onPressed;
-
-  const _BookmarkButton({
-    Key? key,
-    required this.isBookmarked,
-    required this.onPressed,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: Duration(milliseconds: 300),
-      transitionBuilder: (Widget child, Animation<double> animation) {
-        return ScaleTransition(scale: animation, child: child);
-      },
-      child: IconButton(
-        key: ValueKey<bool>(isBookmarked),
-        icon: Icon(
-          isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-          color: Colors.white,
-          size: 20,
-        ),
-        splashRadius: 24,
-        onPressed: () {
-          HapticFeedback.selectionClick();
-          onPressed();
-        },
-        tooltip: isBookmarked ? 'Remove from bookmarks' : 'Add to bookmarks',
-      ),
-    );
-  }
-}
-
-class PostData {
-  final String id;
-  final String title;
-  final String author;
-  final String timeAgo;
-  final String category;
-  final int likes;
-  final int comments;
-  bool isBookmarked;
-  final String imageUrl;
-  final LinearGradient gradient;
-  final IconData icon;
-
-  PostData({
-    required this.id,
-    required this.title,
-    required this.author,
-    required this.timeAgo,
-    required this.category,
-    required this.likes,
-    required this.comments,
-    required this.isBookmarked,
-    this.imageUrl = '',
-    required this.gradient,
-    required this.icon,
-  });
 }
