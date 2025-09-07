@@ -1,0 +1,14 @@
+{
+  "appTitle": "Krishi Sakhi",
+  "drawerHome": "Home",
+  "drawerLearningChat": "Learning Chat",
+  "drawerCourses": "Courses",
+  "drawerForum": "Forum",
+  "drawerSettings": "Settings",
+  "userName": "Raj Kumar",
+  "projectsCount": "Projects: {count}",
+  "sinceDate": "Since: Jan 2024",
+  "signOut": "Sign Out",
+  "signOutQuestion": "Are you sure you want to sign out?",
+  "cancel": "Cancel"
+}
