@@ -45,4 +45,13 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get cancel => 'റദ്ദാക്കുക';
+
+  @override
+  String get settings => 'ക്രമീകരണങ്ങൾ';
+
+  @override
+  String get language => 'ഭാഷ';
+
+  @override
+  String get chooseLanguage => 'ഭാഷ തിരഞ്ഞെടുക്കുക';
 }

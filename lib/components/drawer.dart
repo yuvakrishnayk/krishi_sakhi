@@ -5,6 +5,7 @@ import 'package:krishi_sakhi/screens/chatbot_screen.dart';
 import 'package:krishi_sakhi/screens/courses_screen.dart';
 import 'package:krishi_sakhi/screens/forum_screen.dart';
 import 'package:krishi_sakhi/screens/home_screen.dart';
+import 'package:krishi_sakhi/screens/settings_screen.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({Key? key}) : super(key: key);
@@ -66,7 +67,12 @@ class CustomDrawer extends StatelessWidget {
                     _DrawerItemData(
                       Icons.settings_rounded,
                       l10n.drawerSettings,
-                      () {},
+                      () {
+                                              Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SettingsScreen()),
+                      );
+                      },
                     ),
                   ]),
                   // Language switcher section
