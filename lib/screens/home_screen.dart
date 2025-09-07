@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/components/drawer.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
+import 'package:krishi_sakhi/screens/form_screen.dart';
 import 'package:krishi_sakhi/screens/project_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -66,11 +67,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 20),
                     _buildWeatherSection(context),
                     const SizedBox(height: 20),
-                    _buildSectionHeader(context, 'Latest News', 'See All'),
+                    _buildSectionHeader(context, 'Latest News', ''),
                     const SizedBox(height: 12),
                     _buildAnnouncementSection(context),
                     const SizedBox(height: 20),
-                    _buildSectionHeader(context, 'My Projects', ''),
+                    _buildSectionHeader(context, 'Projects', ''),
                     const SizedBox(height: 12),
                   ],
                 ),
@@ -94,7 +95,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => FormScreens()),
+          );
+        },
         backgroundColor: const Color(0xFF2E7D32),
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -329,7 +335,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => ProjectScreen()));
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ProjectScreen()),
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -480,16 +489,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                  TextButton(
-                    onPressed: () {},
-                    child: const Text('Details'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF2E7D32),
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(0, 0),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
                 ],
               ),
             ],
@@ -630,32 +629,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
-                      ),
-
-                      // View details link
-                      Row(
-                        children: [
-                          Text(
-                            'View Details',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color:
-                                  isMarket
-                                      ? const Color(0xFF388E3C)
-                                      : const Color(0xFF3949AB),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.chevron_right,
-                            size: 20,
-                            color:
-                                isMarket
-                                    ? const Color(0xFF388E3C)
-                                    : const Color(0xFF3949AB),
-                          ),
-                        ],
                       ),
                     ],
                   ),
