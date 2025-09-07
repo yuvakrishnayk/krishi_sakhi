@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/components/drawer.dart';
 import 'package:krishi_sakhi/models/courses_model.dart';
 
-
 class CoursesScreen extends StatefulWidget {
   CoursesScreen({Key? key}) : super(key: key);
   @override
@@ -76,6 +75,40 @@ class CoursesScreen extends StatefulWidget {
 
 class _CoursesScreenState extends State<CoursesScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  List<Course> _filteredCourses = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredCourses = CoursesScreen._sampleCourses;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterCourses(String query) {
+    setState(() {
+      _isSearching = query.isNotEmpty;
+      if (query.isEmpty) {
+        _filteredCourses = CoursesScreen._sampleCourses;
+      } else {
+        _filteredCourses =
+            CoursesScreen._sampleCourses.where((course) {
+              return course.title.toLowerCase().contains(query.toLowerCase()) ||
+                  course.instructor.toLowerCase().contains(
+                    query.toLowerCase(),
+                  ) ||
+                  course.category.toLowerCase().contains(query.toLowerCase()) ||
+                  course.level.toLowerCase().contains(query.toLowerCase());
+            }).toList();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,31 +129,136 @@ class _CoursesScreenState extends State<CoursesScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.white),
+            icon: const Icon(Icons.settings_outlined, color: Colors.white),
             onPressed: () {},
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: CoursesScreen._sampleCourses.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: CourseCard(
-                    course: CoursesScreen._sampleCourses[index],
-                  ),
-                );
-              },
+      body: Column(
+        children: [
+          // Search bar
+          Container(
+            height: 50,
+            margin: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
-          ],
-        ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _filterCourses,
+              style: TextStyle(color: Color(0xFF212121), fontSize: 16),
+              decoration: InputDecoration(
+                hintText: 'Search courses, instructors, or categories...',
+                hintStyle: TextStyle(color: Color(0xFF757575), fontSize: 15),
+                prefixIcon: AnimatedSwitcher(
+                  duration: Duration(milliseconds: 300),
+                  child:
+                      _isSearching
+                          ? IconButton(
+                            key: ValueKey('clear'),
+                            icon: Icon(Icons.clear, color: Color(0xFF2E7D32)),
+                            onPressed: () {
+                              _searchController.clear();
+                              _filterCourses('');
+                            },
+                          )
+                          : Icon(
+                            Icons.search,
+                            color: Color(0xFF2E7D32),
+                            key: ValueKey('search'),
+                          ),
+                ),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+              ),
+            ),
+          ),
+
+          // Rest of the content
+          Expanded(
+            child:
+                _filteredCourses.isEmpty && _isSearching
+                    ? _buildEmptySearchResult()
+                    : SingleChildScrollView(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _filteredCourses.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: CourseCard(
+                                  course: _filteredCourses[index],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptySearchResult() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 80,
+            color: Color(0xFF757575).withOpacity(0.5),
+          ),
+          SizedBox(height: 16),
+          Text(
+            'No courses found',
+            style: TextStyle(
+              color: Color(0xFF212121),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Try different keywords or browse all courses',
+            style: TextStyle(color: Color(0xFF757575), fontSize: 14),
+          ),
+          SizedBox(height: 20),
+          ElevatedButton.icon(
+            icon: Icon(Icons.refresh),
+            label: Text('View All Courses'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFF2E7D32),
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            onPressed: () {
+              _searchController.clear();
+              _filterCourses('');
+            },
+          ),
+        ],
       ),
     );
   }

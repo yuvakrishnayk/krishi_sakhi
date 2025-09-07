@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:krishi_sakhi/main.dart'; // <-- for MyApp.of(context)
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
 import 'package:krishi_sakhi/screens/chatbot_screen.dart';
 import 'package:krishi_sakhi/screens/courses_screen.dart';
@@ -44,20 +43,20 @@ class CustomDrawer extends StatelessWidget {
                       () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => ChatbotScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => ChatbotScreen(),
+                          ),
                         );
                       },
                     ),
-                    _DrawerItemData(
-                      Icons.book_rounded,
-                      l10n.drawerCourses,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => CoursesScreen()),
-                        );
-                      },
-                    ),
+                    _DrawerItemData(Icons.book_rounded, l10n.drawerCourses, () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CoursesScreen(),
+                        ),
+                      );
+                    }),
                     _DrawerItemData(Icons.forum_rounded, l10n.drawerForum, () {
                       Navigator.push(
                         context,
@@ -75,17 +74,7 @@ class CustomDrawer extends StatelessWidget {
                       },
                     ),
                   ]),
-                  // Language switcher section
-                  _buildDrawerSection('Language', [
-                    _DrawerItemData(Icons.language, 'English', () {
-                      MyApp.of(context)?.changeLocale(const Locale('en'));
-                      Navigator.pop(context);
-                    }),
-                    _DrawerItemData(Icons.language, 'Malayalam', () {
-                      MyApp.of(context)?.changeLocale(const Locale('ml'));
-                      Navigator.pop(context);
-                    }),
-                  ]),
+                  // Language switcher sectio
                 ],
               ),
             ),
