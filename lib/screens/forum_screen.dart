@@ -103,8 +103,7 @@ class _ForumScreenState extends State<ForumScreen>
       likes: 67,
       comments: 15,
       isBookmarked: false,
-      imageUrl:
-          'https://images.unsplash.com/photo-1584267385427-cf4894528b38?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+
       gradient: LinearGradient(
         colors: [Color(0xFF73C8A9), Color(0xFF373B44)],
         begin: Alignment.topLeft,
@@ -311,7 +310,12 @@ class _ForumScreenState extends State<ForumScreen>
                     onTap: () {
                       HapticFeedback.mediumImpact();
                       // TODO: Implement create post functionality
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePostScreen()));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CreatePostScreen(),
+                        ),
+                      );
                     },
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 15),
@@ -864,5 +868,3 @@ class _EnhancedActionButton extends StatelessWidget {
     );
   }
 }
-
-
