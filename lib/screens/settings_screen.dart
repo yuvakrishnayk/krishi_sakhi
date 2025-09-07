@@ -18,8 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   String _userName = 'Your Name';
   File? _profileImageFile;
-  String _profilePicUrl =
-      'https://static.vecteezy.com/system/resources/previews/022/395/514/non_2x/a-beautiful-smiling-young-male-farmer-in-front-of-a-farm-background-ai-generated-photo.jpeg';
+  String _profilePicUrl = 'https://static.vecteezy.com/system/resources/previews/022/395/514/non_2x/a-beautiful-smiling-young-male-farmer-in-front-of-a-farm-background-ai-generated-photo.jpeg';
 
   @override
   Widget build(BuildContext context) {
