@@ -31,75 +31,76 @@ class Course {
   });
 }
 
+// Move sample courses to a top-level constant
+final List<Course> sampleCourses = [
+  Course(
+    title: 'Organic Farming Fundamentals',
+    instructor: 'Dr. Sarah Johnson',
+    duration: '6 weeks',
+    language: 'English',
+    imageUrl:
+        'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400',
+    rating: 4.8,
+    students: 1250,
+    category: 'Sustainable Agriculture',
+    level: 'Beginner',
+    isFree: true,
+    description:
+        'Learn the basics of organic farming methods and sustainable practices',
+  ),
+  Course(
+    title: 'Smart Irrigation Systems',
+    instructor: 'Prof. Michael Chen',
+    duration: '4 weeks',
+    language: 'English',
+    imageUrl:
+        'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400',
+    rating: 4.7,
+    students: 980,
+    category: 'Technology',
+    level: 'Intermediate',
+    isFree: true,
+
+    description:
+        'Master modern irrigation techniques and water conservation methods',
+  ),
+  Course(
+    title: 'Integrated Pest Management',
+    instructor: 'Dr. Emily Rodriguez',
+    duration: '8 weeks',
+    language: 'English',
+    imageUrl:
+        'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400',
+    rating: 4.9,
+    students: 1500,
+    category: 'Crop Protection',
+    level: 'Advanced',
+    isFree: true,
+
+    description:
+        'Comprehensive pest control strategies for sustainable farming',
+  ),
+  Course(
+    title: 'Soil Health & Fertility Management',
+    instructor: 'Dr. James Wilson',
+    duration: '5 weeks',
+    language: 'English',
+    imageUrl:
+        'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=400',
+    rating: 4.6,
+    students: 750,
+    category: 'Soil Science',
+    level: 'Beginner',
+    isFree: true,
+    description:
+        'Understand soil composition and improve fertility naturally',
+  ),
+];
+
 class CoursesScreen extends StatefulWidget {
   CoursesScreen({Key? key}) : super(key: key);
   @override
   State<CoursesScreen> createState() => _CoursesScreenState();
-
-  static final List<Course> _sampleCourses = [
-    Course(
-      title: 'Organic Farming Fundamentals',
-      instructor: 'Dr. Sarah Johnson',
-      duration: '6 weeks',
-      language: 'English',
-      imageUrl:
-          'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400',
-      rating: 4.8,
-      students: 1250,
-      category: 'Sustainable Agriculture',
-      level: 'Beginner',
-      isFree: true,
-      description:
-          'Learn the basics of organic farming methods and sustainable practices',
-    ),
-    Course(
-      title: 'Smart Irrigation Systems',
-      instructor: 'Prof. Michael Chen',
-      duration: '4 weeks',
-      language: 'English',
-      imageUrl:
-          'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400',
-      rating: 4.7,
-      students: 980,
-      category: 'Technology',
-      level: 'Intermediate',
-      isFree: true,
-
-      description:
-          'Master modern irrigation techniques and water conservation methods',
-    ),
-    Course(
-      title: 'Integrated Pest Management',
-      instructor: 'Dr. Emily Rodriguez',
-      duration: '8 weeks',
-      language: 'English',
-      imageUrl:
-          'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400',
-      rating: 4.9,
-      students: 1500,
-      category: 'Crop Protection',
-      level: 'Advanced',
-      isFree: true,
-
-      description:
-          'Comprehensive pest control strategies for sustainable farming',
-    ),
-    Course(
-      title: 'Soil Health & Fertility Management',
-      instructor: 'Dr. James Wilson',
-      duration: '5 weeks',
-      language: 'English',
-      imageUrl:
-          'https://images.unsplash.com/photo-1560493676-04071c5f467b?w=400',
-      rating: 4.6,
-      students: 750,
-      category: 'Soil Science',
-      level: 'Beginner',
-      isFree: true,
-      description:
-          'Understand soil composition and improve fertility naturally',
-    ),
-  ];
 }
 
 class _CoursesScreenState extends State<CoursesScreen> {
