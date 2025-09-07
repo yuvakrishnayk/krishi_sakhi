@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:krishi_sakhi/screens/home_screen.dart';
-import 'package:krishi_sakhi/l10n/app_localizations.dart'; // <-- correct generated file
+import 'package:krishi_sakhi/l10n/app_localizations.dart';
+import 'package:krishi_sakhi/screens/splash_screen.dart'; // <-- correct generated file
 
 void main(){
   runApp(MyApp());
@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
       ),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: const HomeScreen(),
+      home: const SplashScreen(),
     );
   }
 }
