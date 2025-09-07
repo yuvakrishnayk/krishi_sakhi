@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/main.dart'; // <-- for MyApp.of(context)
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
+import 'package:krishi_sakhi/screens/chatbot_screen.dart';
 import 'package:krishi_sakhi/screens/forum_screen.dart';
 import 'package:krishi_sakhi/screens/home_screen.dart';
 
@@ -38,7 +39,12 @@ class CustomDrawer extends StatelessWidget {
                     _DrawerItemData(
                       Icons.psychology,
                       l10n.drawerLearningChat,
-                      () {},
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ChatbotScreen()),
+                        );
+                      },
                     ),
                     _DrawerItemData(
                       Icons.book_rounded,

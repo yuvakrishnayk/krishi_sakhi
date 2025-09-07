@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/screens/home_screen.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart'; // <-- correct generated file
 
-void main() {
-  runApp(const MyApp());
+void main(){
+  runApp(MyApp());
 }
 
 class MyApp extends StatefulWidget {
