@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/main.dart'; // <-- for MyApp.of(context)
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
 import 'package:krishi_sakhi/screens/chatbot_screen.dart';
+import 'package:krishi_sakhi/screens/courses_screen.dart';
 import 'package:krishi_sakhi/screens/forum_screen.dart';
 import 'package:krishi_sakhi/screens/home_screen.dart';
 
@@ -49,7 +50,12 @@ class CustomDrawer extends StatelessWidget {
                     _DrawerItemData(
                       Icons.book_rounded,
                       l10n.drawerCourses,
-                      () {},
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => CoursesScreen()),
+                        );
+                      },
                     ),
                     _DrawerItemData(Icons.forum_rounded, l10n.drawerForum, () {
                       Navigator.push(
