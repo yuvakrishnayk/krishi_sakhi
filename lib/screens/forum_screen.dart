@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:krishi_sakhi/components/drawer.dart';
+import 'package:krishi_sakhi/screens/create_post_screen.dart';
 import 'forum_detail_screen.dart'; // Add this import
 
 class ForumScreen extends StatefulWidget {
@@ -310,16 +311,7 @@ class _ForumScreenState extends State<ForumScreen>
                     onTap: () {
                       HapticFeedback.mediumImpact();
                       // TODO: Implement create post functionality
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Create new post'),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          backgroundColor: primaryColor,
-                        ),
-                      );
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => CreatePostScreen()));
                     },
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 15),
