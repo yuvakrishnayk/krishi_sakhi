@@ -674,15 +674,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        if (!kIsWeb) // Hide camera option on web
-                          _buildPickerOption(
-                            icon: Icons.camera_alt,
-                            label: 'Camera',
-                            onTap: () {
-                              Navigator.pop(context);
-                              _pickImageFromCamera();
-                            },
-                          ),
+                        _buildPickerOption(
+                          icon: Icons.camera_alt,
+                          label: 'Camera',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _pickImageFromCamera();
+                          },
+                        ),
                         _buildPickerOption(
                           icon: Icons.photo_library,
                           label: 'Gallery',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/components/drawer.dart';
 import 'package:krishi_sakhi/models/courses_model.dart';
+import 'package:krishi_sakhi/screens/courses_detail_screen.dart';
 
 class CoursesScreen extends StatefulWidget {
   CoursesScreen({Key? key}) : super(key: key);
@@ -285,7 +286,12 @@ class CourseCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
-          // Navigate to course details
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CourseDetailScreen(course: course),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: SizedBox(
