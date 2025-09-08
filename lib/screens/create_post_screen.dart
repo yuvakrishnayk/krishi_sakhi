@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart'; // Add this import
+import 'dart:typed_data'; // Add this import
 
 class CreatePostScreen extends StatefulWidget {
   @override
@@ -13,7 +16,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final _tagsController = TextEditingController();
 
   File? _selectedMedia;
+  Uint8List? _webImage; // Add this for web support
   bool _isVideo = false;
+  final ImagePicker _picker = ImagePicker();
 
   List<String> _popularTags = [
     'Irrigation',
@@ -121,7 +126,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           ),
           SizedBox(height: 16),
 
-          if (_selectedMedia != null) ...[
+          if (_selectedMedia != null || _webImage != null) ...[
             Container(
               height: 200,
               width: double.infinity,
@@ -153,7 +158,66 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                             ),
                           ),
                         )
-                        : Image.file(_selectedMedia!, fit: BoxFit.cover),
+                        : kIsWeb
+                        ? (_webImage != null
+                            ? Image.memory(
+                              _webImage!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          color: Colors.red,
+                                          size: 48,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Error loading image',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                            : Container())
+                        : Image.file(
+                          _selectedMedia!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline,
+                                      color: Colors.red,
+                                      size: 48,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Error loading image',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
               ),
             ),
             SizedBox(height: 12),
@@ -161,13 +225,17 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton.icon(
-                  onPressed: () => setState(() => _selectedMedia = null),
+                  onPressed:
+                      () => setState(() {
+                        _selectedMedia = null;
+                        _webImage = null; // Clear web image too
+                      }),
                   icon: Icon(Icons.delete, color: Colors.red),
                   label: Text('Remove', style: TextStyle(color: Colors.red)),
                 ),
                 SizedBox(width: 16),
                 TextButton.icon(
-                  onPressed: () {},
+                  onPressed: _showMediaPickerDialog,
                   icon: Icon(Icons.edit, color: Color(0xFF4CAF50)),
                   label: Text(
                     'Change',
@@ -178,7 +246,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             ),
           ] else ...[
             GestureDetector(
-              onTap: () {},
+              onTap: _showMediaPickerDialog,
               child: Container(
                 height: 120,
                 width: double.infinity,
@@ -524,7 +592,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   SizedBox(height: 8),
                   Text('Tags: ${_selectedTags.join(", ")}'),
                 ],
-                if (_selectedMedia != null) ...[
+                if (_selectedMedia != null || _webImage != null) ...[
                   SizedBox(height: 8),
                   Text('Media: ${_isVideo ? "Video" : "Image"} attached'),
                 ],
@@ -551,6 +619,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     _tagsController.clear();
     setState(() {
       _selectedMedia = null;
+      _webImage = null; // Clear web image too
       _selectedTags.clear();
       _isVideo = false;
     });
@@ -562,5 +631,212 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     _descriptionController.dispose();
     _tagsController.dispose();
     super.dispose();
+  }
+
+  void _showMediaPickerDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Text(
+                      'Select Media',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2E7D32),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        if (!kIsWeb) // Hide camera option on web
+                          _buildPickerOption(
+                            icon: Icons.camera_alt,
+                            label: 'Camera',
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickImageFromCamera();
+                            },
+                          ),
+                        _buildPickerOption(
+                          icon: Icons.photo_library,
+                          label: 'Gallery',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _pickImageFromGallery();
+                          },
+                        ),
+                        _buildPickerOption(
+                          icon: Icons.videocam,
+                          label: 'Video',
+                          onTap: () {
+                            Navigator.pop(context);
+                            _pickVideoFromGallery();
+                          },
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPickerOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Color(0xFFF1F8E9),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: Color(0xFF4CAF50), width: 2),
+            ),
+            child: Icon(icon, color: Color(0xFF2E7D32), size: 28),
+          ),
+          SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: Color(0xFF2E7D32),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickImageFromCamera() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 80,
+      );
+      if (image != null) {
+        if (kIsWeb) {
+          // For web, read as bytes
+          final bytes = await image.readAsBytes();
+          setState(() {
+            _webImage = bytes;
+            _selectedMedia = null;
+            _isVideo = false;
+          });
+        } else {
+          // For mobile/desktop
+          setState(() {
+            _selectedMedia = File(image.path);
+            _webImage = null;
+            _isVideo = false;
+          });
+        }
+      }
+    } catch (e) {
+      _showErrorSnackBar('Error picking image from camera');
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      if (image != null) {
+        if (kIsWeb) {
+          // For web, read as bytes
+          final bytes = await image.readAsBytes();
+          setState(() {
+            _webImage = bytes;
+            _selectedMedia = null;
+            _isVideo = false;
+          });
+        } else {
+          // For mobile/desktop
+          setState(() {
+            _selectedMedia = File(image.path);
+            _webImage = null;
+            _isVideo = false;
+          });
+        }
+      }
+    } catch (e) {
+      _showErrorSnackBar('Error picking image from gallery');
+    }
+  }
+
+  Future<void> _pickVideoFromGallery() async {
+    try {
+      final XFile? video = await _picker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: Duration(minutes: 5),
+      );
+      if (video != null) {
+        if (kIsWeb) {
+          // For web, we'll just store the reference (you might want to handle video differently)
+          setState(() {
+            _selectedMedia = null;
+            _webImage = null;
+            _isVideo = true;
+          });
+        } else {
+          setState(() {
+            _selectedMedia = File(video.path);
+            _webImage = null;
+            _isVideo = true;
+          });
+        }
+      }
+    } catch (e) {
+      _showErrorSnackBar('Error picking video from gallery');
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 }
