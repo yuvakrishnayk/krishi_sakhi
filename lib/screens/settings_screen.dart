@@ -592,7 +592,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen>
           ExpansionPanelList(
             expansionCallback: (int index, bool isExpanded) {
               setState(() {
-                _faqExpanded[index] = !isExpanded;
+                _faqExpanded[index] = isExpanded;
               });
             },
             children:
