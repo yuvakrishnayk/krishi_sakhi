@@ -14,6 +14,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
+  List<bool> _faqExpanded = [false, false, false, false, false, false];
 
   String _userName = 'Your Name';
   File? _profileImageFile;
@@ -109,27 +110,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // Help & Support Section
             _buildSectionTitle('Help & Support'),
 
-            // FAQ
-            _buildSettingCard(
-              context,
-              icon: Icons.help_outline,
-              title: 'Frequently Asked Questions',
-              subtitle: 'Find answers to common questions',
-              onTap: () => _navigateToHelpSupport(context, 0),
-            ),
-
-            // Report a Problem
-
-            // Give Feedback
-
             // Contact Support
             _buildSettingCard(
               context,
               icon: Icons.support_agent,
               title: 'Contact Support',
               subtitle: 'Get in touch with our support team',
-              onTap: () => _navigateToHelpSupport(context, 3),
+              onTap: () => _showContactSupportDialog(context),
             ),
+
+            // FAQ Section
+            _buildSectionTitle('Frequently Asked Questions'),
+            _buildFAQSection(),
           ],
         ),
       ),
@@ -150,12 +142,107 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _navigateToHelpSupport(BuildContext context, int initialTabIndex) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => HelpSupportScreen(initialTabIndex: initialTabIndex),
+  Widget _buildFAQSection() {
+    final faqList = [
+      {
+        'question': 'How do I change the app language?',
+        'answer':
+            'Go to Settings and tap on the Language option. Select between English or Malayalam. The app will update to your chosen language instantly.',
+      },
+      {
+        'question': 'How do I enable or disable notifications?',
+        'answer':
+            'In Settings, use the Notifications switch to turn notifications on or off. You will receive updates about your projects and important information based on your preference.',
+      },
+      {
+        'question': 'How do I edit my profile information?',
+        'answer':
+            'Go to Settings and tap the edit icon on your profile section. You can change your name and profile picture by tapping on the camera icon.',
+      },
+      {
+        'question': 'How do I add or manage my agricultural projects?',
+        'answer':
+            'Use the main dashboard to add new projects. You can track progress, add notes, and manage multiple farming activities from the projects section.',
+      },
+      {
+        'question': 'What should I do if the app is running slowly?',
+        'answer':
+            'Try closing and reopening the app. If the issue persists, restart your device. For continued problems, contact support.',
+      },
+      {
+        'question': 'How can I get help with farming techniques?',
+        'answer':
+            'Use the Chatbot feature for instant farming advice, or visit the Forum section to connect with other farmers and share experiences.',
+      },
+    ];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.shade100.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ExpansionPanelList(
+        expansionCallback: (int index, bool isExpanded) {
+          setState(() {
+            _faqExpanded[index] = isExpanded;
+          });
+        },
+        elevation: 0,
+        dividerColor: Colors.grey[300],
+        expandedHeaderPadding: const EdgeInsets.symmetric(vertical: 4),
+        children:
+            faqList.asMap().entries.map((entry) {
+              int idx = entry.key;
+              var faq = entry.value;
+              return ExpansionPanel(
+                backgroundColor: Colors.white,
+                headerBuilder: (context, isExpanded) {
+                  return ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4CAF50).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.help_outline,
+                        color: const Color(0xFF2E7D32),
+                        size: 20,
+                      ),
+                    ),
+                    title: Text(
+                      faq['question']!,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: Color(0xFF2E2E2E),
+                      ),
+                    ),
+                  );
+                },
+                body: Padding(
+                  padding: const EdgeInsets.fromLTRB(72, 0, 16, 16),
+                  child: Text(
+                    faq['answer']!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                isExpanded: _faqExpanded[idx],
+                canTapOnHeader: true,
+              );
+            }).toList(),
       ),
     );
   }
@@ -337,6 +424,90 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _showContactSupportDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final messageController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text('Contact Support'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Your Name',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: 'Email Address',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: messageController,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: 'Message',
+                      hintText: 'How can we help you?',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E7D32),
+                ),
+                onPressed: () {
+                  if (nameController.text.trim().isEmpty ||
+                      emailController.text.trim().isEmpty ||
+                      messageController.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please fill in all fields.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  Navigator.pop(context);
+                  _showSuccessDialog(
+                    'Message Sent',
+                    'Thank you for contacting us! We\'ll get back to you within 24 hours.',
+                  );
+                },
+                child: const Text(
+                  'Send Message',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
   Widget _buildSettingCard(
     BuildContext context, {
     required IconData icon,
@@ -465,354 +636,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
-    );
-  }
-}
-
-// Help & Support Screen
-class HelpSupportScreen extends StatefulWidget {
-  final int initialTabIndex;
-
-  const HelpSupportScreen({super.key, this.initialTabIndex = 0});
-
-  @override
-  State<HelpSupportScreen> createState() => _HelpSupportScreenState();
-}
-
-class _HelpSupportScreenState extends State<HelpSupportScreen>
-    with TickerProviderStateMixin {
-  late TabController _tabController;
-  List<bool> _faqExpanded = [false, false, false, false, false, false];
-
-  // Controllers for forms
-  final _problemController = TextEditingController();
-  final _feedbackController = TextEditingController();
-  final _contactNameController = TextEditingController();
-  final _contactEmailController = TextEditingController();
-  final _contactMessageController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(
-      length: 4,
-      vsync: this,
-      initialIndex: widget.initialTabIndex,
-    );
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _problemController.dispose();
-    _feedbackController.dispose();
-    _contactNameController.dispose();
-    _contactEmailController.dispose();
-    _contactMessageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF2E7D32),
-        title: const Text(
-          'Help & Support',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        elevation: 0,
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [_buildFAQTab(), _buildContactTab()],
-      ),
-    );
-  }
-
-  Widget _buildFAQTab() {
-    final faqList = [
-      {
-        'question': 'How do I change the app language?',
-        'answer':
-            'Go to Settings and tap on the Language option. Select between English or Malayalam. The app will update to your chosen language instantly.',
-      },
-      {
-        'question': 'How do I enable or disable notifications?',
-        'answer':
-            'In Settings, use the Notifications switch to turn notifications on or off. You will receive updates about your projects and important information based on your preference.',
-      },
-      {
-        'question': 'How do I edit my profile information?',
-        'answer':
-            'Go to Settings and tap the edit icon on your profile section. You can change your name and profile picture by tapping on the camera icon.',
-      },
-      {
-        'question': 'How do I add or manage my agricultural projects?',
-        'answer':
-            'Use the main dashboard to add new projects. You can track progress, add notes, and manage multiple farming activities from the projects section.',
-      },
-      {
-        'question': 'What should I do if the app is running slowly?',
-        'answer':
-            'Try closing and reopening the app. If the issue persists, restart your device. For continued problems, report it through the "Report Problem" tab.',
-      },
-      {
-        'question': 'How can I get help with farming techniques?',
-        'answer':
-            'Use the Chatbot feature for instant farming advice, or visit the Forum section to connect with other farmers and share experiences.',
-      },
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.grey.shade50, Colors.grey.shade100],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Frequently Asked Questions',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2E7D32),
-            ),
-          ),
-          const SizedBox(height: 16),
-          ExpansionPanelList(
-            expansionCallback: (int index, bool isExpanded) {
-              setState(() {
-                _faqExpanded[index] = isExpanded;
-              });
-            },
-            children:
-                faqList.asMap().entries.map((entry) {
-                  int idx = entry.key;
-                  var faq = entry.value;
-                  return ExpansionPanel(
-                    headerBuilder: (context, isExpanded) {
-                      return ListTile(
-                        title: Text(
-                          faq['question']!,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                      );
-                    },
-                    body: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      child: Text(
-                        faq['answer']!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[700],
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-                    isExpanded: _faqExpanded[idx],
-                  );
-                }).toList(),
-            elevation: 2,
-            dividerColor: Colors.grey[300],
-            expandedHeaderPadding: const EdgeInsets.symmetric(vertical: 4),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContactTab() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.grey.shade50, Colors.grey.shade100],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Contact Support',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2E7D32),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Get in touch with our support team for any assistance.',
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 24),
-            _buildFormCard([
-              _buildTextFieldWithLabel('Your Name', _contactNameController),
-              const SizedBox(height: 16),
-              _buildTextFieldWithLabel(
-                'Email Address',
-                _contactEmailController,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-              _buildTextFieldWithLabel(
-                'Message',
-                _contactMessageController,
-                maxLines: 5,
-                hint: 'How can we help you?',
-              ),
-              const SizedBox(height: 24),
-              _buildSubmitButton(
-                'Send Message',
-                () => _sendContactMessage(),
-                Icons.send,
-              ),
-            ]),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFormCard(List<Widget> children) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.shade100.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
-      ),
-    );
-  }
-
-  Widget _buildTextFieldWithLabel(
-    String label,
-    TextEditingController controller, {
-    int maxLines = 1,
-    String? hint,
-    TextInputType? keyboardType,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2E2E2E),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            hintText: hint,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSubmitButton(
-    String text,
-    VoidCallback onPressed,
-    IconData icon,
-  ) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, color: Colors.white),
-        label: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2E7D32),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 2,
-        ),
-      ),
-    );
-  }
-
-  void _sendContactMessage() {
-    if (_contactNameController.text.trim().isEmpty ||
-        _contactEmailController.text.trim().isEmpty ||
-        _contactMessageController.text.trim().isEmpty) {
-      _showSnackBar('Please fill in all fields.');
-      return;
-    }
-
-    // Here you would typically send the data to your backend
-    _showSuccessDialog(
-      'Message Sent',
-      'Thank you for contacting us! We\'ll get back to you within 24 hours.',
-    );
-
-    // Clear the form
-    _contactNameController.clear();
-    _contactEmailController.clear();
-    _contactMessageController.clear();
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red.shade600,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
     );
   }
 

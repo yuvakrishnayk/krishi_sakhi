@@ -521,9 +521,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               if (value == null || value.isEmpty) {
                 return 'Please enter a description';
               }
-              if (value.length < 20) {
-                return 'Description should be at least 20 characters long';
-              }
+
               return null;
             },
           ),
