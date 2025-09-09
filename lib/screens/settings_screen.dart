@@ -16,7 +16,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   List<bool> _faqExpanded = [false, false, false, false, false, false];
 
-  String _userName = 'Your Name';
+  String _userName = 'Raj Kumar';
   File? _profileImageFile;
   String _profilePicUrl =
       'https://static.vecteezy.com/system/resources/previews/022/395/514/non_2x/a-beautiful-smiling-young-male-farmer-in-front-of-a-farm-background-ai-generated-photo.jpeg';
