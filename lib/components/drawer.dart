@@ -14,125 +14,123 @@ class CustomDrawer extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!; // make non-null
     return Drawer(
       elevation: 16,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.grey.shade50, Colors.grey.shade100],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildDrawerHeader(context),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      _buildDrawerSection('', [
-                        _DrawerItemData(Icons.home_filled, l10n.drawerHome, () {
+      child: Column(
+        children: [
+          _buildDrawerHeader(context),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.grey.shade50, Colors.grey.shade100],
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    _buildDrawerSection('', [
+                      _DrawerItemData(Icons.home_filled, l10n.drawerHome, () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => HomeScreen()),
+                        );
+                      }),
+                      _DrawerItemData(
+                        Icons.psychology,
+                        l10n.drawerLearningChat,
+                        () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => HomeScreen(),
+                              builder: (context) => ChatbotScreen(),
                             ),
                           );
-                        }),
-                        _DrawerItemData(
-                          Icons.psychology,
-                          l10n.drawerLearningChat,
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ChatbotScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _DrawerItemData(
-                          Icons.book_rounded,
-                          l10n.drawerCourses,
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CoursesScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _DrawerItemData(
-                          Icons.forum_rounded,
-                          l10n.drawerForum,
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ForumScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _DrawerItemData(
-                          Icons.settings_rounded,
-                          l10n.drawerSettings,
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SettingsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ]),
-                      // Language switcher section
-                      const SizedBox(height: 16),
-                    ],
-                  ),
+                        },
+                      ),
+                      _DrawerItemData(
+                        Icons.book_rounded,
+                        l10n.drawerCourses,
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CoursesScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _DrawerItemData(
+                        Icons.forum_rounded,
+                        l10n.drawerForum,
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ForumScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _DrawerItemData(
+                        Icons.settings_rounded,
+                        l10n.drawerSettings,
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SettingsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ]),
+                    // Language switcher section
+                    const SizedBox(height: 16),
+                  ],
                 ),
               ),
-              const Divider(height: 1, thickness: 0.5),
-              _buildLogoutButton(context),
-            ],
+            ),
           ),
-        ),
+          const Divider(height: 1, thickness: 0.5),
+          _buildLogoutButton(context),
+        ],
       ),
     );
   }
 
   Widget _buildDrawerHeader(BuildContext context) {
     return Container(
-      constraints: BoxConstraints(minHeight: 180, maxHeight: 220),
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        margin: EdgeInsets.zero,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF2E7D32),
-              const Color(0xFF388E3C),
-              const Color(0xFF4CAF50),
-            ],
-            stops: const [0.0, 0.6, 1.0],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: _buildProfileContainer(context),
+      constraints: BoxConstraints(minHeight: 200, maxHeight: 240),
+      margin: EdgeInsets.zero,
+      padding: EdgeInsets.fromLTRB(
+        16,
+        MediaQuery.of(context).padding.top + 16,
+        16,
+        16,
       ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF2E7D32),
+            const Color(0xFF388E3C),
+            const Color(0xFF4CAF50),
+          ],
+          stops: const [0.0, 0.6, 1.0],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: _buildProfileContainer(context),
     );
   }
 
