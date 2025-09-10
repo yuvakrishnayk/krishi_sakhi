@@ -570,7 +570,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

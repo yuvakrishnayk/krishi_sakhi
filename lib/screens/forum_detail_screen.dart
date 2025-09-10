@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 class ForumDetailScreen extends StatefulWidget {
   final PostData post;
 
-  const ForumDetailScreen({Key? key, required this.post}) : super(key: key);
+  const ForumDetailScreen({super.key, required this.post});
 
   @override
   _ForumDetailScreenState createState() => _ForumDetailScreenState();
@@ -101,7 +101,7 @@ class _ForumDetailScreenState extends State<ForumDetailScreen> {
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
               ),
-              child: Container(
+              child: SizedBox(
                 width: double.infinity,
                 height: 200,
                 child: Image.network(
@@ -344,7 +344,7 @@ class _ForumDetailScreenState extends State<ForumDetailScreen> {
             SizedBox(height: 20),
 
             // Comments list
-            ...comments.map((comment) => _buildCommentItem(comment)).toList(),
+            ...comments.map((comment) => _buildCommentItem(comment)),
           ],
         ),
       ),

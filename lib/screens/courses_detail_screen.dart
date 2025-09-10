@@ -4,7 +4,7 @@ import 'package:krishi_sakhi/models/courses_model.dart';
 class CourseDetailScreen extends StatefulWidget {
   final Course course;
 
-  const CourseDetailScreen({Key? key, required this.course}) : super(key: key);
+  const CourseDetailScreen({super.key, required this.course});
 
   @override
   State<CourseDetailScreen> createState() => _CourseDetailScreenState();

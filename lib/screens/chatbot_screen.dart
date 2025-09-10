@@ -4,7 +4,7 @@ import 'package:krishi_sakhi/components/drawer.dart';
 import '../l10n/app_localizations.dart';
 
 class ChatbotScreen extends StatefulWidget {
-  const ChatbotScreen({Key? key}) : super(key: key);
+  const ChatbotScreen({super.key});
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();

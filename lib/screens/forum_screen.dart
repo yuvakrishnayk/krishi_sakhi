@@ -5,6 +5,8 @@ import 'package:krishi_sakhi/screens/create_post_screen.dart';
 import 'forum_detail_screen.dart'; // Add this import
 
 class ForumScreen extends StatefulWidget {
+  const ForumScreen({super.key});
+
   @override
   _ForumScreenState createState() => _ForumScreenState();
 }
@@ -476,13 +478,13 @@ class PostCard extends StatelessWidget {
   final Color textColor;
 
   const PostCard({
-    Key? key,
+    super.key,
     required this.post,
     required this.onBookmarkToggle,
     required this.onTap,
     required this.cardColor,
     required this.textColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -520,7 +522,7 @@ class PostCard extends StatelessWidget {
               Stack(
                 children: [
                   hasImage
-                      ? Container(
+                      ? SizedBox(
                         height: 200,
                         width: double.infinity,
                         child: Image.network(
@@ -834,11 +836,10 @@ class _EnhancedActionButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   const _EnhancedActionButton({
-    Key? key,
     required this.icon,
     required this.count,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

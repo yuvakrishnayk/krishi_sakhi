@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart'; // Add this import
-import 'dart:typed_data'; // Add this import
+// Add this import
 
 class CreatePostScreen extends StatefulWidget {
+  const CreatePostScreen({super.key});
+
   @override
   _CreatePostScreenState createState() => _CreatePostScreenState();
 }
@@ -20,7 +22,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   bool _isVideo = false;
   final ImagePicker _picker = ImagePicker();
 
-  List<String> _popularTags = [
+  final List<String> _popularTags = [
     'Irrigation',
     'Organic Farming',
     'Crop Management',
@@ -36,7 +38,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     'Livestock',
   ];
 
-  List<String> _selectedTags = [];
+  final List<String> _selectedTags = [];
 
   @override
   Widget build(BuildContext context) {
@@ -531,7 +533,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Widget _buildCreatePostButton() {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(

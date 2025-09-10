@@ -14,11 +14,11 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
-  List<bool> _faqExpanded = [false, false, false, false, false, false];
+  final List<bool> _faqExpanded = [false, false, false, false, false, false];
 
   String _userName = 'Raj Kumar';
   File? _profileImageFile;
-  String _profilePicUrl =
+  final String _profilePicUrl =
       'https://static.vecteezy.com/system/resources/previews/022/395/514/non_2x/a-beautiful-smiling-young-male-farmer-in-front-of-a-farm-background-ai-generated-photo.jpeg';
 
   @override
@@ -87,7 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               subtitle: _notificationsEnabled ? loc.on : loc.off,
               trailing: Switch(
                 value: _notificationsEnabled,
-                activeColor: const Color(0xFF2E7D32),
+                activeThumbColor: const Color(0xFF2E7D32),
                 onChanged: (val) {
                   setState(() => _notificationsEnabled = val);
                 },

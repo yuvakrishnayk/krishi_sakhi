@@ -4,7 +4,7 @@ import 'package:krishi_sakhi/models/courses_model.dart';
 import 'package:krishi_sakhi/screens/courses_detail_screen.dart';
 
 class CoursesScreen extends StatefulWidget {
-  CoursesScreen({Key? key}) : super(key: key);
+  const CoursesScreen({super.key});
   @override
   State<CoursesScreen> createState() => _CoursesScreenState();
 
@@ -276,7 +276,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
 class CourseCard extends StatelessWidget {
   final Course course;
 
-  const CourseCard({Key? key, required this.course}) : super(key: key);
+  const CourseCard({super.key, required this.course});
 
   @override
   Widget build(BuildContext context) {

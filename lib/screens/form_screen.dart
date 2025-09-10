@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 
 class FormScreens extends StatefulWidget {
+  const FormScreens({super.key});
+
   @override
   _FormScreensState createState() => _FormScreensState();
 }
@@ -139,8 +141,9 @@ class _FormScreensState extends State<FormScreens>
                       keyboardType: TextInputType.number,
                       validator: (value) {
                         if (value?.isEmpty == true) return 'Required field';
-                        if (double.tryParse(value!) == null)
+                        if (double.tryParse(value!) == null) {
                           return 'Enter valid number';
+                        }
                         return null;
                       },
                     ),
@@ -369,7 +372,7 @@ class _FormScreensState extends State<FormScreens>
           ),
         ),
         child: DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           decoration: InputDecoration(
             labelText: label,
             hintText: hint ?? 'Select an option',
