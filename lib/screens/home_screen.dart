@@ -40,13 +40,13 @@ class _HomeScreenState extends State<HomeScreen> {
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: _toggleDrawer,
-          tooltip: 'Open navigation menu',
+          tooltip: l10n.openNavigationMenu,
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: Colors.white),
             splashRadius: 24,
-            tooltip: 'Settings',
+            tooltip: l10n.settings,
             onPressed: () {},
           ),
         ],
@@ -63,15 +63,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
-                    _buildDailyTipCard(context),
+                    _buildDailyTipCard(context, l10n),
                     const SizedBox(height: 20),
-                    _buildWeatherSection(context),
+                    _buildWeatherSection(context, l10n),
                     const SizedBox(height: 20),
-                    _buildSectionHeader(context, 'Latest News', ''),
+                    _buildSectionHeader(context, l10n.latestNews, ''),
                     const SizedBox(height: 12),
-                    _buildAnnouncementSection(context),
+                    _buildAnnouncementSection(context, l10n),
                     const SizedBox(height: 20),
-                    _buildSectionHeader(context, 'Projects', ''),
+                    _buildSectionHeader(context, l10n.projects, ''),
                     const SizedBox(height: 12),
                   ],
                 ),
@@ -83,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildProjectCard(context, index),
+                  (context, index) => _buildProjectCard(context, index, l10n),
                   childCount: 3,
                 ),
               ),
@@ -107,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDailyTipCard(BuildContext context) {
+  Widget _buildDailyTipCard(BuildContext context, AppLocalizations l10n) {
     return Card(
       elevation: 0,
       color: const Color(0xFFF1F8E9),
@@ -136,22 +136,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '5-Minute Daily Tip',
-                        style: TextStyle(
+                        l10n.dailyTip,
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                           color: Color(0xFF2E7D32),
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'Monsoon Season Alert',
-                        style: TextStyle(
+                        l10n.monsoonAlert,
+                        style: const TextStyle(
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
                           color: Color(0xFF333333),
@@ -163,9 +163,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Prepare your fields for heavy rainfall. Ensure proper drainage channels are clear and ready for the upcoming monsoon rains.',
-              style: TextStyle(fontSize: 14, height: 1.4),
+            Text(
+              l10n.monsoonMessage,
+              style: const TextStyle(fontSize: 14, height: 1.4),
             ),
             const SizedBox(height: 12),
             Row(
@@ -174,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextButton.icon(
                   onPressed: () {},
                   icon: const Icon(Icons.play_circle_outline, size: 18),
-                  label: const Text('Play Audio'),
+                  label: Text(l10n.playAudio),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF2E7D32),
                     padding: EdgeInsets.zero,
@@ -190,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildWeatherSection(BuildContext context) {
+  Widget _buildWeatherSection(BuildContext context, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -204,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -212,17 +212,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Thrissur',
-                    style: TextStyle(
+                    l10n.thrissurLocation,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'Scattered Showers',
-                    style: TextStyle(
+                    l10n.scattered,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
@@ -231,8 +231,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               Text(
-                '28°C',
-                style: TextStyle(
+                l10n.currentTemperature,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -251,7 +251,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     children: [
                       Text(
-                        ['Now', '3PM', '4PM', '5PM', '6PM'][index],
+                        [
+                          l10n.nowLabel,
+                          l10n.timeSlot3PM,
+                          l10n.timeSlot4PM,
+                          l10n.timeSlot5PM,
+                          l10n.timeSlot6PM,
+                        ][index],
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -323,9 +329,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProjectCard(BuildContext context, int index) {
-    final crops = ['Rice', 'Vegetables', 'Coconut'];
-    final dates = ['Started: May 15', 'Started: Jun 02', 'Started: Apr 10'];
+  Widget _buildProjectCard(
+    BuildContext context,
+    int index,
+    AppLocalizations l10n,
+  ) {
+    final crops = [l10n.rice, l10n.vegetables, l10n.coconut];
+    final dates = [l10n.startedMay, l10n.startedJun, l10n.startedApr];
     final progress = [0.7, 0.35, 0.9];
     final bgColors = [
       const Color(0xFFE8F5E9),
@@ -377,7 +387,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${crops[index]} Field',
+                          index == 0
+                              ? l10n.riceField
+                              : '${crops[index]} ${l10n.fieldSuffix}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -405,7 +417,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      index == 1 ? 'Needs Attention' : 'On Track',
+                      index == 1 ? l10n.needsAttention : l10n.onTrack,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -428,9 +440,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Progress',
-                              style: TextStyle(
+                            Text(
+                              l10n.progress,
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: Color(0xFF666666),
@@ -478,7 +490,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        index == 1 ? 'Irrigation needed' : 'Watered today',
+                        index == 1 ? l10n.irrigationNeeded : l10n.wateredToday,
                         style: TextStyle(
                           fontSize: 13,
                           color:
@@ -498,28 +510,31 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAnnouncementSection(BuildContext context) {
+  Widget _buildAnnouncementSection(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
     // Sample announcement data with more entries
     final announcements = [
       {
-        'title': 'Rice MSP increased to ₹2,183/quintal',
+        'title': l10n.riceMSPUpdate,
         'type': 'market',
-        'subtitle': 'Effective from October 1st',
+        'subtitle': l10n.mspEffectiveDate,
       },
       {
-        'title': 'PM Kisan: 15th installment dates announced',
+        'title': l10n.pmKisanUpdate,
         'type': 'scheme',
-        'subtitle': 'Apply before September 25',
+        'subtitle': l10n.schemeDeadline,
       },
       {
-        'title': 'Coconut prices reach ₹40 per piece',
+        'title': l10n.marketUpdate,
         'type': 'market',
-        'subtitle': 'Local mandi rates updated',
+        'subtitle': l10n.marketSubtitle,
       },
       {
-        'title': 'Subsidies for micro-irrigation systems',
+        'title': l10n.schemeSubsidy,
         'type': 'scheme',
-        'subtitle': 'Up to 55% subsidy available',
+        'subtitle': l10n.schemeSubsidySubtitle,
       },
     ];
 

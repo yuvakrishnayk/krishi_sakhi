@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:krishi_sakhi/screens/home_screen.dart';
+import '../l10n/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -48,6 +49,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.green[50],
       body: Center(
@@ -75,9 +77,9 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               const SizedBox(height: 40),
               // App name
-              const Text(
-                'Krishi Sakhi',
-                style: TextStyle(
+              Text(
+                loc.appName,
+                style: const TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1B5E20), // Dark green color
@@ -86,8 +88,8 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               const SizedBox(height: 10),
               // Tagline
-              const Text(
-                'Your Farming Companion',
+              Text(
+                loc.tagline,
                 style: TextStyle(
                   fontSize: 18,
                   color: Color(0xFF2E7D32), // Medium green color

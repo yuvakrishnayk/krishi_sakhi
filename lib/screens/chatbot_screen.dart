@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:krishi_sakhi/components/drawer.dart';
+import '../l10n/app_localizations.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({Key? key}) : super(key: key);
@@ -16,25 +17,24 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   late Animation<double> _fabAnimation;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  final List<_ChatMessage> _messages = [
-    _ChatMessage(
-      text: 'Hello! How can I assist you today with your farming needs?',
-      isUser: false,
-      time: '10:00 AM',
-    ),
-    _ChatMessage(
-      text: 'I\'m having trouble with pests on my tomato plants, Can you help?',
-      isUser: true,
-      time: '10:01 AM',
-    ),
-    _ChatMessage(
-      text:
-          'Of course! To better understand the issue, could you describe the pests or upload a photo of the affected plants?',
-      isUser: false,
-      time: '10:02 AM',
-    ),
-  ];
+  List<_ChatMessage> _messages = [];
   bool _isTyping = true;
+  bool _messagesInitialized = false;
+
+  void _initializeMessages(AppLocalizations loc) {
+    if (!_messagesInitialized) {
+      _messages = [
+        _ChatMessage(text: loc.chatGreeting, isUser: false, time: '10:00 AM'),
+        _ChatMessage(text: loc.chatPestQuery, isUser: true, time: '10:01 AM'),
+        _ChatMessage(
+          text: loc.chatPestResponse,
+          isUser: false,
+          time: '10:02 AM',
+        ),
+      ];
+      _messagesInitialized = true;
+    }
+  }
 
   @override
   void initState() {
@@ -62,6 +62,8 @@ class _ChatbotScreenState extends State<ChatbotScreen>
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
+    final loc = AppLocalizations.of(context)!;
+
     _fabAnimationController.reverse().then((_) {
       _fabAnimationController.forward();
     });
@@ -82,8 +84,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
       setState(() {
         _messages.add(
           _ChatMessage(
-            text:
-                'Thank you for your message. I\'m analyzing your query and will provide you with the best farming advice!',
+            text: loc.chatAnalyzing,
             isUser: false,
             time: DateFormat('hh:mm a').format(DateTime.now()),
           ),
@@ -94,35 +95,37 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   }
 
   void _handleAttachment() {
+    final loc = AppLocalizations.of(context)!;
+
     // Show attachment options (gallery, camera, files)
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder:
           (context) => Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Select Attachment',
+                  loc.selectAttachment,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.grey[800],
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _AttachmentOption(
                       icon: Icons.photo_camera,
-                      label: 'Camera',
+                      label: loc.camera,
                       onTap: () {
                         Navigator.pop(context);
                         // Handle camera selection
@@ -130,7 +133,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                     ),
                     _AttachmentOption(
                       icon: Icons.photo_library,
-                      label: 'Gallery',
+                      label: loc.gallery,
                       onTap: () {
                         Navigator.pop(context);
                         // Handle gallery selection
@@ -138,7 +141,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                     ),
                     _AttachmentOption(
                       icon: Icons.insert_drive_file,
-                      label: 'Files',
+                      label: loc.files,
                       onTap: () {
                         Navigator.pop(context);
                         // Handle file selection
@@ -162,19 +165,25 @@ class _ChatbotScreenState extends State<ChatbotScreen>
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    _initializeMessages(loc);
+
     return Scaffold(
       key: _scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: AppBar(
         backgroundColor: const Color(0xFF2E7D32),
-        title: const Text(
-          'Krishi Assist',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        title: Text(
+          loc.krishiAssist,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: _toggleDrawer,
-          tooltip: 'Open navigation menu',
+          tooltip: loc.openNavigationMenu,
         ),
         elevation: 4,
       ),
@@ -207,7 +216,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                 },
               ),
             ),
-            _QuickActions(),
+            _QuickActions(loc),
             Container(
               height: 1,
               decoration: BoxDecoration(
@@ -220,14 +229,14 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                 ),
               ),
             ),
-            _buildInputArea(),
+            _buildInputArea(loc),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInputArea() {
+  Widget _buildInputArea(AppLocalizations loc) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -275,7 +284,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
               child: TextField(
                 controller: _controller,
                 decoration: InputDecoration(
-                  hintText: 'Ask me anything about farming...',
+                  hintText: loc.chatInputHint,
                   hintStyle: TextStyle(color: Colors.grey[500]),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(28),
@@ -659,6 +668,10 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
 }
 
 class _QuickActions extends StatelessWidget {
+  final AppLocalizations loc;
+
+  const _QuickActions(this.loc);
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -679,17 +692,17 @@ class _QuickActions extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _QuickActionButton(
-            label: 'Weather',
+            label: loc.weather,
             icon: Icons.cloud,
             color: Colors.blue,
           ),
           _QuickActionButton(
-            label: 'Pests',
+            label: loc.pests,
             icon: Icons.bug_report,
             color: Colors.red,
           ),
           _QuickActionButton(
-            label: 'Market',
+            label: loc.market,
             icon: Icons.attach_money,
             color: Colors.orange,
           ),

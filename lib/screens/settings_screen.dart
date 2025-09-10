@@ -62,7 +62,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.only(bottom: 18),
               child: Stack(
                 children: [
-                  _buildProfileContainer(context),
+                  _buildProfileContainer(context, loc),
                   Positioned(
                     top: 8,
                     right: 8,
@@ -77,14 +77,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
 
             // Settings Section
-            _buildSectionTitle('Settings'),
+            _buildSectionTitle(loc.settings),
 
             // Notification Toggle
             _buildSettingCard(
               context,
               icon: Icons.notifications_active_rounded,
-              title: 'Notifications',
-              subtitle: _notificationsEnabled ? 'On' : 'Off',
+              title: loc.notifications,
+              subtitle: _notificationsEnabled ? loc.on : loc.off,
               trailing: Switch(
                 value: _notificationsEnabled,
                 activeColor: const Color(0xFF2E7D32),
@@ -108,20 +108,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
 
             // Help & Support Section
-            _buildSectionTitle('Help & Support'),
+            _buildSectionTitle(loc.helpSupport),
 
             // Contact Support
             _buildSettingCard(
               context,
               icon: Icons.support_agent,
-              title: 'Contact Support',
-              subtitle: 'Get in touch with our support team',
+              title: loc.contactSupport,
+              subtitle: loc.supportSubtitle,
               onTap: () => _showContactSupportDialog(context),
             ),
 
             // FAQ Section
-            _buildSectionTitle('Frequently Asked Questions'),
-            _buildFAQSection(),
+            _buildSectionTitle(loc.faq),
+            _buildFAQSection(loc),
           ],
         ),
       ),
@@ -142,38 +142,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildFAQSection() {
+  Widget _buildFAQSection(AppLocalizations loc) {
     final faqList = [
-      {
-        'question': 'How do I change the app language?',
-        'answer':
-            'Go to Settings and tap on the Language option. Select between English or Malayalam. The app will update to your chosen language instantly.',
-      },
-      {
-        'question': 'How do I enable or disable notifications?',
-        'answer':
-            'In Settings, use the Notifications switch to turn notifications on or off. You will receive updates about your projects and important information based on your preference.',
-      },
-      {
-        'question': 'How do I edit my profile information?',
-        'answer':
-            'Go to Settings and tap the edit icon on your profile section. You can change your name and profile picture by tapping on the camera icon.',
-      },
-      {
-        'question': 'How do I add or manage my agricultural projects?',
-        'answer':
-            'Use the main dashboard to add new projects. You can track progress, add notes, and manage multiple farming activities from the projects section.',
-      },
-      {
-        'question': 'What should I do if the app is running slowly?',
-        'answer':
-            'Try closing and reopening the app. If the issue persists, restart your device. For continued problems, contact support.',
-      },
-      {
-        'question': 'How can I get help with farming techniques?',
-        'answer':
-            'Use the Chatbot feature for instant farming advice, or visit the Forum section to connect with other farmers and share experiences.',
-      },
+      {'question': loc.faqLanguage, 'answer': loc.faqLanguageAnswer},
+      {'question': loc.faqNotifications, 'answer': loc.faqNotificationsAnswer},
+      {'question': loc.faqProfile, 'answer': loc.faqProfileAnswer},
+      {'question': loc.faqProjects, 'answer': loc.faqProjectsAnswer},
+      {'question': loc.faqPerformance, 'answer': loc.faqPerformanceAnswer},
+      {'question': loc.faqFarmingHelp, 'answer': loc.faqFarmingHelpAnswer},
     ];
 
     return Container(
@@ -247,7 +223,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildProfileContainer(BuildContext context) {
+  Widget _buildProfileContainer(BuildContext context, AppLocalizations loc) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF2E7D32),
@@ -317,7 +293,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
-                        '24 Projects',
+                        loc.projectCount,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -339,7 +315,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Since Jan 2024',
+                      loc.sinceJan,
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         fontSize: 12,
@@ -366,7 +342,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: const Text('Edit Profile'),
+            title: Text(AppLocalizations.of(context)!.editProfile),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -401,14 +377,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.name,
+                  ),
                 ),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -417,7 +395,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   });
                   Navigator.pop(context);
                 },
-                child: const Text('Save'),
+                child: Text(AppLocalizations.of(context)!.save),
               ),
             ],
           ),
@@ -436,35 +414,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: const Text('Contact Support'),
+            title: Text(AppLocalizations.of(context)!.contactSupport),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
                     controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Your Name',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.yourName,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email Address',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.emailAddress,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: messageController,
                     maxLines: 4,
-                    decoration: const InputDecoration(
-                      labelText: 'Message',
-                      hintText: 'How can we help you?',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.message,
+                      hintText: AppLocalizations.of(context)!.helpMessage,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ],
@@ -473,7 +451,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -484,8 +462,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       emailController.text.trim().isEmpty ||
                       messageController.text.trim().isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please fill in all fields.'),
+                      SnackBar(
+                        content: Text(
+                          AppLocalizations.of(context)!.fillAllFields,
+                        ),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -494,13 +474,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   Navigator.pop(context);
                   _showSuccessDialog(
-                    'Message Sent',
-                    'Thank you for contacting us! We\'ll get back to you within 24 hours.',
+                    AppLocalizations.of(context)!.messageSent,
+                    AppLocalizations.of(context)!.thankYouMessage,
                   );
                 },
-                child: const Text(
-                  'Send Message',
-                  style: TextStyle(color: Colors.white),
+                child: Text(
+                  AppLocalizations.of(context)!.sendMessage,
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
             ],
@@ -607,7 +587,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             title: Text(
-              AppLocalizations.of(context)!.chooseLanguage,
+              AppLocalizations.of(context)!.selectLanguage,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             content: Column(
@@ -616,7 +596,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 RadioListTile<Locale>(
                   value: const Locale('en'),
                   groupValue: Localizations.localeOf(context),
-                  title: const Text('English'),
+                  title: Text(AppLocalizations.of(context)!.english),
                   activeColor: const Color(0xFF388E3C),
                   onChanged: (locale) {
                     MyApp.of(context)?.changeLocale(locale!);
@@ -626,7 +606,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 RadioListTile<Locale>(
                   value: const Locale('ml'),
                   groupValue: Localizations.localeOf(context),
-                  title: const Text('മലയാളം'),
+                  title: Text(AppLocalizations.of(context)!.malayalam),
                   activeColor: const Color(0xFF388E3C),
                   onChanged: (locale) {
                     MyApp.of(context)?.changeLocale(locale!);
@@ -677,7 +657,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text('OK', style: TextStyle(color: Colors.white)),
+                child: Text(
+                  AppLocalizations.of(context)!.ok,
+                  style: const TextStyle(color: Colors.white),
+                ),
               ),
             ],
           ),

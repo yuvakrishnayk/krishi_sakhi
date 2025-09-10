@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 class FormScreens extends StatefulWidget {
   @override
@@ -26,28 +27,6 @@ class _FormScreensState extends State<FormScreens>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
-  // Dropdown options
-  final List<String> cropTypes = [
-    'Wheat',
-    'Rice',
-    'Corn',
-    'Soybeans',
-    'Cotton',
-    'Sugarcane',
-    'Barley',
-    'Oats',
-  ];
-
-  final List<String> soilTypes = [
-    'Clay',
-    'Sandy',
-    'Loamy',
-    'Silty',
-    'Peaty',
-    'Chalky',
-    'Saline',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -71,22 +50,49 @@ class _FormScreensState extends State<FormScreens>
     super.dispose();
   }
 
-  String _getExperienceLabel(double value) {
-    if (value <= 1) return 'Beginner';
-    if (value <= 2) return 'Novice';
-    if (value <= 3) return 'Intermediate';
-    if (value <= 4) return 'Advanced';
-    return 'Expert';
+  String _getExperienceLabel(double value, AppLocalizations loc) {
+    if (value <= 1) return loc.beginner;
+    if (value <= 2) return loc.novice;
+    if (value <= 3) return loc.intermediate;
+    if (value <= 4) return loc.advanced;
+    return loc.expert;
+  }
+
+  List<String> _getCropTypes(AppLocalizations loc) {
+    return [
+      loc.wheat,
+      loc.rice,
+      loc.corn,
+      loc.soybeans,
+      loc.cotton,
+      loc.sugarcane,
+      loc.barley,
+      loc.oats,
+    ];
+  }
+
+  List<String> _getSoilTypes(AppLocalizations loc) {
+    return [
+      loc.clay,
+      loc.sandy,
+      loc.loamy,
+      loc.silty,
+      loc.peaty,
+      loc.chalky,
+      loc.saline,
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: Color(0xFFF8FAF8),
       appBar: AppBar(
         backgroundColor: const Color(0xFF2E7D32),
         title: Text(
-          'Create Project',
+          loc.newProject,
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w700,
@@ -95,7 +101,7 @@ class _FormScreensState extends State<FormScreens>
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
-          tooltip: 'Back',
+          tooltip: loc.cancel,
         ),
         elevation: 4,
       ),
@@ -119,7 +125,7 @@ class _FormScreensState extends State<FormScreens>
                   children: [
                     _buildTextFormField(
                       controller: _farmNameController,
-                      label: 'Farm Name',
+                      label: loc.farmName,
                       icon: Icons.eco_outlined,
                       validator:
                           (value) =>
@@ -128,7 +134,7 @@ class _FormScreensState extends State<FormScreens>
                     SizedBox(height: 16),
                     _buildTextFormField(
                       controller: _landSizeController,
-                      label: 'Land Size (Acres)',
+                      label: loc.landSize,
                       icon: Icons.crop_landscape_outlined,
                       keyboardType: TextInputType.number,
                       validator: (value) {
@@ -149,9 +155,9 @@ class _FormScreensState extends State<FormScreens>
                   icon: Icons.grass_outlined,
                   children: [
                     _buildEnhancedDropdownField(
-                      label: 'Crop Type',
+                      label: loc.cropType,
                       value: selectedCropType,
-                      items: cropTypes,
+                      items: _getCropTypes(loc),
                       onChanged:
                           (value) => setState(() => selectedCropType = value),
                       icon: Icons.agriculture,
@@ -166,9 +172,9 @@ class _FormScreensState extends State<FormScreens>
                   icon: Icons.terrain_outlined,
                   children: [
                     _buildEnhancedDropdownField(
-                      label: 'Soil Type',
+                      label: loc.soilType,
                       value: selectedSoilType,
-                      items: soilTypes,
+                      items: _getSoilTypes(loc),
                       onChanged:
                           (value) => setState(() => selectedSoilType = value),
                       icon: Icons.layers,
@@ -190,19 +196,20 @@ class _FormScreensState extends State<FormScreens>
 
                 // Additional Info Section
                 _buildEnhancedSliderField(
-                  label: 'Farming Experience',
+                  label: loc.experience,
                   value: farmingExperience,
                   min: 0,
                   max: 5,
                   divisions: 5,
                   onChanged:
                       (value) => setState(() => farmingExperience = value),
+                  loc: loc,
                 ),
 
                 SizedBox(height: 40),
 
                 // Enhanced Bottom Buttons
-                _buildActionButtons(),
+                _buildActionButtons(loc),
 
                 SizedBox(height: 20),
               ],
@@ -542,6 +549,7 @@ class _FormScreensState extends State<FormScreens>
     required double max,
     required int divisions,
     required Function(double) onChanged,
+    required AppLocalizations loc,
   }) {
     return Container(
       padding: EdgeInsets.all(20),
@@ -577,7 +585,7 @@ class _FormScreensState extends State<FormScreens>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  _getExperienceLabel(value),
+                  _getExperienceLabel(value, loc),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -623,7 +631,7 @@ class _FormScreensState extends State<FormScreens>
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(AppLocalizations loc) {
     return Row(
       children: [
         SizedBox(width: 16),
@@ -654,7 +662,7 @@ class _FormScreensState extends State<FormScreens>
                 Icon(Icons.add_circle_outline, color: Colors.white),
                 SizedBox(width: 8),
                 Text(
-                  'Create Project',
+                  loc.submit,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,

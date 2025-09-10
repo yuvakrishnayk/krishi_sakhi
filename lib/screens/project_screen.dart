@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/components/drawer.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 
 class ProjectScreen extends StatefulWidget {
   const ProjectScreen({super.key});
@@ -27,6 +28,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     // Get the selected date
     final selectedDate = DateTime(
       today.year,
@@ -35,11 +38,11 @@ class _ProjectScreenState extends State<ProjectScreen> {
     );
 
     // Determine section title based on selected date
-    String sectionTitle = 'Today\'s Tasks';
+    String sectionTitle = loc.todaysTasks;
     if (selectedDate.day == today.day - 1) {
-      sectionTitle = 'Yesterday\'s Tasks';
+      sectionTitle = loc.yesterdaysTasks;
     } else if (selectedDate.day < today.day - 1) {
-      sectionTitle = 'Tasks for ${DateFormat('MMM d').format(selectedDate)}';
+      sectionTitle = loc.tasksFor(DateFormat('MMM d').format(selectedDate));
     }
 
     return Scaffold(
@@ -48,20 +51,23 @@ class _ProjectScreenState extends State<ProjectScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: primaryColor,
-        title: const Text(
-          'Krishi Sakhi',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        title: Text(
+          loc.appTitle,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: _toggleDrawer,
-          tooltip: 'Open navigation menu',
+          tooltip: loc.openNavigationMenu,
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: Colors.white),
             splashRadius: 24,
-            tooltip: 'Settings',
+            tooltip: loc.settings,
             onPressed: () {},
           ),
         ],
@@ -74,15 +80,15 @@ class _ProjectScreenState extends State<ProjectScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildCalendarSection(),
-                  _buildEnhancedDailyAdvisory(selectedDate),
-                  _buildProjectOverview(),
-                  _buildRoadmapSection(),
+                  _buildCalendarSection(loc),
+                  _buildEnhancedDailyAdvisory(selectedDate, loc),
+                  _buildProjectOverview(loc),
+                  _buildRoadmapSection(loc),
                   _buildSectionHeader(sectionTitle),
                 ],
               ),
             ),
-            _buildTodayTasksList(),
+            _buildTodayTasksList(loc),
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
           ],
         ),
@@ -90,7 +96,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
     );
   }
 
-  Widget _buildCalendarSection() {
+  Widget _buildCalendarSection(AppLocalizations loc) {
     // Generate dates for calendar (previous 3 days, today, and next 3 days)
     final List<DateTime> dates = [];
     for (int i = -3; i <= 3; i++) {
@@ -115,7 +121,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Rice Cultivation Project',
+              loc.riceProject,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -157,8 +163,10 @@ class _ProjectScreenState extends State<ProjectScreen> {
                               SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'Future tasks will be available on their scheduled date',
-                                  style: TextStyle(fontWeight: FontWeight.w500),
+                                  loc.futureTaskMessage,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ],
@@ -175,7 +183,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                           ),
                           duration: Duration(seconds: 3),
                           action: SnackBarAction(
-                            label: 'DISMISS',
+                            label: loc.dismiss,
                             textColor: Colors.white,
                             onPressed: () {
                               ScaffoldMessenger.of(
@@ -266,7 +274,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
     );
   }
 
-  Widget _buildProjectOverview() {
+  Widget _buildProjectOverview(AppLocalizations loc) {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -299,16 +307,16 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Rice Field',
-                      style: TextStyle(
+                    Text(
+                      loc.riceField,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Started: May 15',
+                      loc.startedMay,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,
@@ -327,7 +335,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'On Track',
+                  loc.onTrack,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -344,9 +352,9 @@ class _ProjectScreenState extends State<ProjectScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Progress',
-                    style: TextStyle(
+                  Text(
+                    loc.progress,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: Color(0xFF666666),
@@ -393,9 +401,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
-                    'Watered today',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF666666)),
+                  Text(
+                    loc.wateredToday,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF666666),
+                    ),
                   ),
                 ],
               ),
@@ -406,7 +417,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   padding: EdgeInsets.zero,
                   minimumSize: const Size(60, 30),
                 ),
-                child: const Text('Details'),
+                child: Text(loc.details),
               ),
             ],
           ),
@@ -415,13 +426,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
     );
   }
 
-  Widget _buildRoadmapSection() {
+  Widget _buildRoadmapSection(AppLocalizations loc) {
     final roadmapData = {
-      "week1": ["Prepare nursery"],
-      "week2": ["Irrigate beds"],
-      "week3": ["Transplant seedlings"],
-      "week6": ["Apply urea"],
-      "week10": ["Check for leaf spot"],
+      "week1": [loc.prepareNursery],
+      "week2": [loc.irrigateBeds],
+      "week3": [loc.transplantSeedlings],
+      "week6": [loc.applyUrea],
+      "week10": [loc.checkLeafSpot],
     };
 
     return Container(
@@ -444,9 +455,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Roadmap',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Text(
+                loc.roadmap,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -466,7 +480,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                     width: 80,
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Week ${weekNum}',
+                      loc.week(weekNum.toString()),
                       style: TextStyle(
                         color:
                             isCurrentWeek ? primaryColor : Colors.grey.shade700,
@@ -576,40 +590,40 @@ class _ProjectScreenState extends State<ProjectScreen> {
     );
   }
 
-  Widget _buildTodayTasksList() {
+  Widget _buildTodayTasksList(AppLocalizations loc) {
     // Add date field to each task
     final allTasks = [
       {
-        'title': 'Apply organic fertilizer',
-        'time': '9:00 AM',
+        'title': loc.applyFertilizer,
+        'time': loc.time9AM,
         'isDone': true,
         'icon': Icons.grass,
         'date': DateTime(today.year, today.month, today.day - 1), // Yesterday
       },
       {
-        'title': 'Irrigation check',
-        'time': '11:30 AM',
+        'title': loc.irrigationCheck,
+        'time': loc.time1130AM,
         'isDone': false,
         'icon': Icons.water_drop,
         'date': DateTime(today.year, today.month, today.day), // Today
       },
       {
-        'title': 'Pest monitoring',
-        'time': '2:00 PM',
+        'title': loc.pestMonitoring,
+        'time': loc.time2PM,
         'isDone': false,
         'icon': Icons.bug_report,
         'date': DateTime(today.year, today.month, today.day), // Today
       },
       {
-        'title': 'Harvest planning',
-        'time': '4:30 PM',
+        'title': loc.harvestPlanning,
+        'time': loc.time430PM,
         'isDone': false,
         'icon': Icons.agriculture,
         'date': DateTime(today.year, today.month, today.day + 1), // Tomorrow
       },
       {
-        'title': 'Soil testing',
-        'time': '10:00 AM',
+        'title': loc.soilTesting,
+        'time': loc.time10AM,
         'isDone': false,
         'icon': Icons.science,
         'date': DateTime(today.year, today.month, today.day + 1), // Tomorrow
@@ -662,7 +676,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                 ),
                 SizedBox(height: 12),
                 Text(
-                  'No tasks for this day',
+                  loc.noTasksForDay,
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
                 ),
               ],
@@ -743,11 +757,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
     );
   }
 
-  Widget _buildEnhancedDailyAdvisory(DateTime selectedDate) {
+  Widget _buildEnhancedDailyAdvisory(
+    DateTime selectedDate,
+    AppLocalizations loc,
+  ) {
     // Check if selected date is in the past, today, or future
-    selectedDate.isBefore(
-      DateTime(today.year, today.month, today.day),
-    );
+    selectedDate.isBefore(DateTime(today.year, today.month, today.day));
     final isToday =
         selectedDate.day == today.day &&
         selectedDate.month == today.month &&
@@ -792,8 +807,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   const SizedBox(width: 8),
                   Text(
                     isToday
-                        ? "Today's Advisory"
-                        : "Advisory for ${DateFormat('MMM d').format(selectedDate)}",
+                        ? loc.todaysAdvisory
+                        : "${loc.advisoryFor} ${DateFormat('MMM d').format(selectedDate)}",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -807,7 +822,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   onPressed: () {},
                   icon: Icon(Icons.refresh, color: primaryColor, size: 16),
                   label: Text(
-                    'Refresh',
+                    loc.refresh,
                     style: TextStyle(color: primaryColor, fontSize: 12),
                   ),
                   style: TextButton.styleFrom(
@@ -847,7 +862,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                       ),
                     ),
                     Text(
-                      isToday ? 'Sunny' : 'Was Cloudy',
+                      isToday ? loc.sunny : loc.wasCloudy,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -864,7 +879,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Field Conditions',
+                      loc.fieldConditions,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -878,25 +893,23 @@ class _ProjectScreenState extends State<ProjectScreen> {
                         _buildMetricItem(
                           Icons.water_drop,
                           isToday ? '72%' : '68%',
-                          'Soil Moisture',
+                          loc.soilMoisture,
                         ),
                         _buildMetricItem(
                           Icons.air,
                           isToday ? '10 km/h' : '8 km/h',
-                          'Wind',
+                          loc.wind,
                         ),
                         _buildMetricItem(
                           Icons.opacity,
                           isToday ? '68%' : '75%',
-                          'Humidity',
+                          loc.humidity,
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      isToday
-                          ? 'Weather conditions are optimal for field operations today.'
-                          : 'Weather conditions were suitable for field activities.',
+                      isToday ? loc.weatherOptimal : loc.weatherSuitable,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -920,7 +933,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Pest Alert',
+                loc.pestAlert,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -935,7 +948,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  isToday ? 'High Risk' : 'Medium Risk',
+                  isToday ? loc.highRisk : loc.mediumRisk,
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
@@ -947,9 +960,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            isToday
-                ? 'Leaf Folder detected in nearby fields. Consider preventative measures within 48 hours.'
-                : 'Brown Plant Hopper risks were monitored and controlled.',
+            isToday ? loc.leafFolderDetected : loc.brownPlantHopper,
             style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
           ),
 
@@ -965,7 +976,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Recommendations',
+                loc.recommendations,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -976,21 +987,15 @@ class _ProjectScreenState extends State<ProjectScreen> {
           ),
           const SizedBox(height: 10),
           _buildRecommendationItem(
-            isToday
-                ? 'Optimal time for irrigation is before 10:00 AM today'
-                : 'Field irrigation was completed',
+            isToday ? loc.irrigationOptimal : loc.fieldIrrigationCompleted,
             isToday,
           ),
           _buildRecommendationItem(
-            isToday
-                ? 'Monitor field edges for pest activity'
-                : 'Pest monitoring was conducted',
+            isToday ? loc.monitorPestActivity : loc.pestMonitoringConducted,
             isToday,
           ),
           _buildRecommendationItem(
-            isToday
-                ? 'Consider fertilizer application in Section B'
-                : 'Field nutrients were at optimal levels',
+            isToday ? loc.considerFertilizer : loc.fieldNutrientsOptimal,
             isToday,
           ),
         ],
