@@ -17,6 +17,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final List<bool> _faqExpanded = [false, false, false, false, false, false];
 
   String _userName = '';
+  bool _isUserNameCustomized = false;
   File? _profileImageFile;
   final String _profilePicUrl =
       'https://static.vecteezy.com/system/resources/previews/022/395/514/non_2x/a-beautiful-smiling-young-male-farmer-in-front-of-a-farm-background-ai-generated-photo.jpeg';
@@ -25,8 +26,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
-    // Initialize username if not already set
-    if (_userName.isEmpty) {
+    // Initialize username if not customized by user
+    if (!_isUserNameCustomized) {
       _userName = loc.defaultUserName;
     }
     return Scaffold(
@@ -397,6 +398,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onPressed: () {
                   setState(() {
                     _userName = nameController.text;
+                    _isUserNameCustomized = true;
                   });
                   Navigator.pop(context);
                 },
@@ -607,6 +609,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: (locale) {
                     MyApp.of(context)?.changeLocale(locale!);
                     Navigator.pop(context);
+                    setState(() {}); // Trigger rebuild to update username
                   },
                 ),
                 RadioListTile<Locale>(
@@ -617,6 +620,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: (locale) {
                     MyApp.of(context)?.changeLocale(locale!);
                     Navigator.pop(context);
+                    setState(() {}); // Trigger rebuild to update username
                   },
                 ),
               ],

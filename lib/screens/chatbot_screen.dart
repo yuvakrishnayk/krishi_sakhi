@@ -18,7 +18,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<_ChatMessage> _messages = [];
-  bool _isTyping = true;
+  bool _isTyping = false;
   bool _messagesInitialized = false;
 
   void _initializeMessages(AppLocalizations loc) {
@@ -272,12 +272,18 @@ class _ChatbotScreenState extends State<ChatbotScreen>
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                    spreadRadius: 1,
+                  ),
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.9),
+                    blurRadius: 6,
+                    offset: const Offset(0, -1),
                   ),
                 ],
               ),
@@ -285,20 +291,45 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                 controller: _controller,
                 decoration: InputDecoration(
                   hintText: loc.chatInputHint,
-                  hintStyle: TextStyle(color: Colors.grey[500]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(28),
-                    borderSide: BorderSide.none,
+                  hintStyle: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
                   ),
-                  fillColor: const Color(0xFFF8F9FA),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide(
+                      color: Colors.grey[200]!,
+                      width: 1.5,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide(
+                      color: Colors.grey[200]!,
+                      width: 1.5,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide(color: Colors.green[400]!, width: 2),
+                  ),
+                  fillColor: Colors.white,
                   filled: true,
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+                    horizontal: 20,
+                    vertical: 16,
                   ),
+                ),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black87,
+                  height: 1.4,
                 ),
                 minLines: 1,
                 maxLines: 4,
+                textCapitalization: TextCapitalization.sentences,
                 onSubmitted: (_) => _sendMessage(),
               ),
             ),
