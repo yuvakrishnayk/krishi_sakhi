@@ -327,7 +327,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatAnalyzing => 'Thank you for your message. I\'m analyzing your query and will provide you with the best farming advice!';
 
   @override
-  String get chatInputHint => 'Ask me anything about farming...';
+  String get chatInputHint => 'Type your message here...';
 
   @override
   String get selectAttachment => 'Select Attachment';
