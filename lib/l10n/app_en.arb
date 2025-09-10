@@ -201,5 +201,10 @@
   "time430PM": "4:30 PM",
   "time10AM": "10:00 AM",
   "appName": "Krishi Sakhi",
-  "tagline": "Your Farming Companion"
+  "tagline": "Your Farming Companion",
+  "defaultUserName": "Raj Kumar",
+  "openNavigationMenu": "Open navigation menu",
+  "editProfile": "Edit Profile",
+  "malayalamLanguage": "മലയാളം",
+  "englishLanguage": "English"
 }

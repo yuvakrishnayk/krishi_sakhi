@@ -1180,6 +1180,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your Farming Companion'**
   String get tagline;
+
+  /// No description provided for @defaultUserName.
+  ///
+  /// In en, this message translates to:
+  /// **'Raj Kumar'**
+  String get defaultUserName;
+
+  /// No description provided for @malayalamLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'മലയാളം'**
+  String get malayalamLanguage;
+
+  /// No description provided for @englishLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get englishLanguage;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

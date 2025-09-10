@@ -556,4 +556,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tagline => 'Your Farming Companion';
+
+  @override
+  String get defaultUserName => 'Raj Kumar';
+
+  @override
+  String get malayalamLanguage => 'മലയാളം';
+
+  @override
+  String get englishLanguage => 'English';
 }

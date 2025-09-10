@@ -556,4 +556,13 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get tagline => 'നിങ്ങളുടെ കൃഷി സഹായി';
+
+  @override
+  String get defaultUserName => 'രാജ് കുമാർ';
+
+  @override
+  String get malayalamLanguage => 'മലയാളം';
+
+  @override
+  String get englishLanguage => 'ഇംഗ്ലീഷ്';
 }

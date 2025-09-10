@@ -16,7 +16,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   final List<bool> _faqExpanded = [false, false, false, false, false, false];
 
-  String _userName = 'Raj Kumar';
+  String _userName = '';
   File? _profileImageFile;
   final String _profilePicUrl =
       'https://static.vecteezy.com/system/resources/previews/022/395/514/non_2x/a-beautiful-smiling-young-male-farmer-in-front-of-a-farm-background-ai-generated-photo.jpeg';
@@ -24,6 +24,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+
+    // Initialize username if not already set
+    if (_userName.isEmpty) {
+      _userName = loc.defaultUserName;
+    }
     return Scaffold(
       drawer: const CustomDrawer(),
       backgroundColor: const Color(0xFFF8F9FA),
@@ -41,7 +46,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               (context) => IconButton(
                 icon: const Icon(Icons.menu, color: Colors.white),
                 onPressed: () => Scaffold.of(context).openDrawer(),
-                tooltip: 'Open navigation menu',
+                tooltip: loc.openNavigationMenu,
               ),
         ),
         elevation: 0,
@@ -68,7 +73,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     right: 8,
                     child: IconButton(
                       icon: const Icon(Icons.edit, color: Colors.white),
-                      tooltip: 'Edit Profile',
+                      tooltip: loc.editProfile,
                       onPressed: () => _showEditProfileDialog(context),
                     ),
                   ),
@@ -569,12 +574,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   String _getCurrentLanguage(BuildContext context) {
     final locale = Localizations.localeOf(context);
+    final loc = AppLocalizations.of(context)!;
     switch (locale.languageCode) {
       case 'ml':
-        return 'മലയാളം';
+        return loc.malayalamLanguage;
       case 'en':
       default:
-        return 'English';
+        return loc.englishLanguage;
     }
   }
 
@@ -596,7 +602,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 RadioListTile<Locale>(
                   value: const Locale('en'),
                   groupValue: Localizations.localeOf(context),
-                  title: Text(AppLocalizations.of(context)!.english),
+                  title: Text(AppLocalizations.of(context)!.englishLanguage),
                   activeColor: const Color(0xFF388E3C),
                   onChanged: (locale) {
                     MyApp.of(context)?.changeLocale(locale!);
@@ -606,7 +612,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 RadioListTile<Locale>(
                   value: const Locale('ml'),
                   groupValue: Localizations.localeOf(context),
-                  title: Text(AppLocalizations.of(context)!.malayalam),
+                  title: Text(AppLocalizations.of(context)!.malayalamLanguage),
                   activeColor: const Color(0xFF388E3C),
                   onChanged: (locale) {
                     MyApp.of(context)?.changeLocale(locale!);

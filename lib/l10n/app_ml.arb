@@ -201,6 +201,11 @@
   "time430PM": "വൈകുന്നേരം 4:30",
   "time10AM": "രാവിലെ 10:00",
   "appName": "കൃഷി സഖി",
-  "tagline": "നിങ്ങളുടെ കൃഷി സഹായി"
+  "tagline": "നിങ്ങളുടെ കൃഷി സഹായി",
+  "defaultUserName": "രാജ് കുമാർ",
+  "openNavigationMenu": "നാവിഗേഷൻ മെനു തുറക്കുക",
+  "editProfile": "പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക",
+  "malayalamLanguage": "മലയാളം",
+  "englishLanguage": "ഇംഗ്ലീഷ്"
 }
 
