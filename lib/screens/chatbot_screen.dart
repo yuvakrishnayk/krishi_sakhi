@@ -101,6 +101,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true, // Added for better control
       builder:
           (context) => Container(
             decoration: const BoxDecoration(
@@ -108,48 +109,55 @@ class _ChatbotScreenState extends State<ChatbotScreen>
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  loc.selectAttachment,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    loc.selectAttachment,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _AttachmentOption(
-                      icon: Icons.photo_camera,
-                      label: loc.camera,
-                      onTap: () {
-                        Navigator.pop(context);
-                        // Handle camera selection
-                      },
+                  const SizedBox(height: 20),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _AttachmentOption(
+                          icon: Icons.photo_camera,
+                          label: loc.camera,
+                          onTap: () {
+                            Navigator.pop(context);
+                            // Handle camera selection
+                          },
+                        ),
+                        const SizedBox(width: 20),
+                        _AttachmentOption(
+                          icon: Icons.photo_library,
+                          label: loc.gallery,
+                          onTap: () {
+                            Navigator.pop(context);
+                            // Handle gallery selection
+                          },
+                        ),
+                        const SizedBox(width: 20),
+                        _AttachmentOption(
+                          icon: Icons.insert_drive_file,
+                          label: loc.files,
+                          onTap: () {
+                            Navigator.pop(context);
+                            // Handle file selection
+                          },
+                        ),
+                      ],
                     ),
-                    _AttachmentOption(
-                      icon: Icons.photo_library,
-                      label: loc.gallery,
-                      onTap: () {
-                        Navigator.pop(context);
-                        // Handle gallery selection
-                      },
-                    ),
-                    _AttachmentOption(
-                      icon: Icons.insert_drive_file,
-                      label: loc.files,
-                      onTap: () {
-                        Navigator.pop(context);
-                        // Handle file selection
-                      },
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
     );
@@ -173,11 +181,14 @@ class _ChatbotScreenState extends State<ChatbotScreen>
       drawer: const CustomDrawer(),
       appBar: AppBar(
         backgroundColor: const Color(0xFF2E7D32),
-        title: Text(
-          loc.krishiAssist,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
+        title: Flexible(
+          child: Text(
+            loc.krishiAssist,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         leading: IconButton(
@@ -249,135 +260,160 @@ class _ChatbotScreenState extends State<ChatbotScreen>
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey[100],
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
+      child: SafeArea(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: IntrinsicWidth(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey[100],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.attach_file, color: Colors.grey[600]),
+                    onPressed: _handleAttachment,
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  constraints: BoxConstraints(
+                    minWidth: MediaQuery.of(context).size.width * 0.4,
+                    maxWidth: MediaQuery.of(context).size.width * 0.6,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                        spreadRadius: 1,
+                      ),
+                      BoxShadow(
+                        color: Colors.white.withOpacity(0.9),
+                        blurRadius: 6,
+                        offset: const Offset(0, -1),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: loc.chatInputHint,
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(
+                          color: Colors.grey[200]!,
+                          width: 1.5,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(
+                          color: Colors.grey[200]!,
+                          width: 1.5,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(
+                          color: Colors.green[400]!,
+                          width: 2,
+                        ),
+                      ),
+                      fillColor: Colors.white,
+                      filled: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                    ),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.black87,
+                      height: 1.4,
+                    ),
+                    minLines: 1,
+                    maxLines: 4,
+                    textCapitalization: TextCapitalization.sentences,
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [Colors.green[400]!, Colors.green[600]!],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.green.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.mic, color: Colors.white),
+                    onPressed: () {},
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ScaleTransition(
+                  scale: _fabAnimation,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [Colors.green[600]!, Colors.green[800]!],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.green.withOpacity(0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.send, color: Colors.white),
+                      onPressed: _sendMessage,
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-            child: IconButton(
-              icon: Icon(Icons.attach_file, color: Colors.grey[600]),
-              onPressed: _handleAttachment,
-            ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 3),
-                    spreadRadius: 1,
-                  ),
-                  BoxShadow(
-                    color: Colors.white.withOpacity(0.9),
-                    blurRadius: 6,
-                    offset: const Offset(0, -1),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _controller,
-                decoration: InputDecoration(
-                  hintText: loc.chatInputHint,
-                  hintStyle: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 15,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide(
-                      color: Colors.grey[200]!,
-                      width: 1.5,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide(
-                      color: Colors.grey[200]!,
-                      width: 1.5,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide(color: Colors.green[400]!, width: 2),
-                  ),
-                  fillColor: Colors.white,
-                  filled: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                ),
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.black87,
-                  height: 1.4,
-                ),
-                minLines: 1,
-                maxLines: 4,
-                textCapitalization: TextCapitalization.sentences,
-                onSubmitted: (_) => _sendMessage(),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [Colors.green[400]!, Colors.green[600]!],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.green.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.mic, color: Colors.white),
-              onPressed: () {},
-            ),
-          ),
-          const SizedBox(width: 8),
-          ScaleTransition(
-            scale: _fabAnimation,
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [Colors.green[600]!, Colors.green[800]!],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.green.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.white),
-                onPressed: _sendMessage,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -525,6 +561,8 @@ class _AnimatedMessageState extends State<_AnimatedMessage>
                               : FontWeight.w400,
                       letterSpacing: 0.2,
                     ),
+                    softWrap: true,
+                    overflow: TextOverflow.visible,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -552,7 +590,7 @@ class _TypingIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -582,43 +620,45 @@ class _TypingIndicator extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.white, Colors.grey[50]!, Colors.grey[100]!],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: Colors.grey[300]!.withOpacity(0.2),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                  spreadRadius: 1,
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.white, Colors.grey[50]!, Colors.grey[100]!],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                BoxShadow(
-                  color: Colors.white.withOpacity(0.8),
-                  blurRadius: 6,
-                  offset: const Offset(0, 1),
-                  spreadRadius: -1,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: Colors.grey[300]!.withOpacity(0.2),
+                  width: 1.5,
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _Dot(),
-                const SizedBox(width: 6),
-                _Dot(delay: 200),
-                const SizedBox(width: 6),
-                _Dot(delay: 400),
-              ],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 1,
+                  ),
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.8),
+                    blurRadius: 6,
+                    offset: const Offset(0, 1),
+                    spreadRadius: -1,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _Dot(),
+                  const SizedBox(width: 6),
+                  _Dot(delay: 200),
+                  const SizedBox(width: 6),
+                  _Dot(delay: 400),
+                ],
+              ),
             ),
           ),
         ],
@@ -719,25 +759,30 @@ class _QuickActions extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _QuickActionButton(
-            label: loc.weather,
-            icon: Icons.cloud,
-            color: Colors.blue,
-          ),
-          _QuickActionButton(
-            label: loc.pests,
-            icon: Icons.bug_report,
-            color: Colors.red,
-          ),
-          _QuickActionButton(
-            label: loc.market,
-            icon: Icons.attach_money,
-            color: Colors.orange,
-          ),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _QuickActionButton(
+              label: loc.weather,
+              icon: Icons.cloud,
+              color: Colors.blue,
+            ),
+            const SizedBox(width: 16),
+            _QuickActionButton(
+              label: loc.pests,
+              icon: Icons.bug_report,
+              color: Colors.red,
+            ),
+            const SizedBox(width: 16),
+            _QuickActionButton(
+              label: loc.market,
+              icon: Icons.attach_money,
+              color: Colors.orange,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -807,12 +852,15 @@ class _QuickActionButtonState extends State<_QuickActionButton>
             children: [
               Icon(widget.icon, size: 18, color: widget.color),
               const SizedBox(width: 6),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: widget.color,
+              Flexible(
+                child: Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: widget.color,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -842,7 +890,7 @@ class _AttachmentOption extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.green[50],
@@ -850,7 +898,7 @@ class _AttachmentOption extends StatelessWidget {
             ),
             child: Icon(icon, size: 28, color: Colors.green[600]),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             label,
             style: TextStyle(
@@ -858,6 +906,8 @@ class _AttachmentOption extends StatelessWidget {
               fontWeight: FontWeight.w500,
               color: Colors.grey[700],
             ),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

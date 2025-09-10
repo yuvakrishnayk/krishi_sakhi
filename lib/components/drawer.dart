@@ -22,65 +22,84 @@ class CustomDrawer extends StatelessWidget {
             colors: [Colors.grey.shade50, Colors.grey.shade100],
           ),
         ),
-        child: Column(
-          children: [
-            _buildDrawerHeader(context),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  const SizedBox(height: 8),
-                  _buildDrawerSection('', [
-                    _DrawerItemData(Icons.home_filled, l10n.drawerHome, () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => HomeScreen()),
-                      );
-                    }),
-                    _DrawerItemData(
-                      Icons.psychology,
-                      l10n.drawerLearningChat,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChatbotScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    _DrawerItemData(Icons.book_rounded, l10n.drawerCourses, () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CoursesScreen(),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildDrawerHeader(context),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      _buildDrawerSection('', [
+                        _DrawerItemData(Icons.home_filled, l10n.drawerHome, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HomeScreen(),
+                            ),
+                          );
+                        }),
+                        _DrawerItemData(
+                          Icons.psychology,
+                          l10n.drawerLearningChat,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ChatbotScreen(),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    }),
-                    _DrawerItemData(Icons.forum_rounded, l10n.drawerForum, () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => ForumScreen()),
-                      );
-                    }),
-                    _DrawerItemData(
-                      Icons.settings_rounded,
-                      l10n.drawerSettings,
-                      () {
-                                              Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => SettingsScreen()),
-                      );
-                      },
-                    ),
-                  ]),
-                  // Language switcher sectio
-                ],
+                        _DrawerItemData(
+                          Icons.book_rounded,
+                          l10n.drawerCourses,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CoursesScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _DrawerItemData(
+                          Icons.forum_rounded,
+                          l10n.drawerForum,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ForumScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _DrawerItemData(
+                          Icons.settings_rounded,
+                          l10n.drawerSettings,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SettingsScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ]),
+                      // Language switcher section
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            const Divider(height: 1, thickness: 0.5),
-            _buildLogoutButton(context),
-          ],
+              const Divider(height: 1, thickness: 0.5),
+              _buildLogoutButton(context),
+            ],
+          ),
         ),
       ),
     );
@@ -88,11 +107,11 @@ class CustomDrawer extends StatelessWidget {
 
   Widget _buildDrawerHeader(BuildContext context) {
     return Container(
-      height: 200,
+      constraints: BoxConstraints(minHeight: 180, maxHeight: 220),
       margin: const EdgeInsets.only(bottom: 8),
-      child: DrawerHeader(
+      child: Container(
         margin: EdgeInsets.zero,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -124,16 +143,40 @@ class CustomDrawer extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withOpacity(0.2)),
       ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          // Left side - Photo
-          _buildProfilePhoto(),
-          const SizedBox(width: 16),
-          // Right side - User info
-          Expanded(child: _buildUserDetails(context)),
-        ],
+      padding: const EdgeInsets.all(12),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Use different layouts based on available space
+          if (constraints.maxWidth < 200) {
+            return _buildCompactProfile(context);
+          } else {
+            return _buildStandardProfile(context);
+          }
+        },
       ),
+    );
+  }
+
+  Widget _buildCompactProfile(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildProfilePhoto(),
+        const SizedBox(height: 8),
+        Flexible(child: _buildUserDetails(context)),
+      ],
+    );
+  }
+
+  Widget _buildStandardProfile(BuildContext context) {
+    return Row(
+      children: [
+        // Left side - Photo
+        _buildProfilePhoto(),
+        const SizedBox(width: 12),
+        // Right side - User info
+        Expanded(child: _buildUserDetails(context)),
+      ],
     );
   }
 
@@ -152,7 +195,7 @@ class CustomDrawer extends StatelessWidget {
       ),
       child: CircleAvatar(
         backgroundColor: Colors.white,
-        radius: 35,
+        radius: 30, // Reduced from 35 to save space
         backgroundImage: const NetworkImage(
           'https://static.vecteezy.com/system/resources/previews/022/395/514/non_2x/a-beautiful-smiling-young-male-farmer-in-front-of-a-farm-background-ai-generated-photo.jpeg',
         ),
@@ -171,69 +214,83 @@ class CustomDrawer extends StatelessWidget {
 
   Widget _buildUserDetails(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Name
-        Text(
-          l10n.userName,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.3,
+    return Flexible(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Name
+          Flexible(
+            child: Text(
+              l10n.userName,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16, // Reduced from 18
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.3,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 8),
-
-        // Projects with number
-        Row(
-          children: [
-            Icon(
-              Icons.agriculture,
-              color: Colors.white.withOpacity(0.9),
-              size: 16,
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                l10n.projectsCount('24'),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+          const SizedBox(height: 6), // Reduced spacing
+          // Projects with number
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.agriculture,
                   color: Colors.white.withOpacity(0.9),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                  size: 14, // Reduced from 16
                 ),
-              ),
+                const SizedBox(width: 4), // Reduced spacing
+                Flexible(
+                  child: Text(
+                    l10n.projectsCount('24'),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 12, // Reduced from 14
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        const SizedBox(height: 2),
+          ),
+          const SizedBox(height: 2),
 
-        // Account created date
-        Row(
-          children: [
-            Icon(
-              Icons.calendar_today,
-              color: Colors.white.withOpacity(0.9),
-              size: 16,
+          // Account created date
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  color: Colors.white.withOpacity(0.9),
+                  size: 14, // Reduced from 16
+                ),
+                const SizedBox(width: 4), // Reduced spacing
+                Flexible(
+                  child: Text(
+                    l10n.sinceDate,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 11, // Reduced from 12
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 6),
-            Text(
-              l10n.sinceDate,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.9),
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -252,6 +309,8 @@ class CustomDrawer extends StatelessWidget {
                 color: Colors.grey[600],
                 letterSpacing: 1.2,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ...items.map(
@@ -278,34 +337,43 @@ class CustomDrawer extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 14,
+            ), // Reduced vertical padding
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6), // Reduced from 8
                   decoration: BoxDecoration(
                     color: const Color(0xFF4CAF50).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(icon, color: const Color(0xFF2E7D32), size: 22),
+                  child: Icon(
+                    icon,
+                    color: const Color(0xFF2E7D32),
+                    size: 20,
+                  ), // Reduced from 22
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12), // Reduced from 16
                 Expanded(
                   child: Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 15, // Reduced from 16
                       fontWeight: FontWeight.w500,
                       color: Color(0xFF2E2E2E),
                       letterSpacing: 0.1,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Icon(
                   Icons.chevron_right_rounded,
                   color: Colors.grey[400],
-                  size: 20,
+                  size: 18, // Reduced from 20
                 ),
               ],
             ),
@@ -347,23 +415,30 @@ class CustomDrawer extends StatelessWidget {
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(
+                vertical: 12,
+              ), // Reduced from 14
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
                     Icons.logout_rounded,
                     color: Colors.white,
-                    size: 22,
+                    size: 20, // Reduced from 22
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    l10n.signOut,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      letterSpacing: 0.3,
+                  const SizedBox(width: 8), // Reduced from 12
+                  Flexible(
+                    child: Text(
+                      l10n.signOut,
+                      style: const TextStyle(
+                        fontSize: 15, // Reduced from 16
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        letterSpacing: 0.3,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -387,14 +462,24 @@ class CustomDrawer extends StatelessWidget {
           title: Text(
             l10n.signOut,
             style: const TextStyle(fontWeight: FontWeight.w600),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          content: Text(l10n.signOutQuestion),
+          content: SingleChildScrollView(
+            child: Text(
+              l10n.signOutQuestion,
+              maxLines: 5,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
                 l10n.cancel,
                 style: TextStyle(color: Colors.grey[600]),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             ElevatedButton(
@@ -411,6 +496,8 @@ class CustomDrawer extends StatelessWidget {
               child: Text(
                 l10n.signOut,
                 style: const TextStyle(color: Colors.white),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
