@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter/foundation.dart'; // Add this import
-// Add this import
+import 'package:flutter/foundation.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -18,7 +17,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final _tagsController = TextEditingController();
 
   File? _selectedMedia;
-  Uint8List? _webImage; // Add this for web support
+  Uint8List? _webImage;
   bool _isVideo = false;
   final ImagePicker _picker = ImagePicker();
 
@@ -50,7 +49,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: 18,
           ),
         ),
         backgroundColor: Color(0xFF2E7D32),
@@ -97,6 +96,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Widget _buildMediaUploadSection() {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -116,12 +116,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             children: [
               Icon(Icons.photo_camera, color: Color(0xFF2E7D32), size: 24),
               SizedBox(width: 8),
-              Text(
-                'Add Media',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
+              Expanded(
+                child: Text(
+                  'Add Media',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2E7D32),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -155,44 +158,49 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                 Text(
                                   'Video Selected',
                                   style: TextStyle(color: Colors.white),
+                                  textAlign: TextAlign.center,
                                 ),
                               ],
                             ),
                           ),
                         )
-                        : kIsWeb
-                        ? (_webImage != null
-                            ? Image.memory(
-                              _webImage!,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey[200],
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.error_outline,
-                                          color: Colors.red,
-                                          size: 48,
-                                        ),
-                                        SizedBox(height: 8),
-                                        Text(
-                                          'Error loading image',
-                                          style: TextStyle(color: Colors.red),
-                                        ),
-                                      ],
+                        : (kIsWeb && _webImage != null)
+                        ? Image.memory(
+                          _webImage!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline,
+                                      color: Colors.red,
+                                      size: 48,
                                     ),
-                                  ),
-                                );
-                              },
-                            )
-                            : Container())
-                        : Image.file(
+                                    SizedBox(height: 8),
+                                    Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                      ),
+                                      child: Text(
+                                        'Error loading image',
+                                        style: TextStyle(color: Colors.red),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                        : (_selectedMedia != null)
+                        ? Image.file(
                           _selectedMedia!,
                           fit: BoxFit.cover,
                           width: double.infinity,
@@ -210,41 +218,97 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                       size: 48,
                                     ),
                                     SizedBox(height: 8),
-                                    Text(
-                                      'Error loading image',
-                                      style: TextStyle(color: Colors.red),
+                                    Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                      ),
+                                      child: Text(
+                                        'Error loading image',
+                                        style: TextStyle(color: Colors.red),
+                                        textAlign: TextAlign.center,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
                             );
                           },
+                        )
+                        : Container(
+                          color: Colors.grey[200],
+                          child: Center(child: Text('No media selected')),
                         ),
               ),
             ),
             SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextButton.icon(
-                  onPressed:
-                      () => setState(() {
-                        _selectedMedia = null;
-                        _webImage = null; // Clear web image too
-                      }),
-                  icon: Icon(Icons.delete, color: Colors.red),
-                  label: Text('Remove', style: TextStyle(color: Colors.red)),
-                ),
-                SizedBox(width: 16),
-                TextButton.icon(
-                  onPressed: _showMediaPickerDialog,
-                  icon: Icon(Icons.edit, color: Color(0xFF4CAF50)),
-                  label: Text(
-                    'Change',
-                    style: TextStyle(color: Color(0xFF4CAF50)),
-                  ),
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < 300) {
+                  // For very narrow screens, stack buttons vertically
+                  return Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton.icon(
+                          onPressed:
+                              () => setState(() {
+                                _selectedMedia = null;
+                                _webImage = null;
+                              }),
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          label: Text(
+                            'Remove',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton.icon(
+                          onPressed: _showMediaPickerDialog,
+                          icon: Icon(Icons.edit, color: Color(0xFF4CAF50)),
+                          label: Text(
+                            'Change',
+                            style: TextStyle(color: Color(0xFF4CAF50)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  // For wider screens, use row layout
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Flexible(
+                        child: TextButton.icon(
+                          onPressed:
+                              () => setState(() {
+                                _selectedMedia = null;
+                                _webImage = null;
+                              }),
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          label: Text(
+                            'Remove',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ),
+                      Flexible(
+                        child: TextButton.icon(
+                          onPressed: _showMediaPickerDialog,
+                          icon: Icon(Icons.edit, color: Color(0xFF4CAF50)),
+                          label: Text(
+                            'Change',
+                            style: TextStyle(color: Color(0xFF4CAF50)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+              },
             ),
           ] else ...[
             GestureDetector(
@@ -270,18 +334,32 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       size: 40,
                     ),
                     SizedBox(height: 8),
-                    Text(
-                      'Tap to Upload Image or Video',
-                      style: TextStyle(
-                        color: Color(0xFF2E7D32),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'Tap to Upload Image or Video',
+                        style: TextStyle(
+                          color: Color(0xFF2E7D32),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
                       ),
                     ),
                     SizedBox(height: 4),
-                    Text(
-                      'From Gallery or Camera',
-                      style: TextStyle(color: Color(0xFF4CAF50), fontSize: 12),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'From Gallery or Camera',
+                        style: TextStyle(
+                          color: Color(0xFF4CAF50),
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
@@ -296,6 +374,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Widget _buildTitleField() {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -315,12 +394,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             children: [
               Icon(Icons.title, color: Color(0xFF2E7D32), size: 24),
               SizedBox(width: 8),
-              Text(
-                'Title',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
+              Expanded(
+                child: Text(
+                  'Title',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2E7D32),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -341,6 +423,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               prefixIcon: Icon(Icons.agriculture, color: Color(0xFF4CAF50)),
               filled: true,
               fillColor: Color(0xFFF8FFF8),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -356,6 +442,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Widget _buildTagsSection() {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -375,12 +462,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             children: [
               Icon(Icons.local_offer, color: Color(0xFF2E7D32), size: 24),
               SizedBox(width: 8),
-              Text(
-                'Tags',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
+              Expanded(
+                child: Text(
+                  'Tags',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2E7D32),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -389,28 +479,39 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
           // Selected tags
           if (_selectedTags.isNotEmpty) ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children:
-                  _selectedTags
-                      .map(
-                        (tag) => Chip(
-                          label: Text(
-                            tag,
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          backgroundColor: Color(0xFF4CAF50),
-                          deleteIcon: Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          onDeleted:
-                              () => setState(() => _selectedTags.remove(tag)),
-                        ),
-                      )
-                      .toList(),
+            Container(
+              width: double.infinity,
+              constraints: BoxConstraints(maxHeight: 120),
+              child: SingleChildScrollView(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      _selectedTags
+                          .map(
+                            (tag) => Chip(
+                              label: Text(
+                                tag,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              backgroundColor: Color(0xFF4CAF50),
+                              deleteIcon: Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              onDeleted:
+                                  () =>
+                                      setState(() => _selectedTags.remove(tag)),
+                            ),
+                          )
+                          .toList(),
+                ),
+              ),
             ),
             SizedBox(height: 12),
           ],
@@ -423,47 +524,55 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               fontWeight: FontWeight.w500,
               color: Color(0xFF2E7D32),
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children:
-                _popularTags
-                    .map(
-                      (tag) => GestureDetector(
-                        onTap: () {
-                          if (!_selectedTags.contains(tag)) {
-                            setState(() => _selectedTags.add(tag));
-                          }
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                _selectedTags.contains(tag)
-                                    ? Color(0xFF4CAF50)
-                                    : Color(0xFFE8F5E8),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Color(0xFF4CAF50)),
-                          ),
-                          child: Text(
-                            tag,
-                            style: TextStyle(
-                              color:
-                                  _selectedTags.contains(tag)
-                                      ? Colors.white
-                                      : Color(0xFF2E7D32),
-                              fontSize: 12,
+          Container(
+            width: double.infinity,
+            constraints: BoxConstraints(maxHeight: 120),
+            child: SingleChildScrollView(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children:
+                    _popularTags
+                        .map(
+                          (tag) => GestureDetector(
+                            onTap: () {
+                              if (!_selectedTags.contains(tag)) {
+                                setState(() => _selectedTags.add(tag));
+                              }
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    _selectedTags.contains(tag)
+                                        ? Color(0xFF4CAF50)
+                                        : Color(0xFFE8F5E8),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Color(0xFF4CAF50)),
+                              ),
+                              child: Text(
+                                tag,
+                                style: TextStyle(
+                                  color:
+                                      _selectedTags.contains(tag)
+                                          ? Colors.white
+                                          : Color(0xFF2E7D32),
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    )
-                    .toList(),
+                        )
+                        .toList(),
+              ),
+            ),
           ),
         ],
       ),
@@ -472,6 +581,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Widget _buildDescriptionField() {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -491,12 +601,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             children: [
               Icon(Icons.description, color: Color(0xFF2E7D32), size: 24),
               SizedBox(width: 8),
-              Text(
-                'Description',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E7D32),
+              Expanded(
+                child: Text(
+                  'Description',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2E7D32),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -518,12 +631,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ),
               filled: true,
               fillColor: Color(0xFFF8FFF8),
+              contentPadding: EdgeInsets.all(16),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter a description';
               }
-
               return null;
             },
           ),
@@ -533,7 +646,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Widget _buildCreatePostButton() {
-    return SizedBox(
+    return Container(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
@@ -548,12 +661,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.publish, size: 24),
             SizedBox(width: 12),
-            Text(
-              'Create Post',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Flexible(
+              child: Text(
+                'Create Post',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
@@ -575,36 +692,59 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               children: [
                 Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 28),
                 SizedBox(width: 8),
-                Text('Success!'),
+                Flexible(child: Text('Success!')),
               ],
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Your agricultural post has been created successfully!'),
-                SizedBox(height: 12),
-                Text(
-                  'Title: ${_titleController.text}',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+            content: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.6,
+                maxWidth: MediaQuery.of(context).size.width * 0.9,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your agricultural post has been created successfully!',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    SizedBox(height: 12),
+                    Text(
+                      'Title: ${_titleController.text}',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
+                    if (_selectedTags.isNotEmpty) ...[
+                      SizedBox(height: 8),
+                      Text(
+                        'Tags: ${_selectedTags.join(", ")}',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 3,
+                      ),
+                    ],
+                    if (_selectedMedia != null || _webImage != null) ...[
+                      SizedBox(height: 8),
+                      Text(
+                        'Media: ${_isVideo ? "Video" : "Image"} attached',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
                 ),
-                if (_selectedTags.isNotEmpty) ...[
-                  SizedBox(height: 8),
-                  Text('Tags: ${_selectedTags.join(", ")}'),
-                ],
-                if (_selectedMedia != null || _webImage != null) ...[
-                  SizedBox(height: 8),
-                  Text('Media: ${_isVideo ? "Video" : "Image"} attached'),
-                ],
-              ],
+              ),
             ),
             actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _resetForm();
-                },
-                child: Text('OK', style: TextStyle(color: Color(0xFF2E7D32))),
+              Container(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _resetForm();
+                  },
+                  child: Text('OK', style: TextStyle(color: Color(0xFF2E7D32))),
+                ),
               ),
             ],
           );
@@ -619,7 +759,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     _tagsController.clear();
     setState(() {
       _selectedMedia = null;
-      _webImage = null; // Clear web image too
+      _webImage = null;
       _selectedTags.clear();
       _isVideo = false;
     });
@@ -637,8 +777,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (BuildContext context) {
         return Container(
+          width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.only(
@@ -646,65 +788,111 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               topRight: Radius.circular(20),
             ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Text(
-                      'Select Media',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2E7D32),
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                Flexible(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        _buildPickerOption(
-                          icon: Icons.camera_alt,
-                          label: 'Camera',
-                          onTap: () {
-                            Navigator.pop(context);
-                            _pickImageFromCamera();
+                        Text(
+                          'Select Media',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2E7D32),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 20),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            if (constraints.maxWidth < 400) {
+                              // For narrow screens, use column layout
+                              return Column(
+                                children: [
+                                  _buildPickerOption(
+                                    icon: Icons.camera_alt,
+                                    label: 'Camera',
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      _pickImageFromCamera();
+                                    },
+                                  ),
+                                  SizedBox(height: 20),
+                                  _buildPickerOption(
+                                    icon: Icons.photo_library,
+                                    label: 'Gallery',
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      _pickImageFromGallery();
+                                    },
+                                  ),
+                                  SizedBox(height: 20),
+                                  _buildPickerOption(
+                                    icon: Icons.videocam,
+                                    label: 'Video',
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      _pickVideoFromGallery();
+                                    },
+                                  ),
+                                ],
+                              );
+                            } else {
+                              // For wider screens, use row layout
+                              return Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _buildPickerOption(
+                                    icon: Icons.camera_alt,
+                                    label: 'Camera',
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      _pickImageFromCamera();
+                                    },
+                                  ),
+                                  _buildPickerOption(
+                                    icon: Icons.photo_library,
+                                    label: 'Gallery',
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      _pickImageFromGallery();
+                                    },
+                                  ),
+                                  _buildPickerOption(
+                                    icon: Icons.videocam,
+                                    label: 'Video',
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      _pickVideoFromGallery();
+                                    },
+                                  ),
+                                ],
+                              );
+                            }
                           },
                         ),
-                        _buildPickerOption(
-                          icon: Icons.photo_library,
-                          label: 'Gallery',
-                          onTap: () {
-                            Navigator.pop(context);
-                            _pickImageFromGallery();
-                          },
-                        ),
-                        _buildPickerOption(
-                          icon: Icons.videocam,
-                          label: 'Video',
-                          onTap: () {
-                            Navigator.pop(context);
-                            _pickVideoFromGallery();
-                          },
-                        ),
+                        SizedBox(height: 20),
                       ],
                     ),
-                    SizedBox(height: 20),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -718,28 +906,34 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Color(0xFFF1F8E9),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Color(0xFF4CAF50), width: 2),
+      child: Container(
+        constraints: BoxConstraints(minWidth: 80),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Color(0xFFF1F8E9),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Color(0xFF4CAF50), width: 2),
+              ),
+              child: Icon(icon, color: Color(0xFF2E7D32), size: 28),
             ),
-            child: Icon(icon, color: Color(0xFF2E7D32), size: 28),
-          ),
-          SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: Color(0xFF2E7D32),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+            SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: Color(0xFF2E7D32),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -752,7 +946,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       );
       if (image != null) {
         if (kIsWeb) {
-          // For web, read as bytes
           final bytes = await image.readAsBytes();
           setState(() {
             _webImage = bytes;
@@ -760,7 +953,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             _isVideo = false;
           });
         } else {
-          // For mobile/desktop
           setState(() {
             _selectedMedia = File(image.path);
             _webImage = null;
@@ -781,7 +973,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       );
       if (image != null) {
         if (kIsWeb) {
-          // For web, read as bytes
           final bytes = await image.readAsBytes();
           setState(() {
             _webImage = bytes;
@@ -789,7 +980,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             _isVideo = false;
           });
         } else {
-          // For mobile/desktop
           setState(() {
             _selectedMedia = File(image.path);
             _webImage = null;
@@ -809,20 +999,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         maxDuration: Duration(minutes: 5),
       );
       if (video != null) {
-        if (kIsWeb) {
-          // For web, we'll just store the reference (you might want to handle video differently)
-          setState(() {
+        setState(() {
+          if (kIsWeb) {
             _selectedMedia = null;
             _webImage = null;
-            _isVideo = true;
-          });
-        } else {
-          setState(() {
+          } else {
             _selectedMedia = File(video.path);
             _webImage = null;
-            _isVideo = true;
-          });
-        }
+          }
+          _isVideo = true;
+        });
       }
     } catch (e) {
       _showErrorSnackBar('Error picking video from gallery');
