@@ -1,0 +1,20 @@
+# Web Framework
+fastapi
+uvicorn
+pydantic
+
+# Vector Database
+pinecone
+
+# LLM Integration
+groq
+
+# Embeddings 
+sentence-transformers
+
+# Environment & Configuration
+python-dotenv
+
+# Utils
+requests
+numpy
