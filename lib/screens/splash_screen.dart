@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-
-import 'package:krishi_sakhi/screens/home_screen.dart';
+import 'package:krishi_sakhi/screens/signinpage.dart';
 import '../l10n/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -35,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen>
       // Navigate to the home screen
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
+        MaterialPageRoute(builder: (context) => LoginScreen()),
       );
       // Note: You'll need to define this route in your main.dart
     });

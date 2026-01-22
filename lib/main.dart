@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
-import 'package:krishi_sakhi/screens/create_account_screen.dart';
-import 'package:krishi_sakhi/screens/signinpage.dart';
+
+import 'package:krishi_sakhi/screens/splash_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -61,7 +61,7 @@ class _MyAppState extends State<MyApp> {
       ),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: LoginScreen(),
+      home: SplashScreen(),
     );
   }
 }
