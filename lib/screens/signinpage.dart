@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:krishi_sakhi/screens/create_account_screen.dart';
 import 'package:krishi_sakhi/screens/signin_otp_screen.dart';
 
@@ -84,26 +87,68 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(
-      const Duration(milliseconds: 600),
-    ); // small delay for UX
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      // Navigate to the OTP verification screen and pass phone data
-      _showSuccess(
-        'OTP sent to ${_selectedCountryCode}${_mobileController.text}',
-      );
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder:
-              (context) => OtpVerificationSigninScreen(
-                phoneNumber: _mobileController.text,
-                countryCode: _selectedCountryCode,
-              ),
-        ),
-      );
+    try {
+      final fullPhone = '$_selectedCountryCode${_mobileController.text.trim()}';
+      final users = FirebaseFirestore.instance.collection('users');
+
+      // Query for the user by full phone
+      final query =
+          await users.where('phone_full', isEqualTo: fullPhone).limit(1).get();
+
+      if (query.docs.isEmpty) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          _showError('No account found for this mobile number');
+        }
+        return;
+      }
+
+      final doc = query.docs.first;
+      final storedHash =
+          doc.data().containsKey('pin_hash')
+              ? doc.get('pin_hash') as String
+              : null;
+      if (storedHash == null) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          _showError('Account has no PIN set. Try sign up or reset PIN.');
+        }
+        return;
+      }
+
+      final enteredHash =
+          sha256.convert(utf8.encode(_pinController.text)).toString();
+
+      if (enteredHash != storedHash) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          _showError('Incorrect PIN');
+        }
+        return;
+      }
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showSuccess('Logged in successfully');
+        // Continue to next screen (keeps your existing OTP flow)
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => OtpVerificationSigninScreen(
+                  phoneNumber: _mobileController.text,
+                  countryCode: _selectedCountryCode,
+                ),
+          ),
+        );
+      }
+    } catch (e, st) {
+      debugPrint('Login error: $e\n$st');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showError('Failed to login. Please try again.');
+      }
     }
   }
 
