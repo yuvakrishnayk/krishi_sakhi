@@ -74,6 +74,15 @@ class _SignupScreenState extends State<SignupScreen>
   Future<void> _handleSignup() async {
     FocusScope.of(context).unfocus();
 
+    // Log input values to console when signup is pressed
+    debugPrint('--- Signup button pressed ---');
+    debugPrint('Name: ${_nameController.text}');
+    debugPrint('Country Code: $_selectedCountryCode');
+    debugPrint('Phone: ${_mobileController.text}');
+    debugPrint('Full Phone: $_selectedCountryCode${_mobileController.text}');
+    debugPrint('PIN: ${_pinController.text}');
+    debugPrint('Confirm PIN: ${_confirmPinController.text}');
+
     if (_nameController.text.isEmpty) {
       _showError('Please enter your name');
       return;
@@ -106,6 +115,18 @@ class _SignupScreenState extends State<SignupScreen>
       _showError('PINs do not match');
       return;
     }
+
+    // Print all input data to console for debugging before sending
+    debugPrint('--- Signing up with the following data ---');
+    debugPrint('Name: ${_nameController.text}');
+    debugPrint('Country Code: $_selectedCountryCode');
+    debugPrint('Phone: ${_mobileController.text}');
+    debugPrint('Full Phone: $_selectedCountryCode${_mobileController.text}');
+    debugPrint('PIN: ${_pinController.text}');
+    debugPrint('Confirm PIN: ${_confirmPinController.text}');
+    debugPrint(
+      'isPinVisible: $_isPinVisible, isConfirmPinVisible: $_isConfirmPinVisible',
+    );
 
     setState(() => _isLoading = true);
     await Future.delayed(const Duration(seconds: 2));
