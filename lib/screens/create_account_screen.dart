@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'signup_otp_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -130,14 +133,15 @@ class _SignupScreenState extends State<SignupScreen>
     );
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (mounted) {
+    try {
+      final userId = await _saveUserToFirestore();
+      if (!mounted) return;
       setState(() => _isLoading = false);
-      // show confirmation and navigate to OTP screen
+
       _showSuccess(
-        'OTP sent to $_selectedCountryCode${_mobileController.text}',
+        'Account created. OTP sent to $_selectedCountryCode${_mobileController.text}',
       );
+
       Future.delayed(const Duration(milliseconds: 800)).then((_) {
         Navigator.push(
           context,
@@ -150,6 +154,20 @@ class _SignupScreenState extends State<SignupScreen>
           ),
         );
       });
+    } on Exception catch (e) {
+      debugPrint('Signup error: $e');
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      if (e.toString().contains('phone-already-registered')) {
+        _showError('This mobile number is already registered');
+      } else {
+        _showError('Failed to create account. Please try again.');
+      }
+    } catch (e, st) {
+      debugPrint('Unexpected error saving user: $e\n$st');
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError('Failed to create account. Please try again.');
     }
   }
 
@@ -189,6 +207,33 @@ class _SignupScreenState extends State<SignupScreen>
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  // Save user data to Firestore (PIN stored as SHA-256 hash)
+  Future<String> _saveUserToFirestore() async {
+    final users = FirebaseFirestore.instance.collection('users');
+    final fullPhone = '$_selectedCountryCode${_mobileController.text.trim()}';
+
+    // check if phone already exists
+    final existing =
+        await users.where('phone_full', isEqualTo: fullPhone).limit(1).get();
+    if (existing.docs.isNotEmpty) {
+      throw Exception('phone-already-registered');
+    }
+
+    final hashedPin =
+        sha256.convert(utf8.encode(_pinController.text)).toString();
+    final docRef = await users.add({
+      'name': _nameController.text.trim(),
+      'country_code': _selectedCountryCode,
+      'phone': _mobileController.text.trim(),
+      'phone_full': fullPhone,
+      'pin_hash': hashedPin,
+      'created_at': FieldValue.serverTimestamp(),
+    });
+
+    debugPrint('Created user doc: ${docRef.id}');
+    return docRef.id;
   }
 
   @override

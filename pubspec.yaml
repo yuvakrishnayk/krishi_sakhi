@@ -37,6 +37,9 @@ dependencies:
     sdk: flutter
   intl: ^0.20.2
   firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
+  cloud_firestore: ^6.1.2
+  crypto: ^3.0.7
 
 dev_dependencies:
   # The "flutter_lints" package below contains a set of recommended lints to
