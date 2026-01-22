@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:krishi_sakhi/screens/create_account_screen.dart';
+import 'package:krishi_sakhi/screens/signin_otp_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -83,14 +84,26 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(
+      const Duration(milliseconds: 600),
+    ); // small delay for UX
 
     if (mounted) {
       setState(() => _isLoading = false);
-      _showSuccess('Login successful! 🎉');
-      Future.delayed(const Duration(seconds: 1)).then((_) {
-        Navigator.pushReplacementNamed(context, '/home');
-      });
+      // Navigate to the OTP verification screen and pass phone data
+      _showSuccess(
+        'OTP sent to ${_selectedCountryCode}${_mobileController.text}',
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => OtpVerificationSigninScreen(
+                phoneNumber: _mobileController.text,
+                countryCode: _selectedCountryCode,
+              ),
+        ),
+      );
     }
   }
 
