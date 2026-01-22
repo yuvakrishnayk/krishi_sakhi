@@ -186,14 +186,13 @@ class _LoginScreenState extends State<LoginScreen>
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          Color(
-                            0xFF0D4017,
-                          ).withOpacity(0.95 * (1 - _pulseController.value)),
-                          Color(
-                            0xFF0D4017,
-                          ).withOpacity(0.6 * (1 - _pulseController.value)),
+                          Colors.white.withOpacity(
+                            0.06 * (1 - _pulseController.value),
+                          ),
+                          Colors.white.withOpacity(
+                            0.01 * (1 - _pulseController.value),
+                          ),
                         ],
-                        stops: [0.0, 1.0],
                       ),
                     ),
                   );
@@ -227,499 +226,636 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             // Main content
             SafeArea(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: FadeTransition(
-                  opacity: _fadeController,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 50),
-                        // Header
-                        SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(-1, 0),
-                            end: Offset.zero,
-                          ).animate(
-                            CurvedAnimation(
-                              parent: _slideController,
-                              curve: Curves.easeOutCubic,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.white.withOpacity(0.2),
-                                      Colors.white.withOpacity(0.1),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.3),
-                                    width: 1.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 8),
-                                    ),
-                                  ],
-                                ),
-                                child: const Icon(
-                                  Icons.agriculture_rounded,
-                                  color: Colors.white,
-                                  size: 36,
-                                ),
-                              ),
-                              const SizedBox(height: 32),
-                              const Text(
-                                'Welcome Back',
-                                style: TextStyle(
-                                  fontSize: 38,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  height: 1.1,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Sign in to continue to Krishi Sakhi',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white.withOpacity(0.85),
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                            ],
-                          ),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight:
+                              MediaQuery.of(context).size.height -
+                              MediaQuery.of(context).padding.top -
+                              MediaQuery.of(context).padding.bottom,
                         ),
-                        const SizedBox(height: 50),
-
-                        // Login Form Card
-                        SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, 0.3),
-                            end: Offset.zero,
-                          ).animate(
-                            CurvedAnimation(
-                              parent: _slideController,
-                              curve: Curves.easeOutCubic,
-                            ),
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.all(32),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(32),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 50,
-                                  offset: const Offset(0, 20),
-                                  spreadRadius: -5,
-                                ),
-                              ],
+                        child: FadeTransition(
+                          opacity: _fadeController,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // Mobile Number Field
-                                Text(
-                                  'Phone Number',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.grey.shade800,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color:
-                                          _mobileFocusNode.hasFocus
-                                              ? const Color(0xFF2E7D32)
-                                              : Colors.grey.shade200,
-                                      width: 2,
-                                    ),
-                                    color: Colors.grey.shade50,
-                                    boxShadow:
-                                        _mobileFocusNode.hasFocus
-                                            ? [
-                                              BoxShadow(
-                                                color: const Color(
-                                                  0xFF2E7D32,
-                                                ).withOpacity(0.15),
-                                                blurRadius: 20,
-                                                offset: const Offset(0, 6),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 30),
+                                    // Header
+                                    SlideTransition(
+                                      position: Tween<Offset>(
+                                        begin: const Offset(-1, 0),
+                                        end: Offset.zero,
+                                      ).animate(
+                                        CurvedAnimation(
+                                          parent: _slideController,
+                                          curve: Curves.easeOutCubic,
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(14),
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  Colors.white.withOpacity(0.2),
+                                                  Colors.white.withOpacity(0.1),
+                                                ],
                                               ),
-                                            ]
-                                            : [],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 14,
-                                          vertical: 16,
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: Colors.white.withOpacity(
+                                                  0.3,
+                                                ),
+                                                width: 1.5,
+                                              ),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.1),
+                                                  blurRadius: 20,
+                                                  offset: const Offset(0, 8),
+                                                ),
+                                              ],
+                                            ),
+                                            child: const Icon(
+                                              Icons.agriculture_rounded,
+                                              color: Colors.white,
+                                              size: 36,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 24),
+                                          const Text(
+                                            'Welcome Back',
+                                            style: TextStyle(
+                                              fontSize: 34,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                              height: 1.1,
+                                              letterSpacing: -0.5,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Sign in to continue to Krishi Sakhi',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.white.withOpacity(
+                                                0.85,
+                                              ),
+                                              letterSpacing: 0.2,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 35),
+
+                                    // Login Form Card
+                                    SlideTransition(
+                                      position: Tween<Offset>(
+                                        begin: const Offset(0, 0.3),
+                                        end: Offset.zero,
+                                      ).animate(
+                                        CurvedAnimation(
+                                          parent: _slideController,
+                                          curve: Curves.easeOutCubic,
                                         ),
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(28),
                                         decoration: BoxDecoration(
-                                          color: const Color(
-                                            0xFF2E7D32,
-                                          ).withOpacity(0.06),
-                                          borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(16),
-                                            bottomLeft: Radius.circular(16),
-                                          ),
-                                        ),
-                                        child: DropdownButton<String>(
-                                          value: _selectedCountryCode,
-                                          underline: const SizedBox(),
-                                          icon: Icon(
-                                            Icons.keyboard_arrow_down_rounded,
-                                            color: Colors.grey.shade700,
-                                            size: 20,
-                                          ),
+                                          color: Colors.white,
                                           borderRadius: BorderRadius.circular(
-                                            12,
+                                            32,
                                           ),
-                                          items:
-                                              _countryCodes.map((country) {
-                                                return DropdownMenuItem(
-                                                  value: country['code'],
-                                                  child: Row(
-                                                    children: [
-                                                      Text(
-                                                        country['flag']!,
-                                                        style: const TextStyle(
-                                                          fontSize: 20,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.2,
+                                              ),
+                                              blurRadius: 50,
+                                              offset: const Offset(0, 20),
+                                              spreadRadius: -5,
+                                            ),
+                                          ],
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            // Mobile Number Field
+                                            Text(
+                                              'Phone Number',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.grey.shade800,
+                                                letterSpacing: 0.3,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(18),
+                                                border: Border.all(
+                                                  color:
+                                                      _mobileFocusNode.hasFocus
+                                                          ? const Color(
+                                                            0xFF2E7D32,
+                                                          )
+                                                          : Colors
+                                                              .grey
+                                                              .shade200,
+                                                  width: 2,
+                                                ),
+                                                color: Colors.grey.shade50,
+                                                boxShadow:
+                                                    _mobileFocusNode.hasFocus
+                                                        ? [
+                                                          BoxShadow(
+                                                            color: const Color(
+                                                              0xFF2E7D32,
+                                                            ).withOpacity(0.15),
+                                                            blurRadius: 20,
+                                                            offset:
+                                                                const Offset(
+                                                                  0,
+                                                                  6,
+                                                                ),
+                                                          ),
+                                                        ]
+                                                        : [],
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 14,
+                                                          vertical: 16,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFF2E7D32,
+                                                      ).withOpacity(0.06),
+                                                      borderRadius:
+                                                          const BorderRadius.only(
+                                                            topLeft:
+                                                                Radius.circular(
+                                                                  16,
+                                                                ),
+                                                            bottomLeft:
+                                                                Radius.circular(
+                                                                  16,
+                                                                ),
+                                                          ),
+                                                    ),
+                                                    child: DropdownButton<
+                                                      String
+                                                    >(
+                                                      value:
+                                                          _selectedCountryCode,
+                                                      underline:
+                                                          const SizedBox(),
+                                                      icon: Icon(
+                                                        Icons
+                                                            .keyboard_arrow_down_rounded,
+                                                        color:
+                                                            Colors
+                                                                .grey
+                                                                .shade700,
+                                                        size: 20,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                      items:
+                                                          _countryCodes.map((
+                                                            country,
+                                                          ) {
+                                                            return DropdownMenuItem(
+                                                              value:
+                                                                  country['code'],
+                                                              child: Row(
+                                                                children: [
+                                                                  Text(
+                                                                    country['flag']!,
+                                                                    style: const TextStyle(
+                                                                      fontSize:
+                                                                          20,
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                    width: 8,
+                                                                  ),
+                                                                  Text(
+                                                                    country['code']!,
+                                                                    style: const TextStyle(
+                                                                      fontSize:
+                                                                          15,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w700,
+                                                                      color: Color(
+                                                                        0xFF2E7D32,
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            );
+                                                          }).toList(),
+                                                      onChanged: (value) {
+                                                        setState(
+                                                          () =>
+                                                              _selectedCountryCode =
+                                                                  value!,
+                                                        );
+                                                      },
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: TextField(
+                                                      controller:
+                                                          _mobileController,
+                                                      focusNode:
+                                                          _mobileFocusNode,
+                                                      keyboardType:
+                                                          TextInputType.phone,
+                                                      inputFormatters: [
+                                                        FilteringTextInputFormatter
+                                                            .digitsOnly,
+                                                        LengthLimitingTextInputFormatter(
+                                                          10,
+                                                        ),
+                                                      ],
+                                                      style: const TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: Color(
+                                                          0xFF2E7D32,
+                                                        ),
+                                                        letterSpacing: 0.5,
+                                                      ),
+                                                      decoration: InputDecoration(
+                                                        hintText: '9876543210',
+                                                        hintStyle: TextStyle(
+                                                          color:
+                                                              Colors
+                                                                  .grey
+                                                                  .shade400,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                        ),
+                                                        border:
+                                                            InputBorder.none,
+                                                        contentPadding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 18,
+                                                              vertical: 16,
+                                                            ),
+                                                        prefixIcon: Icon(
+                                                          Icons.phone_rounded,
+                                                          color:
+                                                              _mobileFocusNode
+                                                                      .hasFocus
+                                                                  ? const Color(
+                                                                    0xFF2E7D32,
+                                                                  )
+                                                                  : Colors
+                                                                      .grey
+                                                                      .shade500,
+                                                          size: 22,
                                                         ),
                                                       ),
-                                                      const SizedBox(width: 8),
-                                                      Text(
-                                                        country['code']!,
-                                                        style: const TextStyle(
-                                                          fontSize: 15,
-                                                          fontWeight:
-                                                              FontWeight.w700,
+                                                      onChanged:
+                                                          (value) =>
+                                                              setState(() {}),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(height: 20),
+
+                                            // PIN Field
+                                            Text(
+                                              'PIN',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.grey.shade800,
+                                                letterSpacing: 0.3,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(18),
+                                                border: Border.all(
+                                                  color:
+                                                      _pinFocusNode.hasFocus
+                                                          ? const Color(
+                                                            0xFF2E7D32,
+                                                          )
+                                                          : Colors
+                                                              .grey
+                                                              .shade200,
+                                                  width: 2,
+                                                ),
+                                                color: Colors.grey.shade50,
+                                                boxShadow:
+                                                    _pinFocusNode.hasFocus
+                                                        ? [
+                                                          BoxShadow(
+                                                            color: const Color(
+                                                              0xFF2E7D32,
+                                                            ).withOpacity(0.15),
+                                                            blurRadius: 20,
+                                                            offset:
+                                                                const Offset(
+                                                                  0,
+                                                                  6,
+                                                                ),
+                                                          ),
+                                                        ]
+                                                        : [],
+                                              ),
+                                              child: TextField(
+                                                controller: _pinController,
+                                                focusNode: _pinFocusNode,
+                                                obscureText: !_isPinVisible,
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                inputFormatters: [
+                                                  FilteringTextInputFormatter
+                                                      .digitsOnly,
+                                                  LengthLimitingTextInputFormatter(
+                                                    4,
+                                                  ),
+                                                ],
+                                                style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: const Color(
+                                                    0xFF2E7D32,
+                                                  ),
+                                                  letterSpacing:
+                                                      _isPinVisible ? 6 : 8,
+                                                ),
+                                                decoration: InputDecoration(
+                                                  hintText: '••••',
+                                                  hintStyle: TextStyle(
+                                                    color: Colors.grey.shade400,
+                                                    letterSpacing: 8,
+                                                    fontSize: 20,
+                                                  ),
+                                                  border: InputBorder.none,
+                                                  contentPadding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 18,
+                                                        vertical: 16,
+                                                      ),
+                                                  prefixIcon: Icon(
+                                                    Icons.lock_rounded,
+                                                    color:
+                                                        _pinFocusNode.hasFocus
+                                                            ? const Color(
+                                                              0xFF2E7D32,
+                                                            )
+                                                            : Colors
+                                                                .grey
+                                                                .shade500,
+                                                    size: 22,
+                                                  ),
+                                                  suffixIcon: IconButton(
+                                                    onPressed: () {
+                                                      setState(
+                                                        () =>
+                                                            _isPinVisible =
+                                                                !_isPinVisible,
+                                                      );
+                                                    },
+                                                    icon: Icon(
+                                                      _isPinVisible
+                                                          ? Icons
+                                                              .visibility_rounded
+                                                          : Icons
+                                                              .visibility_off_rounded,
+                                                      color:
+                                                          Colors.grey.shade500,
+                                                      size: 22,
+                                                    ),
+                                                  ),
+                                                ),
+                                                onChanged:
+                                                    (value) => setState(() {}),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 12),
+
+                                            // Forgot PIN Link
+                                            Align(
+                                              alignment: Alignment.centerRight,
+                                              child: TextButton(
+                                                onPressed: () {},
+                                                style: TextButton.styleFrom(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 6,
+                                                      ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                  ),
+                                                ),
+                                                child: const Text(
+                                                  'Forgot PIN?',
+                                                  style: TextStyle(
+                                                    color: Color(0xFF2E7D32),
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 18),
+
+                                            // Login Button
+                                            SizedBox(
+                                              width: double.infinity,
+                                              height: 56,
+                                              child: ElevatedButton(
+                                                onPressed:
+                                                    _isLoading
+                                                        ? null
+                                                        : _handleLogin,
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(
+                                                    0xFF2E7D32,
+                                                  ),
+                                                  disabledBackgroundColor:
+                                                      Colors.grey.shade300,
+                                                  elevation: 0,
+                                                  shadowColor:
+                                                      Colors.transparent,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          18,
+                                                        ),
+                                                  ),
+                                                ),
+                                                child:
+                                                    _isLoading
+                                                        ? const SizedBox(
+                                                          height: 24,
+                                                          width: 24,
+                                                          child: CircularProgressIndicator(
+                                                            strokeWidth: 3,
+                                                            valueColor:
+                                                                AlwaysStoppedAnimation<
+                                                                  Color
+                                                                >(Colors.white),
+                                                          ),
+                                                        )
+                                                        : const Text(
+                                                          'Sign In',
+                                                          style: TextStyle(
+                                                            fontSize: 17,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            color: Colors.white,
+                                                            letterSpacing: 0.5,
+                                                          ),
+                                                        ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 20),
+
+                                            // Divider with text
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Divider(
+                                                    color: Colors.grey.shade300,
+                                                    thickness: 1,
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                      ),
+                                                  child: Text(
+                                                    'OR',
+                                                    style: TextStyle(
+                                                      color:
+                                                          Colors.grey.shade500,
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: Divider(
+                                                    color: Colors.grey.shade300,
+                                                    thickness: 1,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 20),
+
+                                            // Sign Up Link
+                                            Center(
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Text(
+                                                    "Don't have an account? ",
+                                                    style: TextStyle(
+                                                      color:
+                                                          Colors.grey.shade700,
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder:
+                                                              (context) =>
+                                                                  const SignupScreen(),
+                                                        ),
+                                                      );
+                                                    },
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 4,
+                                                            vertical: 2,
+                                                          ),
+                                                      child: const Text(
+                                                        'Sign Up',
+                                                        style: TextStyle(
                                                           color: Color(
                                                             0xFF2E7D32,
                                                           ),
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w800,
                                                         ),
                                                       ),
-                                                    ],
+                                                    ),
                                                   ),
-                                                );
-                                              }).toList(),
-                                          onChanged: (value) {
-                                            setState(
-                                              () =>
-                                                  _selectedCountryCode = value!,
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: TextField(
-                                          controller: _mobileController,
-                                          focusNode: _mobileFocusNode,
-                                          keyboardType: TextInputType.phone,
-                                          inputFormatters: [
-                                            FilteringTextInputFormatter
-                                                .digitsOnly,
-                                            LengthLimitingTextInputFormatter(
-                                              10,
+                                                ],
+                                              ),
                                             ),
                                           ],
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF2E7D32),
-                                            letterSpacing: 0.5,
-                                          ),
-                                          decoration: InputDecoration(
-                                            hintText: '9876543210',
-                                            hintStyle: TextStyle(
-                                              color: Colors.grey.shade400,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                            border: InputBorder.none,
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                                  horizontal: 18,
-                                                  vertical: 16,
-                                                ),
-                                            prefixIcon: Icon(
-                                              Icons.phone_rounded,
-                                              color:
-                                                  _mobileFocusNode.hasFocus
-                                                      ? const Color(0xFF2E7D32)
-                                                      : Colors.grey.shade500,
-                                              size: 22,
-                                            ),
-                                          ),
-                                          onChanged: (value) => setState(() {}),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 28),
-
-                                // PIN Field
-                                Text(
-                                  'PIN',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.grey.shade800,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(
-                                      color:
-                                          _pinFocusNode.hasFocus
-                                              ? const Color(0xFF2E7D32)
-                                              : Colors.grey.shade200,
-                                      width: 2,
-                                    ),
-                                    color: Colors.grey.shade50,
-                                    boxShadow:
-                                        _pinFocusNode.hasFocus
-                                            ? [
-                                              BoxShadow(
-                                                color: const Color(
-                                                  0xFF2E7D32,
-                                                ).withOpacity(0.15),
-                                                blurRadius: 20,
-                                                offset: const Offset(0, 6),
-                                              ),
-                                            ]
-                                            : [],
-                                  ),
-                                  child: TextField(
-                                    controller: _pinController,
-                                    focusNode: _pinFocusNode,
-                                    obscureText: !_isPinVisible,
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                      LengthLimitingTextInputFormatter(4),
-                                    ],
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF2E7D32),
-                                      letterSpacing: _isPinVisible ? 6 : 8,
-                                    ),
-                                    decoration: InputDecoration(
-                                      hintText: '••••',
-                                      hintStyle: TextStyle(
-                                        color: Colors.grey.shade400,
-                                        letterSpacing: 8,
-                                        fontSize: 20,
-                                      ),
-                                      border: InputBorder.none,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 18,
-                                            vertical: 16,
-                                          ),
-                                      prefixIcon: Icon(
-                                        Icons.lock_rounded,
-                                        color:
-                                            _pinFocusNode.hasFocus
-                                                ? const Color(0xFF2E7D32)
-                                                : Colors.grey.shade500,
-                                        size: 22,
-                                      ),
-                                      suffixIcon: IconButton(
-                                        onPressed: () {
-                                          setState(
-                                            () =>
-                                                _isPinVisible = !_isPinVisible,
-                                          );
-                                        },
-                                        icon: Icon(
-                                          _isPinVisible
-                                              ? Icons.visibility_rounded
-                                              : Icons.visibility_off_rounded,
-                                          color: Colors.grey.shade500,
-                                          size: 22,
-                                        ),
-                                      ),
-                                    ),
-                                    onChanged: (value) => setState(() {}),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-
-                                // Forgot PIN Link
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: () {},
-                                    style: TextButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 8,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Forgot PIN?',
-                                      style: TextStyle(
-                                        color: Color(0xFF2E7D32),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-
-                                // Login Button
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 60,
-                                  child: ElevatedButton(
-                                    onPressed: _isLoading ? null : _handleLogin,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF2E7D32),
-                                      disabledBackgroundColor:
-                                          Colors.grey.shade300,
-                                      elevation: 0,
-                                      shadowColor: Colors.transparent,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18),
-                                      ),
-                                    ),
-                                    child:
-                                        _isLoading
-                                            ? const SizedBox(
-                                              height: 26,
-                                              width: 26,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 3,
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                      Color
-                                                    >(Colors.white),
-                                              ),
-                                            )
-                                            : const Text(
-                                              'Sign In',
-                                              style: TextStyle(
-                                                fontSize: 17,
-                                                fontWeight: FontWeight.w700,
-                                                color: Colors.white,
-                                                letterSpacing: 0.5,
-                                              ),
-                                            ),
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-
-                                // Divider with text
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Divider(
-                                        color: Colors.grey.shade300,
-                                        thickness: 1,
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                      ),
-                                      child: Text(
-                                        'OR',
-                                        style: TextStyle(
-                                          color: Colors.grey.shade500,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Divider(
-                                        color: Colors.grey.shade300,
-                                        thickness: 1,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 24),
-
-                                // Sign Up Link
-                                Center(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        "Don't have an account? ",
-                                        style: TextStyle(
-                                          color: Colors.grey.shade700,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder:
-                                                  (context) =>
-                                                      const SignupScreen(),
-                                            ),
-                                          );
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 4,
-                                            vertical: 2,
-                                          ),
-                                          child: const Text(
-                                            'Sign Up',
-                                            style: TextStyle(
-                                              color: Color(0xFF2E7D32),
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                const SizedBox(height: 30),
                               ],
                             ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
