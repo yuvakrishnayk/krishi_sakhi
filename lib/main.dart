@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
-import 'package:krishi_sakhi/screens/splash_screen.dart'; // <-- correct generated file
+import 'package:krishi_sakhi/screens/create_account_screen.dart';
+import 'package:krishi_sakhi/screens/signinpage.dart';
 
-void main(){
+void main() {
   runApp(MyApp());
 }
 
@@ -31,11 +32,36 @@ class _MyAppState extends State<MyApp> {
       supportedLocales: AppLocalizations.supportedLocales,
       onGenerateTitle: (c) => AppLocalizations.of(c)!.appTitle,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Color(0xFF2E7D32),
+          brightness: Brightness.light,
+        ),
+        primaryColor: Color(0xFF2E7D32),
+        scaffoldBackgroundColor: Colors.green[50],
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          labelStyle: TextStyle(color: Colors.grey[700]),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Color(0xFF4CAF50), width: 2),
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color(0xFF4CAF50),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          ),
+        ),
       ),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: const SplashScreen(),
+      home: LoginScreen(),
     );
   }
 }
