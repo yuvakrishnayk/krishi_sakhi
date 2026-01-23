@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 
+import 'package:krishi_sakhi/screens/home_screen.dart';
+
 class OtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
   final String countryCode;
@@ -113,15 +115,29 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     debugPrint('OTP Entered: $otp');
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 1));
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      _showSuccess('Phone number verified successfully! 🎉');
-      Future.delayed(const Duration(seconds: 1)).then((_) {
-        Navigator.pushReplacementNamed(context, '/home');
-      });
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    // Dummy OTP check
+    if (otp != '123456') {
+      _showError('Invalid OTP. Please try again.');
+      _shakeOtpFields();
+      for (var controller in _otpControllers) {
+        controller.clear();
+      }
+      _otpFocusNodes[0].requestFocus();
+      return;
     }
+
+    _showSuccess('Phone number verified successfully! 🎉');
+    Future.delayed(const Duration(seconds: 1)).then((_) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    });
   }
 
   Future<void> _handleResendOtp() async {
