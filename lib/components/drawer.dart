@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
 import 'package:krishi_sakhi/screens/chatbot_screen.dart';
 import 'package:krishi_sakhi/screens/courses_screen.dart';
@@ -16,7 +17,13 @@ class CustomDrawer extends StatelessWidget {
       elevation: 16,
       child: Column(
         children: [
-          _buildDrawerHeader(context),
+          FutureBuilder<String?>(
+            future: _fetchUserName(),
+            builder: (context, snapshot) {
+              final name = snapshot.data ?? l10n.userName;
+              return _buildDrawerHeader(context, name);
+            },
+          ),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
@@ -101,7 +108,7 @@ class CustomDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerHeader(BuildContext context) {
+  Widget _buildDrawerHeader(BuildContext context, String name) {
     return Container(
       constraints: BoxConstraints(minHeight: 200, maxHeight: 240),
       margin: EdgeInsets.zero,
@@ -130,11 +137,11 @@ class CustomDrawer extends StatelessWidget {
           ),
         ],
       ),
-      child: _buildProfileContainer(context),
+      child: _buildProfileContainer(context, name),
     );
   }
 
-  Widget _buildProfileContainer(BuildContext context) {
+  Widget _buildProfileContainer(BuildContext context, String name) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
@@ -146,39 +153,41 @@ class CustomDrawer extends StatelessWidget {
         builder: (context, constraints) {
           // Use different layouts based on available space
           if (constraints.maxWidth < 200) {
-            return _buildCompactProfile(context);
+            return _buildCompactProfile(context, name);
           } else {
-            return _buildStandardProfile(context);
+            return _buildStandardProfile(context, name);
           }
         },
       ),
     );
   }
 
-  Widget _buildCompactProfile(BuildContext context) {
+  Widget _buildCompactProfile(BuildContext context, String name) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildProfilePhoto(),
+        _buildProfilePhoto(name),
         const SizedBox(height: 8),
-        Flexible(child: _buildUserDetails(context)),
+        Flexible(child: _buildUserDetails(context, name)),
       ],
     );
   }
 
-  Widget _buildStandardProfile(BuildContext context) {
+  Widget _buildStandardProfile(BuildContext context, String name) {
     return Row(
       children: [
         // Left side - Photo
-        _buildProfilePhoto(),
+        _buildProfilePhoto(name),
         const SizedBox(width: 12),
         // Right side - User info
-        Expanded(child: _buildUserDetails(context)),
+        Expanded(child: _buildUserDetails(context, name)),
       ],
     );
   }
 
-  Widget _buildProfilePhoto() {
+  Widget _buildProfilePhoto(String name) {
+    final firstWord = name.split(' ').first;
+    final initial = firstWord.isNotEmpty ? firstWord[0].toUpperCase() : '?';
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -192,25 +201,21 @@ class CustomDrawer extends StatelessWidget {
         ],
       ),
       child: CircleAvatar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF4CAF50),
         radius: 30, // Reduced from 35 to save space
-        backgroundImage: const NetworkImage(
-          'https://static.vecteezy.com/system/resources/previews/022/395/514/non_2x/a-beautiful-smiling-young-male-farmer-in-front-of-a-farm-background-ai-generated-photo.jpeg',
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFF4CAF50).withOpacity(0.3),
-              width: 1,
-            ),
+        child: Text(
+          initial,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildUserDetails(BuildContext context) {
+  Widget _buildUserDetails(BuildContext context, String name) {
     final l10n = AppLocalizations.of(context)!;
     return Flexible(
       child: Column(
@@ -221,7 +226,7 @@ class CustomDrawer extends StatelessWidget {
           // Name
           Flexible(
             child: Text(
-              l10n.userName,
+              name,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16, // Reduced from 18
@@ -290,6 +295,24 @@ class CustomDrawer extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<String?> _fetchUserName() async {
+    try {
+      final users = FirebaseFirestore.instance.collection('users');
+      final query =
+          await users.orderBy('created_at', descending: true).limit(1).get();
+      if (query.docs.isNotEmpty) {
+        final doc = query.docs.first;
+        if (doc.data().containsKey('name')) {
+          final name = doc.get('name') as String?;
+          return name;
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch user name: $e');
+    }
+    return null;
   }
 
   Widget _buildDrawerSection(String title, List<_DrawerItemData> items) {
