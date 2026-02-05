@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 
 import 'package:krishi_sakhi/screens/home_screen.dart';
+import 'package:krishi_sakhi/screens/profile_completion_screen.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String phoneNumber;
@@ -135,7 +136,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     Future.delayed(const Duration(seconds: 1)).then((_) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(
+          builder:
+              (context) => ProfileCompletionScreen(
+                phoneNumber: widget.phoneNumber,
+                countryCode: widget.countryCode,
+                name: 'User', // Replace with actual name from signup
+              ),
+        ),
       );
     });
   }
