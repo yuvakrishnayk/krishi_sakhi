@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
+import 'dart:ui';
 import 'package:crypto/crypto.dart';
 import 'package:krishi_sakhi/screens/create_account_screen.dart';
 import 'package:krishi_sakhi/screens/signin_otp_screen.dart';
@@ -25,6 +26,8 @@ class _LoginScreenState extends State<LoginScreen>
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _pulseController;
+  late AnimationController _buttonScaleController;
+  late Animation<double> _buttonScale;
 
   final List<Map<String, String>> _countryCodes = [
     {'code': '+91', 'country': 'India', 'flag': '🇮🇳'},
@@ -46,12 +49,23 @@ class _LoginScreenState extends State<LoginScreen>
       vsync: this,
     );
     _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 3000),
       vsync: this,
     )..repeat(reverse: true);
+    _buttonScaleController = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _buttonScale = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _buttonScaleController, curve: Curves.easeInOut),
+    );
 
     _fadeController.forward();
     _slideController.forward();
+
+    for (final node in [_mobileFocusNode, _pinFocusNode]) {
+      node.addListener(() => setState(() {}));
+    }
   }
 
   @override
@@ -63,12 +77,12 @@ class _LoginScreenState extends State<LoginScreen>
     _fadeController.dispose();
     _slideController.dispose();
     _pulseController.dispose();
+    _buttonScaleController.dispose();
     super.dispose();
   }
 
   Future<void> _handleLogin() async {
     FocusScope.of(context).unfocus();
-
     if (_mobileController.text.isEmpty) {
       _showError('Please enter your mobile number');
       return;
@@ -87,12 +101,9 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     setState(() => _isLoading = true);
-
     try {
       final fullPhone = '$_selectedCountryCode${_mobileController.text.trim()}';
       final users = FirebaseFirestore.instance.collection('users');
-
-      // Query for the user by full phone
       final query =
           await users.where('phone_full', isEqualTo: fullPhone).limit(1).get();
 
@@ -103,7 +114,6 @@ class _LoginScreenState extends State<LoginScreen>
         }
         return;
       }
-
       final doc = query.docs.first;
       final storedHash =
           doc.data().containsKey('pin_hash')
@@ -116,10 +126,8 @@ class _LoginScreenState extends State<LoginScreen>
         }
         return;
       }
-
       final enteredHash =
           sha256.convert(utf8.encode(_pinController.text)).toString();
-
       if (enteredHash != storedHash) {
         if (mounted) {
           setState(() => _isLoading = false);
@@ -127,24 +135,35 @@ class _LoginScreenState extends State<LoginScreen>
         }
         return;
       }
-
       if (mounted) {
         setState(() => _isLoading = false);
         _showSuccess('Logged in successfully');
-        // Continue to next screen (keeps your existing OTP flow)
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder:
-                (context) => OtpVerificationSigninScreen(
+          PageRouteBuilder(
+            pageBuilder:
+                (_, __, ___) => OtpVerificationSigninScreen(
                   phoneNumber: _mobileController.text,
                   countryCode: _selectedCountryCode,
                 ),
+            transitionsBuilder:
+                (_, a, __, child) => FadeTransition(
+                  opacity: a,
+                  child: SlideTransition(
+                    position: Tween(
+                      begin: const Offset(0.08, 0),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(parent: a, curve: Curves.easeOut),
+                    ),
+                    child: child,
+                  ),
+                ),
+            transitionDuration: const Duration(milliseconds: 400),
           ),
         );
       }
-    } catch (e, st) {
-      debugPrint('Login error: $e\n$st');
+    } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
         _showError('Failed to login. Please try again.');
@@ -157,16 +176,37 @@ class _LoginScreenState extends State<LoginScreen>
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.white),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: Text(message)),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
           ],
         ),
-        backgroundColor: Colors.red.shade600,
+        backgroundColor: const Color(0xFFE53935),
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         duration: const Duration(seconds: 3),
+        elevation: 8,
       ),
     );
   }
@@ -176,744 +216,797 @@ class _LoginScreenState extends State<LoginScreen>
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.white),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.check_circle_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: Text(message)),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
           ],
         ),
         backgroundColor: const Color(0xFF2E7D32),
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         duration: const Duration(seconds: 2),
+        elevation: 8,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF2E7D32), Color(0xFF1B5E20), Color(0xFF0D4017)],
-            stops: [0.0, 0.5, 1.0],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFF43A047)],
+            stops: [0.0, 0.4, 1.0],
           ),
         ),
         child: Stack(
           children: [
-            // Animated background circles
+            Positioned.fill(child: CustomPaint(painter: _DotPatternPainter())),
+            // Animated orbs
             Positioned(
-              top: -80,
+              top: -100,
               right: -80,
               child: AnimatedBuilder(
                 animation: _pulseController,
-                builder: (context, child) {
-                  return Container(
-                    width: 250,
-                    height: 250,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          Colors.white.withOpacity(
-                            0.08 * _pulseController.value,
-                          ),
-                          Colors.white.withOpacity(
-                            0.02 * _pulseController.value,
-                          ),
-                        ],
+                builder:
+                    (context, child) => Container(
+                      width: 280,
+                      height: 280,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            Colors.white.withOpacity(
+                              0.12 * _pulseController.value,
+                            ),
+                            Colors.white.withOpacity(0.0),
+                          ],
+                        ),
                       ),
                     ),
-                  );
-                },
               ),
             ),
             Positioned(
-              bottom: -120,
-              left: -60,
+              bottom: -140,
+              left: -80,
               child: AnimatedBuilder(
                 animation: _pulseController,
-                builder: (context, child) {
-                  return Container(
-                    width: 350,
-                    height: 350,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          Colors.white.withOpacity(
-                            0.06 * (1 - _pulseController.value),
-                          ),
-                          Colors.white.withOpacity(
-                            0.01 * (1 - _pulseController.value),
-                          ),
-                        ],
+                builder:
+                    (context, child) => Container(
+                      width: 320,
+                      height: 320,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            Colors.white.withOpacity(
+                              0.08 * (1 - _pulseController.value),
+                            ),
+                            Colors.white.withOpacity(0.0),
+                          ],
+                        ),
                       ),
                     ),
-                  );
-                },
               ),
             ),
-            // Floating shapes
+            // Glass accents
             Positioned(
-              top: 120,
-              left: 30,
-              child: Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  color: Colors.white.withOpacity(0.05),
+              top: 100,
+              left: 20,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white.withOpacity(0.08),
+                      border: Border.all(color: Colors.white.withOpacity(0.15)),
+                    ),
+                  ),
                 ),
               ),
             ),
             Positioned(
-              top: 280,
-              right: 40,
+              top: 260,
+              right: 30,
               child: Container(
-                width: 40,
-                height: 40,
+                width: 35,
+                height: 35,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.04),
+                  color: Colors.white.withOpacity(0.06),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
                 ),
               ),
             ),
             // Main content
             SafeArea(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      physics: const ClampingScrollPhysics(),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight:
-                              MediaQuery.of(context).size.height -
-                              MediaQuery.of(context).padding.top -
-                              MediaQuery.of(context).padding.bottom,
-                        ),
-                        child: FadeTransition(
-                          opacity: _fadeController,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24.0,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight:
+                        screenHeight -
+                        MediaQuery.of(context).padding.top -
+                        MediaQuery.of(context).padding.bottom,
+                  ),
+                  child: FadeTransition(
+                    opacity: _fadeController,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 30),
+                          // Header
+                          SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(-0.5, 0),
+                              end: Offset.zero,
+                            ).animate(
+                              CurvedAnimation(
+                                parent: _slideController,
+                                curve: Curves.easeOutCubic,
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 30),
-                                    // Header
-                                    SlideTransition(
-                                      position: Tween<Offset>(
-                                        begin: const Offset(-1, 0),
-                                        end: Offset.zero,
-                                      ).animate(
-                                        CurvedAnimation(
-                                          parent: _slideController,
-                                          curve: Curves.easeOutCubic,
-                                        ),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(14),
-                                            decoration: BoxDecoration(
-                                              gradient: LinearGradient(
-                                                colors: [
-                                                  Colors.white.withOpacity(0.2),
-                                                  Colors.white.withOpacity(0.1),
-                                                ],
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                              border: Border.all(
-                                                color: Colors.white.withOpacity(
-                                                  0.3,
-                                                ),
-                                                width: 1.5,
-                                              ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black
-                                                      .withOpacity(0.1),
-                                                  blurRadius: 20,
-                                                  offset: const Offset(0, 8),
-                                                ),
-                                              ],
-                                            ),
-                                            child: const Icon(
-                                              Icons.agriculture_rounded,
-                                              color: Colors.white,
-                                              size: 36,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 24),
-                                          const Text(
-                                            'Welcome Back',
-                                            style: TextStyle(
-                                              fontSize: 34,
-                                              fontWeight: FontWeight.w800,
-                                              color: Colors.white,
-                                              height: 1.1,
-                                              letterSpacing: -0.5,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Sign in to continue to Krishi Sakhi',
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.white.withOpacity(
-                                                0.85,
-                                              ),
-                                              letterSpacing: 0.2,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                      sigmaX: 12,
+                                      sigmaY: 12,
                                     ),
-                                    const SizedBox(height: 35),
-
-                                    // Login Form Card
-                                    SlideTransition(
-                                      position: Tween<Offset>(
-                                        begin: const Offset(0, 0.3),
-                                        end: Offset.zero,
-                                      ).animate(
-                                        CurvedAnimation(
-                                          parent: _slideController,
-                                          curve: Curves.easeOutCubic,
-                                        ),
-                                      ),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(28),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(
-                                            32,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(
-                                                0.2,
-                                              ),
-                                              blurRadius: 50,
-                                              offset: const Offset(0, 20),
-                                              spreadRadius: -5,
-                                            ),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Colors.white.withOpacity(0.25),
+                                            Colors.white.withOpacity(0.1),
                                           ],
                                         ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            // Mobile Number Field
-                                            Text(
-                                              'Phone Number',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w700,
-                                                color: Colors.grey.shade800,
-                                                letterSpacing: 0.3,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 10),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(18),
-                                                border: Border.all(
-                                                  color:
-                                                      _mobileFocusNode.hasFocus
-                                                          ? const Color(
-                                                            0xFF2E7D32,
-                                                          )
-                                                          : Colors
-                                                              .grey
-                                                              .shade200,
-                                                  width: 2,
-                                                ),
-                                                color: Colors.grey.shade50,
-                                                boxShadow:
-                                                    _mobileFocusNode.hasFocus
-                                                        ? [
-                                                          BoxShadow(
-                                                            color: const Color(
-                                                              0xFF2E7D32,
-                                                            ).withOpacity(0.15),
-                                                            blurRadius: 20,
-                                                            offset:
-                                                                const Offset(
-                                                                  0,
-                                                                  6,
-                                                                ),
-                                                          ),
-                                                        ]
-                                                        : [],
-                                              ),
-                                              child: Row(
-                                                children: [
-                                                  Container(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 14,
-                                                          vertical: 16,
-                                                        ),
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(
-                                                        0xFF2E7D32,
-                                                      ).withOpacity(0.06),
-                                                      borderRadius:
-                                                          const BorderRadius.only(
-                                                            topLeft:
-                                                                Radius.circular(
-                                                                  16,
-                                                                ),
-                                                            bottomLeft:
-                                                                Radius.circular(
-                                                                  16,
-                                                                ),
-                                                          ),
-                                                    ),
-                                                    child: DropdownButton<
-                                                      String
-                                                    >(
-                                                      value:
-                                                          _selectedCountryCode,
-                                                      underline:
-                                                          const SizedBox(),
-                                                      icon: Icon(
-                                                        Icons
-                                                            .keyboard_arrow_down_rounded,
-                                                        color:
-                                                            Colors
-                                                                .grey
-                                                                .shade700,
-                                                        size: 20,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            12,
-                                                          ),
-                                                      items:
-                                                          _countryCodes.map((
-                                                            country,
-                                                          ) {
-                                                            return DropdownMenuItem(
-                                                              value:
-                                                                  country['code'],
-                                                              child: Row(
-                                                                children: [
-                                                                  Text(
-                                                                    country['flag']!,
-                                                                    style: const TextStyle(
-                                                                      fontSize:
-                                                                          20,
-                                                                    ),
-                                                                  ),
-                                                                  const SizedBox(
-                                                                    width: 8,
-                                                                  ),
-                                                                  Text(
-                                                                    country['code']!,
-                                                                    style: const TextStyle(
-                                                                      fontSize:
-                                                                          15,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .w700,
-                                                                      color: Color(
-                                                                        0xFF2E7D32,
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            );
-                                                          }).toList(),
-                                                      onChanged: (value) {
-                                                        setState(
-                                                          () =>
-                                                              _selectedCountryCode =
-                                                                  value!,
-                                                        );
-                                                      },
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    child: TextField(
-                                                      controller:
-                                                          _mobileController,
-                                                      focusNode:
-                                                          _mobileFocusNode,
-                                                      keyboardType:
-                                                          TextInputType.phone,
-                                                      inputFormatters: [
-                                                        FilteringTextInputFormatter
-                                                            .digitsOnly,
-                                                        LengthLimitingTextInputFormatter(
-                                                          10,
-                                                        ),
-                                                      ],
-                                                      style: const TextStyle(
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color: Color(
-                                                          0xFF2E7D32,
-                                                        ),
-                                                        letterSpacing: 0.5,
-                                                      ),
-                                                      decoration: InputDecoration(
-                                                        hintText: '9876543210',
-                                                        hintStyle: TextStyle(
-                                                          color:
-                                                              Colors
-                                                                  .grey
-                                                                  .shade400,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                        ),
-                                                        border:
-                                                            InputBorder.none,
-                                                        contentPadding:
-                                                            const EdgeInsets.symmetric(
-                                                              horizontal: 18,
-                                                              vertical: 16,
-                                                            ),
-                                                        prefixIcon: Icon(
-                                                          Icons.phone_rounded,
-                                                          color:
-                                                              _mobileFocusNode
-                                                                      .hasFocus
-                                                                  ? const Color(
-                                                                    0xFF2E7D32,
-                                                                  )
-                                                                  : Colors
-                                                                      .grey
-                                                                      .shade500,
-                                                          size: 22,
-                                                        ),
-                                                      ),
-                                                      onChanged:
-                                                          (value) =>
-                                                              setState(() {}),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(height: 20),
-
-                                            // PIN Field
-                                            Text(
-                                              'PIN',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w700,
-                                                color: Colors.grey.shade800,
-                                                letterSpacing: 0.3,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 10),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(18),
-                                                border: Border.all(
-                                                  color:
-                                                      _pinFocusNode.hasFocus
-                                                          ? const Color(
-                                                            0xFF2E7D32,
-                                                          )
-                                                          : Colors
-                                                              .grey
-                                                              .shade200,
-                                                  width: 2,
-                                                ),
-                                                color: Colors.grey.shade50,
-                                                boxShadow:
-                                                    _pinFocusNode.hasFocus
-                                                        ? [
-                                                          BoxShadow(
-                                                            color: const Color(
-                                                              0xFF2E7D32,
-                                                            ).withOpacity(0.15),
-                                                            blurRadius: 20,
-                                                            offset:
-                                                                const Offset(
-                                                                  0,
-                                                                  6,
-                                                                ),
-                                                          ),
-                                                        ]
-                                                        : [],
-                                              ),
-                                              child: TextField(
-                                                controller: _pinController,
-                                                focusNode: _pinFocusNode,
-                                                obscureText: !_isPinVisible,
-                                                keyboardType:
-                                                    TextInputType.number,
-                                                inputFormatters: [
-                                                  FilteringTextInputFormatter
-                                                      .digitsOnly,
-                                                  LengthLimitingTextInputFormatter(
-                                                    4,
-                                                  ),
-                                                ],
-                                                style: TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: const Color(
-                                                    0xFF2E7D32,
-                                                  ),
-                                                  letterSpacing:
-                                                      _isPinVisible ? 6 : 8,
-                                                ),
-                                                decoration: InputDecoration(
-                                                  hintText: '••••',
-                                                  hintStyle: TextStyle(
-                                                    color: Colors.grey.shade400,
-                                                    letterSpacing: 8,
-                                                    fontSize: 20,
-                                                  ),
-                                                  border: InputBorder.none,
-                                                  contentPadding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 18,
-                                                        vertical: 16,
-                                                      ),
-                                                  prefixIcon: Icon(
-                                                    Icons.lock_rounded,
-                                                    color:
-                                                        _pinFocusNode.hasFocus
-                                                            ? const Color(
-                                                              0xFF2E7D32,
-                                                            )
-                                                            : Colors
-                                                                .grey
-                                                                .shade500,
-                                                    size: 22,
-                                                  ),
-                                                  suffixIcon: IconButton(
-                                                    onPressed: () {
-                                                      setState(
-                                                        () =>
-                                                            _isPinVisible =
-                                                                !_isPinVisible,
-                                                      );
-                                                    },
-                                                    icon: Icon(
-                                                      _isPinVisible
-                                                          ? Icons
-                                                              .visibility_rounded
-                                                          : Icons
-                                                              .visibility_off_rounded,
-                                                      color:
-                                                          Colors.grey.shade500,
-                                                      size: 22,
-                                                    ),
-                                                  ),
-                                                ),
-                                                onChanged:
-                                                    (value) => setState(() {}),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 12),
-
-                                            // Forgot PIN Link
-                                            Align(
-                                              alignment: Alignment.centerRight,
-                                              child: TextButton(
-                                                onPressed: () {},
-                                                style: TextButton.styleFrom(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 6,
-                                                      ),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
-                                                  ),
-                                                ),
-                                                child: const Text(
-                                                  'Forgot PIN?',
-                                                  style: TextStyle(
-                                                    color: Color(0xFF2E7D32),
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 18),
-
-                                            // Login Button
-                                            SizedBox(
-                                              width: double.infinity,
-                                              height: 56,
-                                              child: ElevatedButton(
-                                                onPressed:
-                                                    _isLoading
-                                                        ? null
-                                                        : _handleLogin,
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(
-                                                    0xFF2E7D32,
-                                                  ),
-                                                  disabledBackgroundColor:
-                                                      Colors.grey.shade300,
-                                                  elevation: 0,
-                                                  shadowColor:
-                                                      Colors.transparent,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          18,
-                                                        ),
-                                                  ),
-                                                ),
-                                                child:
-                                                    _isLoading
-                                                        ? const SizedBox(
-                                                          height: 24,
-                                                          width: 24,
-                                                          child: CircularProgressIndicator(
-                                                            strokeWidth: 3,
-                                                            valueColor:
-                                                                AlwaysStoppedAnimation<
-                                                                  Color
-                                                                >(Colors.white),
-                                                          ),
-                                                        )
-                                                        : const Text(
-                                                          'Sign In',
-                                                          style: TextStyle(
-                                                            fontSize: 17,
-                                                            fontWeight:
-                                                                FontWeight.w700,
-                                                            color: Colors.white,
-                                                            letterSpacing: 0.5,
-                                                          ),
-                                                        ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 20),
-
-                                            // Divider with text
-                                            Row(
-                                              children: [
-                                                Expanded(
-                                                  child: Divider(
-                                                    color: Colors.grey.shade300,
-                                                    thickness: 1,
-                                                  ),
-                                                ),
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 16,
-                                                      ),
-                                                  child: Text(
-                                                    'OR',
-                                                    style: TextStyle(
-                                                      color:
-                                                          Colors.grey.shade500,
-                                                      fontSize: 13,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ),
-                                                Expanded(
-                                                  child: Divider(
-                                                    color: Colors.grey.shade300,
-                                                    thickness: 1,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 20),
-
-                                            // Sign Up Link
-                                            Center(
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Text(
-                                                    "Don't have an account? ",
-                                                    style: TextStyle(
-                                                      color:
-                                                          Colors.grey.shade700,
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                  GestureDetector(
-                                                    onTap: () {
-                                                      Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                          builder:
-                                                              (context) =>
-                                                                  const SignupScreen(),
-                                                        ),
-                                                      );
-                                                    },
-                                                    child: Container(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 4,
-                                                            vertical: 2,
-                                                          ),
-                                                      child: const Text(
-                                                        'Sign Up',
-                                                        style: TextStyle(
-                                                          color: Color(
-                                                            0xFF2E7D32,
-                                                          ),
-                                                          fontSize: 14,
-                                                          fontWeight:
-                                                              FontWeight.w800,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.3),
+                                          width: 1.5,
                                         ),
                                       ),
+                                      child: const Icon(
+                                        Icons.agriculture_rounded,
+                                        color: Colors.white,
+                                        size: 32,
+                                      ),
                                     ),
-                                  ],
+                                  ),
                                 ),
-                                const SizedBox(height: 30),
+                                const SizedBox(height: 20),
+                                const Text(
+                                  'Welcome\nBack',
+                                  style: TextStyle(
+                                    fontSize: 40,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    height: 1.1,
+                                    letterSpacing: -1,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '👋  Sign in to continue to Krishi Sakhi',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white.withOpacity(0.95),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 35),
+                          // Form Card
+                          SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0, 0.2),
+                              end: Offset.zero,
+                            ).animate(
+                              CurvedAnimation(
+                                parent: _slideController,
+                                curve: Curves.easeOutCubic,
+                              ),
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(28),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFF0D4017,
+                                    ).withOpacity(0.25),
+                                    blurRadius: 40,
+                                    offset: const Offset(0, 16),
+                                    spreadRadius: -8,
+                                  ),
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.08),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Phone Number
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 4,
+                                      bottom: 8,
+                                    ),
+                                    child: Text(
+                                      'PHONE NUMBER',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color:
+                                            _mobileFocusNode.hasFocus
+                                                ? const Color(0xFF1B5E20)
+                                                : Colors.grey.shade700,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color:
+                                            _mobileFocusNode.hasFocus
+                                                ? const Color(0xFF2E7D32)
+                                                : Colors.grey.shade200,
+                                        width:
+                                            _mobileFocusNode.hasFocus ? 2 : 1.5,
+                                      ),
+                                      color:
+                                          _mobileFocusNode.hasFocus
+                                              ? const Color(
+                                                0xFF2E7D32,
+                                              ).withOpacity(0.04)
+                                              : Colors.grey.shade50,
+                                      boxShadow:
+                                          _mobileFocusNode.hasFocus
+                                              ? [
+                                                BoxShadow(
+                                                  color: const Color(
+                                                    0xFF2E7D32,
+                                                  ).withOpacity(0.1),
+                                                  blurRadius: 16,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ]
+                                              : [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.03),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 14,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(
+                                              0xFF2E7D32,
+                                            ).withOpacity(0.06),
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                                  topLeft: Radius.circular(14),
+                                                  bottomLeft: Radius.circular(
+                                                    14,
+                                                  ),
+                                                ),
+                                          ),
+                                          child: DropdownButton<String>(
+                                            value: _selectedCountryCode,
+                                            underline: const SizedBox(),
+                                            isDense: true,
+                                            icon: Icon(
+                                              Icons.keyboard_arrow_down_rounded,
+                                              color: Colors.grey.shade600,
+                                              size: 18,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                            items:
+                                                _countryCodes
+                                                    .map(
+                                                      (c) => DropdownMenuItem(
+                                                        value: c['code'],
+                                                        child: Row(
+                                                          children: [
+                                                            Text(
+                                                              c['flag']!,
+                                                              style:
+                                                                  const TextStyle(
+                                                                    fontSize:
+                                                                        18,
+                                                                  ),
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 6,
+                                                            ),
+                                                            Text(
+                                                              c['code']!,
+                                                              style: const TextStyle(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                color: Color(
+                                                                  0xFF1B5E20,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    )
+                                                    .toList(),
+                                            onChanged:
+                                                (v) => setState(
+                                                  () =>
+                                                      _selectedCountryCode = v!,
+                                                ),
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 1,
+                                          height: 30,
+                                          color: Colors.grey.shade200,
+                                        ),
+                                        Expanded(
+                                          child: TextField(
+                                            controller: _mobileController,
+                                            focusNode: _mobileFocusNode,
+                                            keyboardType: TextInputType.phone,
+                                            inputFormatters: [
+                                              FilteringTextInputFormatter
+                                                  .digitsOnly,
+                                              LengthLimitingTextInputFormatter(
+                                                10,
+                                              ),
+                                            ],
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF1B5E20),
+                                              letterSpacing: 1,
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: '98765 43210',
+                                              hintStyle: TextStyle(
+                                                color: Colors.grey.shade400,
+                                                fontWeight: FontWeight.w400,
+                                              ),
+                                              border: InputBorder.none,
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 14,
+                                                    vertical: 15,
+                                                  ),
+                                            ),
+                                            onChanged: (_) => setState(() {}),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  // PIN
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 4,
+                                      bottom: 8,
+                                    ),
+                                    child: Text(
+                                      'PIN',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color:
+                                            _pinFocusNode.hasFocus
+                                                ? const Color(0xFF1B5E20)
+                                                : Colors.grey.shade700,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color:
+                                            _pinFocusNode.hasFocus
+                                                ? const Color(0xFF2E7D32)
+                                                : Colors.grey.shade200,
+                                        width: _pinFocusNode.hasFocus ? 2 : 1.5,
+                                      ),
+                                      color:
+                                          _pinFocusNode.hasFocus
+                                              ? const Color(
+                                                0xFF2E7D32,
+                                              ).withOpacity(0.04)
+                                              : Colors.grey.shade50,
+                                      boxShadow:
+                                          _pinFocusNode.hasFocus
+                                              ? [
+                                                BoxShadow(
+                                                  color: const Color(
+                                                    0xFF2E7D32,
+                                                  ).withOpacity(0.1),
+                                                  blurRadius: 16,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ]
+                                              : [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.03),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                    ),
+                                    child: TextField(
+                                      controller: _pinController,
+                                      focusNode: _pinFocusNode,
+                                      obscureText: !_isPinVisible,
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                        LengthLimitingTextInputFormatter(4),
+                                      ],
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF1B5E20),
+                                        letterSpacing: _isPinVisible ? 6 : 8,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: '• • • •',
+                                        hintStyle: TextStyle(
+                                          color: Colors.grey.shade400,
+                                          letterSpacing: 8,
+                                          fontSize: 18,
+                                        ),
+                                        border: InputBorder.none,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 15,
+                                            ),
+                                        prefixIcon: Icon(
+                                          Icons.lock_outline_rounded,
+                                          color:
+                                              _pinFocusNode.hasFocus
+                                                  ? const Color(0xFF2E7D32)
+                                                  : Colors.grey.shade500,
+                                          size: 20,
+                                        ),
+                                        suffixIcon: IconButton(
+                                          onPressed:
+                                              () => setState(
+                                                () =>
+                                                    _isPinVisible =
+                                                        !_isPinVisible,
+                                              ),
+                                          icon: Icon(
+                                            _isPinVisible
+                                                ? Icons.visibility_rounded
+                                                : Icons.visibility_off_rounded,
+                                            color: Colors.grey.shade400,
+                                            size: 20,
+                                          ),
+                                        ),
+                                      ),
+                                      onChanged: (_) => setState(() {}),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton(
+                                      onPressed: () {},
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Forgot PIN?',
+                                        style: TextStyle(
+                                          color: Color(0xFF2E7D32),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  // Login Button
+                                  ScaleTransition(
+                                    scale: _buttonScale,
+                                    child: GestureDetector(
+                                      onTapDown:
+                                          (_) =>
+                                              _buttonScaleController.forward(),
+                                      onTapUp: (_) {
+                                        _buttonScaleController.reverse();
+                                        if (!_isLoading) _handleLogin();
+                                      },
+                                      onTapCancel:
+                                          () =>
+                                              _buttonScaleController.reverse(),
+                                      child: AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
+                                        width: double.infinity,
+                                        height: 54,
+                                        decoration: BoxDecoration(
+                                          gradient:
+                                              _isLoading
+                                                  ? null
+                                                  : const LinearGradient(
+                                                    colors: [
+                                                      Color(0xFF2E7D32),
+                                                      Color(0xFF1B5E20),
+                                                    ],
+                                                  ),
+                                          color:
+                                              _isLoading
+                                                  ? Colors.grey.shade300
+                                                  : null,
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          boxShadow:
+                                              _isLoading
+                                                  ? []
+                                                  : [
+                                                    BoxShadow(
+                                                      color: const Color(
+                                                        0xFF2E7D32,
+                                                      ).withOpacity(0.4),
+                                                      blurRadius: 20,
+                                                      offset: const Offset(
+                                                        0,
+                                                        8,
+                                                      ),
+                                                    ),
+                                                  ],
+                                        ),
+                                        child: Center(
+                                          child:
+                                              _isLoading
+                                                  ? const SizedBox(
+                                                    height: 22,
+                                                    width: 22,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2.5,
+                                                      valueColor:
+                                                          AlwaysStoppedAnimation<
+                                                            Color
+                                                          >(Colors.white),
+                                                    ),
+                                                  )
+                                                  : Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: const [
+                                                      Text(
+                                                        'Sign In',
+                                                        style: TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          color: Colors.white,
+                                                          letterSpacing: 0.3,
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 8),
+                                                      Icon(
+                                                        Icons
+                                                            .arrow_forward_rounded,
+                                                        color: Colors.white,
+                                                        size: 20,
+                                                      ),
+                                                    ],
+                                                  ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 22),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Container(
+                                          height: 1,
+                                          color: Colors.grey.shade200,
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                        ),
+                                        child: Text(
+                                          'or',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade400,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Container(
+                                          height: 1,
+                                          color: Colors.grey.shade200,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Center(
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          "Don't have an account? ",
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        GestureDetector(
+                                          onTap:
+                                              () => Navigator.push(
+                                                context,
+                                                PageRouteBuilder(
+                                                  pageBuilder:
+                                                      (_, __, ___) =>
+                                                          const SignupScreen(),
+                                                  transitionsBuilder:
+                                                      (
+                                                        _,
+                                                        a,
+                                                        __,
+                                                        child,
+                                                      ) => FadeTransition(
+                                                        opacity: a,
+                                                        child: SlideTransition(
+                                                          position: Tween(
+                                                            begin: const Offset(
+                                                              0.08,
+                                                              0,
+                                                            ),
+                                                            end: Offset.zero,
+                                                          ).animate(
+                                                            CurvedAnimation(
+                                                              parent: a,
+                                                              curve:
+                                                                  Curves
+                                                                      .easeOut,
+                                                            ),
+                                                          ),
+                                                          child: child,
+                                                        ),
+                                                      ),
+                                                  transitionDuration:
+                                                      const Duration(
+                                                        milliseconds: 400,
+                                                      ),
+                                                ),
+                                              ),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(
+                                                0xFF2E7D32,
+                                              ).withOpacity(0.08),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: const Text(
+                                              'Sign Up',
+                                              style: TextStyle(
+                                                color: Color(0xFF1B5E20),
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+                        ],
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ],
@@ -921,4 +1014,20 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
   }
+}
+
+class _DotPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.white.withOpacity(0.03);
+    const spacing = 30.0;
+    for (double x = 0; x < size.width; x += spacing) {
+      for (double y = 0; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x, y), 1, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
