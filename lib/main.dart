@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
-
-import 'package:krishi_sakhi/screens/Later/splash_screen.dart';
+import 'package:krishi_sakhi/screens/Signin_Page/signinpage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
   runApp(MyApp());
 }
 
@@ -65,7 +62,7 @@ class _MyAppState extends State<MyApp> {
       ),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: SplashScreen(),
+      home: SigninPage(),
     );
   }
 }
