@@ -279,6 +279,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Keep this false to prevent the background from squeezing when keyboard opens
       resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFF1B5E20),
       body: Container(
@@ -366,315 +367,382 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             SafeArea(
               child: FadeTransition(
                 opacity: _fadeController,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Spacer(flex: 1),
-
-                      // Header Section
-                      SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(-0.3, 0),
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(
-                            parent: _slideController,
-                            curve: Curves.easeOutCubic,
-                          ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Added ScrollView + IntrinsicHeight to fix RenderFlex Overflow
+                    return SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.only(
+                        // Gives padding to scroll past the keyboard
+                        bottom: MediaQuery.of(context).viewInsets.bottom,
+                      ),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(24),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(
-                                  sigmaX: 10,
-                                  sigmaY: 10,
-                                ),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(24),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.4),
-                                      width: 1.5,
+                        child: IntrinsicHeight(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Spacer(flex: 1),
+
+                                // Header Section
+                                SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(-0.3, 0),
+                                    end: Offset.zero,
+                                  ).animate(
+                                    CurvedAnimation(
+                                      parent: _slideController,
+                                      curve: Curves.easeOutCubic,
                                     ),
                                   ),
-                                  child: const Icon(
-                                    Icons.agriculture_rounded,
-                                    color: Colors.white,
-                                    size: 32,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Join\nKrishi Sakhi',
-                              style: TextStyle(
-                                fontSize: 36,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
-                                height: 1.1,
-                                letterSpacing: -1.0,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                '🌱  Create your account to get started',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white.withOpacity(0.95),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const Spacer(flex: 1),
-
-                      // Form Card
-                      SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.15),
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(
-                            parent: _slideController,
-                            curve: Curves.easeOutCubic,
-                          ),
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(32),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF0A2B0F).withOpacity(0.3),
-                                blurRadius: 40,
-                                offset: const Offset(0, 20),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // --- Profile Picture Upload Avatar ---
-                              Center(
-                                child: GestureDetector(
-                                  onTap: _pickImage,
-                                  child: Stack(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: const Color(
-                                              0xFF2E7D32,
-                                            ).withOpacity(0.3),
-                                            width: 2,
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(24),
+                                        child: BackdropFilter(
+                                          filter: ImageFilter.blur(
+                                            sigmaX: 10,
+                                            sigmaY: 10,
                                           ),
-                                        ),
-                                        child: CircleAvatar(
-                                          radius: 40,
-                                          backgroundColor: const Color(
-                                            0xFF2E7D32,
-                                          ).withOpacity(0.08),
-                                          backgroundImage:
-                                              _profileImage != null
-                                                  ? FileImage(_profileImage!)
-                                                  : null,
-                                          child:
-                                              _profileImage == null
-                                                  ? const Icon(
-                                                    Icons
-                                                        .person_add_alt_1_rounded,
-                                                    size: 32,
-                                                    color: Color(0xFF2E7D32),
-                                                  )
-                                                  : null,
-                                        ),
-                                      ),
-                                      Positioned(
-                                        bottom: 0,
-                                        right: 0,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF2E7D32),
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
+                                          child: Container(
+                                            padding: const EdgeInsets.all(12),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(
+                                                0.15,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(24),
+                                              border: Border.all(
+                                                color: Colors.white.withOpacity(
+                                                  0.4,
+                                                ),
+                                                width: 1.5,
+                                              ),
+                                            ),
+                                            child: const Icon(
+                                              Icons.agriculture_rounded,
                                               color: Colors.white,
-                                              width: 2,
+                                              size: 32,
                                             ),
                                           ),
-                                          child: const Icon(
-                                            Icons.camera_alt_rounded,
-                                            size: 14,
-                                            color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Join\nKrishi Sakhi',
+                                        style: TextStyle(
+                                          fontSize: 36,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                          height: 1.1,
+                                          letterSpacing: -1.0,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '🌱  Create your account to get started',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.white.withOpacity(
+                                              0.95,
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 24),
 
-                              // Name Field
-                              _buildInputField(
-                                controller: _nameController,
-                                focusNode: _nameFocusNode,
-                                label: 'FULL NAME',
-                                hint: 'Enter your full name',
-                                icon: Icons.person_outline_rounded,
-                              ),
-                              const SizedBox(height: 16),
+                                const Spacer(flex: 1),
 
-                              // Phone Field
-                              _buildLabel(
-                                'PHONE NUMBER',
-                                _mobileFocusNode.hasFocus,
-                              ),
-                              _buildPhoneInput(),
-                              const SizedBox(height: 16),
-
-                              // PIN Fields
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildInputField(
-                                      controller: _pinController,
-                                      focusNode: _pinFocusNode,
-                                      label: 'PIN',
-                                      hint: '••••',
-                                      icon: Icons.lock_outline_rounded,
-                                      keyboardType: TextInputType.number,
-                                      obscureText: !_isPinVisible,
-                                      formatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                        LengthLimitingTextInputFormatter(4),
-                                      ],
-                                      hidePrefixIcon: true,
+                                // Form Card
+                                SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0, 0.15),
+                                    end: Offset.zero,
+                                  ).animate(
+                                    CurvedAnimation(
+                                      parent: _slideController,
+                                      curve: Curves.easeOutCubic,
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: _buildInputField(
-                                      controller: _confirmPinController,
-                                      focusNode: _confirmPinFocusNode,
-                                      label: 'CONFIRM',
-                                      hint: '••••',
-                                      icon: Icons.lock_outline_rounded,
-                                      keyboardType: TextInputType.number,
-                                      obscureText: !_isConfirmPinVisible,
-                                      formatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                        LengthLimitingTextInputFormatter(4),
-                                      ],
-                                      hidePrefixIcon: true,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-
-                              // Sign Up Button
-                              _buildSignupButton(),
-                              const SizedBox(height: 20),
-
-                              // Divider
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Divider(color: Colors.grey.shade300),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                    ),
-                                    child: Text(
-                                      'or',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade500,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Divider(color: Colors.grey.shade300),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-
-                              // Sign In Link
-                              Center(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Already have an account? ",
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () => Navigator.pop(context),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(24),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(32),
+                                      boxShadow: [
+                                        BoxShadow(
                                           color: const Color(
-                                            0xFF2E7D32,
-                                          ).withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
+                                            0xFF0A2B0F,
+                                          ).withOpacity(0.3),
+                                          blurRadius: 40,
+                                          offset: const Offset(0, 20),
                                         ),
-                                        child: const Text(
-                                          'Sign In',
-                                          style: TextStyle(
-                                            color: Color(0xFF1B5E20),
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
+                                      ],
                                     ),
-                                  ],
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // --- Profile Picture Upload Avatar ---
+                                        Center(
+                                          child: GestureDetector(
+                                            onTap: _pickImage,
+                                            child: Stack(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.all(
+                                                    4,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    border: Border.all(
+                                                      color: const Color(
+                                                        0xFF2E7D32,
+                                                      ).withOpacity(0.3),
+                                                      width: 2,
+                                                    ),
+                                                  ),
+                                                  child: CircleAvatar(
+                                                    radius: 40,
+                                                    backgroundColor:
+                                                        const Color(
+                                                          0xFF2E7D32,
+                                                        ).withOpacity(0.08),
+                                                    backgroundImage:
+                                                        _profileImage != null
+                                                            ? FileImage(
+                                                              _profileImage!,
+                                                            )
+                                                            : null,
+                                                    child:
+                                                        _profileImage == null
+                                                            ? const Icon(
+                                                              Icons
+                                                                  .person_add_alt_1_rounded,
+                                                              size: 32,
+                                                              color: Color(
+                                                                0xFF2E7D32,
+                                                              ),
+                                                            )
+                                                            : null,
+                                                  ),
+                                                ),
+                                                Positioned(
+                                                  bottom: 0,
+                                                  right: 0,
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.all(6),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFF2E7D32,
+                                                      ),
+                                                      shape: BoxShape.circle,
+                                                      border: Border.all(
+                                                        color: Colors.white,
+                                                        width: 2,
+                                                      ),
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.camera_alt_rounded,
+                                                      size: 14,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 24),
+
+                                        // Name Field
+                                        _buildInputField(
+                                          controller: _nameController,
+                                          focusNode: _nameFocusNode,
+                                          label: 'FULL NAME',
+                                          hint: 'Enter your full name',
+                                          icon: Icons.person_outline_rounded,
+                                        ),
+                                        const SizedBox(height: 16),
+
+                                        // Phone Field
+                                        _buildLabel(
+                                          'PHONE NUMBER',
+                                          _mobileFocusNode.hasFocus,
+                                        ),
+                                        _buildPhoneInput(),
+                                        const SizedBox(height: 16),
+
+                                        // PIN Fields
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildInputField(
+                                                controller: _pinController,
+                                                focusNode: _pinFocusNode,
+                                                label: 'PIN',
+                                                hint: '••••',
+                                                icon:
+                                                    Icons.lock_outline_rounded,
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                obscureText: !_isPinVisible,
+                                                formatters: [
+                                                  FilteringTextInputFormatter
+                                                      .digitsOnly,
+                                                  LengthLimitingTextInputFormatter(
+                                                    4,
+                                                  ),
+                                                ],
+                                                hidePrefixIcon: true,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: _buildInputField(
+                                                controller:
+                                                    _confirmPinController,
+                                                focusNode: _confirmPinFocusNode,
+                                                label: 'CONFIRM',
+                                                hint: '••••',
+                                                icon:
+                                                    Icons.lock_outline_rounded,
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                obscureText:
+                                                    !_isConfirmPinVisible,
+                                                formatters: [
+                                                  FilteringTextInputFormatter
+                                                      .digitsOnly,
+                                                  LengthLimitingTextInputFormatter(
+                                                    4,
+                                                  ),
+                                                ],
+                                                hidePrefixIcon: true,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 24),
+
+                                        // Sign Up Button
+                                        _buildSignupButton(),
+                                        const SizedBox(height: 20),
+
+                                        // Divider
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Divider(
+                                                color: Colors.grey.shade300,
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                  ),
+                                              child: Text(
+                                                'or',
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade500,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Divider(
+                                                color: Colors.grey.shade300,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 16),
+
+                                        // Sign In Link
+                                        Center(
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                "Already have an account? ",
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              GestureDetector(
+                                                onTap:
+                                                    () =>
+                                                        Navigator.pop(context),
+                                                child: Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 6,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(
+                                                      0xFF2E7D32,
+                                                    ).withOpacity(0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                  ),
+                                                  child: const Text(
+                                                    'Sign In',
+                                                    style: TextStyle(
+                                                      color: Color(0xFF1B5E20),
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
+                                const Spacer(flex: 2),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                      const Spacer(flex: 2),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),
