@@ -161,7 +161,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     final service = AuthService(
       // Default local backend (Android emulator -> 10.0.2.2). Replace with
       // your API host when testing on a real device (e.g. http://192.168.x.y:8000)
-      baseUrl: 'http://10.0.2.2:8000',
+      baseUrl: 'https://krishi-sakhi-backend-app.onrender.com',
     );
     try {
       final res = await service.register(
