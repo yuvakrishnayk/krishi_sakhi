@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'dart:io';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
+import '../../auth/auth_service.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -156,41 +158,73 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
 
     setState(() => _isLoading = true);
 
-    // Simulated network delay (Replace with your actual API call later)
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    _showSuccess(
-      'Account created. OTP sent to $_selectedCountryCode ${_mobileController.text}',
+    final service = AuthService(
+      // Default local backend (Android emulator -> 10.0.2.2). Replace with
+      // your API host when testing on a real device (e.g. http://192.168.x.y:8000)
+      baseUrl: 'http://10.0.2.2:8000',
     );
-
-    Future.delayed(const Duration(milliseconds: 800)).then((_) {
-      if (!mounted) return;
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder:
-              (_, __, ___) => OtpVerificationScreenPlaceholder(
-                phoneNumber: _mobileController.text,
-                countryCode: _selectedCountryCode,
-              ),
-          transitionsBuilder:
-              (_, a, __, child) => FadeTransition(
-                opacity: a,
-                child: SlideTransition(
-                  position: Tween(
-                    begin: const Offset(0.08, 0),
-                    end: Offset.zero,
-                  ).animate(CurvedAnimation(parent: a, curve: Curves.easeOut)),
-                  child: child,
-                ),
-              ),
-          transitionDuration: const Duration(milliseconds: 400),
-        ),
+    try {
+      final res = await service.register(
+        name: _nameController.text.trim(),
+        mobile: _mobileController.text.trim(),
+        pin: _pinController.text.trim(),
+        confirmPin: _confirmPinController.text.trim(),
+        imagePath: _profileImage?.path,
       );
-    });
+
+      // Print response to console for confirmation
+      print('Register response: ${res.statusCode} ${res.body}');
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        _showSuccess(
+          'Account created. OTP sent to $_selectedCountryCode ${_mobileController.text}',
+        );
+
+        Future.delayed(const Duration(milliseconds: 800)).then((_) {
+          if (!mounted) return;
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder:
+                  (_, __, ___) => OtpVerificationScreenPlaceholder(
+                    phoneNumber: _mobileController.text.trim(),
+                    countryCode: _selectedCountryCode,
+                  ),
+              transitionsBuilder:
+                  (_, a, __, child) => FadeTransition(
+                    opacity: a,
+                    child: SlideTransition(
+                      position: Tween(
+                        begin: const Offset(0.08, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(parent: a, curve: Curves.easeOut),
+                      ),
+                      child: child,
+                    ),
+                  ),
+              transitionDuration: const Duration(milliseconds: 400),
+            ),
+          );
+        });
+      } else {
+        String msg;
+        try {
+          final body = jsonDecode(res.body);
+          msg = body['message']?.toString() ?? res.body;
+        } catch (_) {
+          msg = res.body;
+        }
+        _showError('Signup failed: ${res.statusCode} - $msg');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError('Signup error: $e');
+    }
   }
 
   void _showError(String message) {
