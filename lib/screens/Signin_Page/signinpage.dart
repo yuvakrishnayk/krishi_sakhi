@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 
+import 'package:krishi_sakhi/screens/Signup_Page/signup_page.dart';
+
 // import 'package:krishi_sakhi/screens/Signup_Page/signup_page.dart'; // Uncomment if you have this file
 
 class SigninPage extends StatelessWidget {
@@ -508,7 +510,7 @@ class _LoginScreenState extends State<LoginScreen>
                                             MaterialPageRoute(
                                               builder:
                                                   (_) =>
-                                                      const SignupScreenPlaceholder(), // Change back to SignupPage() when ready
+                                                      const SignupPage(), // Change back to SignupPage() when ready
                                             ),
                                           ),
                                       child: Container(
