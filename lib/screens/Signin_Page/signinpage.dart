@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
+import 'dart:convert';
 
 import 'package:krishi_sakhi/screens/Signup_Page/signup_page.dart';
+import 'package:krishi_sakhi/auth/auth_service.dart';
 
 // import 'package:krishi_sakhi/screens/Signup_Page/signup_page.dart'; // Uncomment if you have this file
 
@@ -122,27 +124,74 @@ class _LoginScreenState extends State<LoginScreen>
 
     setState(() => _isLoading = true);
 
-    // Simulated network delay (Replace with your own backend API call)
-    await Future.delayed(const Duration(seconds: 2));
+    // Perform real login request to /login and print response
+    try {
+      final service = AuthService();
+      final response = await service.login(
+        mobile: _mobileController.text.trim(),
+        pin: _pinController.text.trim(),
+      );
 
-    if (mounted) {
-      setState(() => _isLoading = false);
+      // Try decode JSON and print to console (as requested)
+      try {
+        final decoded = jsonDecode(response.body);
+        // Print decoded JSON object
+        // Example expected output:
+        // {"success": true, "message": "Logged in successfully", "data": "<token>"}
+        // The user asked for the op to be printed in console.
+        // We print the full decoded response.
+        // ignore: avoid_print
+        print('Login response decoded: $decoded');
 
-      // Dummy authentication logic for demonstration
-      if (_pinController.text == '1234') {
-        _showSuccess('Logged in successfully');
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const HomeDashboard(),
-            transitionsBuilder:
-                (_, a, __, child) => FadeTransition(opacity: a, child: child),
-            transitionDuration: const Duration(milliseconds: 400),
-          ),
-        );
-      } else {
-        _showError('Incorrect PIN. Try 1234 for testing.');
+        if (response.statusCode == 200 &&
+            (decoded['success'] == true || decoded['data'] != null)) {
+          if (mounted) {
+            _showSuccess(
+              decoded['message']?.toString() ?? 'Logged in successfully',
+            );
+            Navigator.pushReplacement(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => const HomeDashboard(),
+                transitionsBuilder:
+                    (_, a, __, child) =>
+                        FadeTransition(opacity: a, child: child),
+                transitionDuration: const Duration(milliseconds: 400),
+              ),
+            );
+          }
+        } else {
+          if (mounted)
+            _showError(decoded['message']?.toString() ?? 'Login failed');
+        }
+      } catch (e) {
+        // Print raw body if JSON decoding fails
+        // ignore: avoid_print
+        print('Login response (raw): ${response.body}');
+        if (response.statusCode == 200) {
+          if (mounted) {
+            _showSuccess('Logged in');
+            Navigator.pushReplacement(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => const HomeDashboard(),
+                transitionsBuilder:
+                    (_, a, __, child) =>
+                        FadeTransition(opacity: a, child: child),
+                transitionDuration: const Duration(milliseconds: 400),
+              ),
+            );
+          }
+        } else {
+          if (mounted) _showError('Login failed: ${response.statusCode}');
+        }
       }
+    } catch (e) {
+      // ignore: avoid_print
+      print('Login request error: $e');
+      if (mounted) _showError('Network error. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

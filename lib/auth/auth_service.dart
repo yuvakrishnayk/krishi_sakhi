@@ -6,7 +6,15 @@ import 'package:http/http.dart' as http;
 class AuthService {
   final String baseUrl;
 
-  AuthService({this.baseUrl = 'http://127.0.0.1:8000'});
+  /// The base URL of your backend server.
+  ///
+  /// When running on an Android emulator, `127.0.0.1` refers to the
+  /// emulated device itself.  To reach the host machine use `10.0.2.2`.
+  ///
+  /// The default here is set accordingly, but you can always provide a
+  /// custom value when constructing the service (e.g. during testing or
+  /// when using a physical device).
+  AuthService({this.baseUrl = 'http://10.0.2.2:8000'});
 
   Future<http.Response> register({
     required String name,
