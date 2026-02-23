@@ -2,41 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 
-import 'package:krishi_sakhi/screens/Signup_Page/signup_page.dart';
 
-class SigninPage extends StatelessWidget {
-  const SigninPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Krishi Sakhi Login',
-      theme: ThemeData(
-        useMaterial3: true,
-        fontFamily: 'Roboto', // Change to your preferred font
-      ),
-      debugShowCheckedModeBanner: false,
-      home: const LoginScreen(),
-    );
-  }
-}
-
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignupPage extends StatefulWidget {
+  const SignupPage({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignupPage> createState() => _SignupPageState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with TickerProviderStateMixin {
+class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
+  final _nameController = TextEditingController();
   final _mobileController = TextEditingController();
   final _pinController = TextEditingController();
+  final _confirmPinController = TextEditingController();
+
+  final _nameFocusNode = FocusNode();
   final _mobileFocusNode = FocusNode();
   final _pinFocusNode = FocusNode();
+  final _confirmPinFocusNode = FocusNode();
 
   String _selectedCountryCode = '+91';
   bool _isPinVisible = false;
+  bool _isConfirmPinVisible = false;
   bool _isLoading = false;
 
   late AnimationController _fadeController;
@@ -80,17 +68,26 @@ class _LoginScreenState extends State<LoginScreen>
     _fadeController.forward();
     _slideController.forward();
 
-    for (final node in [_mobileFocusNode, _pinFocusNode]) {
+    for (final node in [
+      _nameFocusNode,
+      _mobileFocusNode,
+      _pinFocusNode,
+      _confirmPinFocusNode,
+    ]) {
       node.addListener(() => setState(() {}));
     }
   }
 
   @override
   void dispose() {
+    _nameController.dispose();
     _mobileController.dispose();
     _pinController.dispose();
+    _confirmPinController.dispose();
+    _nameFocusNode.dispose();
     _mobileFocusNode.dispose();
     _pinFocusNode.dispose();
+    _confirmPinFocusNode.dispose();
     _fadeController.dispose();
     _slideController.dispose();
     _pulseController.dispose();
@@ -98,9 +95,17 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleSignup() async {
     FocusScope.of(context).unfocus();
 
+    if (_nameController.text.isEmpty) {
+      _showError('Please enter your name');
+      return;
+    }
+    if (_nameController.text.length < 3) {
+      _showError('Name must be at least 3 characters');
+      return;
+    }
     if (_mobileController.text.isEmpty) {
       _showError('Please enter your mobile number');
       return;
@@ -110,38 +115,59 @@ class _LoginScreenState extends State<LoginScreen>
       return;
     }
     if (_pinController.text.isEmpty) {
-      _showError('Please enter your PIN');
+      _showError('Please enter a PIN');
       return;
     }
     if (_pinController.text.length != 4) {
       _showError('PIN must be 4 digits');
       return;
     }
+    if (_confirmPinController.text.isEmpty) {
+      _showError('Please confirm your PIN');
+      return;
+    }
+    if (_pinController.text != _confirmPinController.text) {
+      _showError('PINs do not match');
+      return;
+    }
 
     setState(() => _isLoading = true);
 
-    // Simulated network delay (Replace with your own backend API call)
+    // Simulated network delay (Replace with your actual API call later)
     await Future.delayed(const Duration(seconds: 2));
 
-    if (mounted) {
-      setState(() => _isLoading = false);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
 
-      // Dummy authentication logic for demonstration
-      if (_pinController.text == '1234') {
-        _showSuccess('Logged in successfully');
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const HomeDashboard(),
-            transitionsBuilder:
-                (_, a, __, child) => FadeTransition(opacity: a, child: child),
-            transitionDuration: const Duration(milliseconds: 400),
-          ),
-        );
-      } else {
-        _showError('Incorrect PIN. Try 1234 for testing.');
-      }
-    }
+    _showSuccess(
+      'Account created. OTP sent to $_selectedCountryCode ${_mobileController.text}',
+    );
+
+    Future.delayed(const Duration(milliseconds: 800)).then((_) {
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder:
+              (_, __, ___) => OtpVerificationScreenPlaceholder(
+                phoneNumber: _mobileController.text,
+                countryCode: _selectedCountryCode,
+              ),
+          transitionsBuilder:
+              (_, a, __, child) => FadeTransition(
+                opacity: a,
+                child: SlideTransition(
+                  position: Tween(
+                    begin: const Offset(0.08, 0),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(parent: a, curve: Curves.easeOut)),
+                  child: child,
+                ),
+              ),
+          transitionDuration: const Duration(milliseconds: 400),
+        ),
+      );
+    });
   }
 
   void _showError(String message) {
@@ -326,9 +352,8 @@ class _LoginScreenState extends State<LoginScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 30),
 
                           // Header Section
                           SlideTransition(
@@ -371,7 +396,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                                 const SizedBox(height: 24),
                                 const Text(
-                                  'Welcome\nBack',
+                                  'Join\nKrishi Sakhi',
                                   style: TextStyle(
                                     fontSize: 42,
                                     fontWeight: FontWeight.w900,
@@ -391,7 +416,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
-                                    '👋  Sign in to continue to Krishi Sakhi',
+                                    '🌱  Create your account to get started',
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
@@ -402,9 +427,9 @@ class _LoginScreenState extends State<LoginScreen>
                               ],
                             ),
                           ),
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 32),
 
-                          // Input Form Card
+                          // Form Card
                           SlideTransition(
                             position: Tween<Offset>(
                               begin: const Offset(0, 0.15),
@@ -433,45 +458,68 @@ class _LoginScreenState extends State<LoginScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Mobile Number Field
+                                  // Name Field
+                                  _buildInputField(
+                                    controller: _nameController,
+                                    focusNode: _nameFocusNode,
+                                    label: 'FULL NAME',
+                                    hint: 'Enter your full name',
+                                    icon: Icons.person_outline_rounded,
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // Phone Field
                                   _buildLabel(
                                     'PHONE NUMBER',
                                     _mobileFocusNode.hasFocus,
                                   ),
                                   _buildPhoneInput(),
-                                  const SizedBox(height: 24),
+                                  const SizedBox(height: 20),
 
-                                  // PIN Field
-                                  _buildLabel('PIN', _pinFocusNode.hasFocus),
-                                  _buildPinInput(),
-
-                                  const SizedBox(height: 12),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: TextButton(
-                                      onPressed: () {},
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: const Color(
-                                          0xFF2E7D32,
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
+                                  // PIN Fields
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildInputField(
+                                          controller: _pinController,
+                                          focusNode: _pinFocusNode,
+                                          label: 'PIN',
+                                          hint: '••••',
+                                          icon: Icons.lock_outline_rounded,
+                                          keyboardType: TextInputType.number,
+                                          obscureText: !_isPinVisible,
+                                          formatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly,
+                                            LengthLimitingTextInputFormatter(4),
+                                          ],
+                                          hidePrefixIcon: true,
                                         ),
                                       ),
-                                      child: const Text(
-                                        'Forgot PIN?',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: _buildInputField(
+                                          controller: _confirmPinController,
+                                          focusNode: _confirmPinFocusNode,
+                                          label: 'CONFIRM',
+                                          hint: '••••',
+                                          icon: Icons.lock_outline_rounded,
+                                          keyboardType: TextInputType.number,
+                                          obscureText: !_isConfirmPinVisible,
+                                          formatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly,
+                                            LengthLimitingTextInputFormatter(4),
+                                          ],
+                                          hidePrefixIcon: true,
                                         ),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 32),
 
-                                  // Login Button
-                                  _buildLoginButton(),
+                                  // Sign Up Button
+                                  _buildSignupButton(),
                                   const SizedBox(height: 28),
 
                                   // Divider
@@ -504,14 +552,14 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                   const SizedBox(height: 24),
 
-                                  // Sign Up Link
+                                  // Sign In Link
                                   Center(
                                     child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
                                         Text(
-                                          "Don't have an account? ",
+                                          "Already have an account? ",
                                           style: TextStyle(
                                             color: Colors.grey.shade600,
                                             fontSize: 14,
@@ -519,15 +567,7 @@ class _LoginScreenState extends State<LoginScreen>
                                           ),
                                         ),
                                         GestureDetector(
-                                          onTap:
-                                              () => Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder:
-                                                      (_) =>
-                                                          const SignupPage(),
-                                                ),
-                                              ),
+                                          onTap: () => Navigator.pop(context),
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 12,
@@ -541,7 +581,7 @@ class _LoginScreenState extends State<LoginScreen>
                                                   BorderRadius.circular(12),
                                             ),
                                             child: const Text(
-                                              'Sign Up',
+                                              'Sign In',
                                               style: TextStyle(
                                                 color: Color(0xFF1B5E20),
                                                 fontSize: 14,
@@ -583,6 +623,80 @@ class _LoginScreenState extends State<LoginScreen>
           letterSpacing: 0.8,
         ),
       ),
+    );
+  }
+
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? formatters,
+    bool obscureText = false,
+    Widget? suffixIcon,
+    bool hidePrefixIcon = false,
+  }) {
+    final isFocused = focusNode.hasFocus;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label, isFocused),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color:
+                isFocused
+                    ? const Color(0xFF2E7D32).withOpacity(0.04)
+                    : Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isFocused ? const Color(0xFF2E7D32) : Colors.grey.shade200,
+              width: isFocused ? 2 : 1.5,
+            ),
+          ),
+          child: TextField(
+            controller: controller,
+            focusNode: focusNode,
+            obscureText: obscureText,
+            keyboardType: keyboardType,
+            inputFormatters: formatters,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1B5E20),
+              letterSpacing: obscureText ? 8 : 0,
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(
+                color: Colors.grey.shade400,
+                fontWeight: FontWeight.w400,
+                letterSpacing: obscureText ? 8 : 0,
+                fontSize: 15,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              prefixIcon:
+                  hidePrefixIcon
+                      ? null
+                      : Icon(
+                        icon,
+                        color:
+                            isFocused
+                                ? const Color(0xFF2E7D32)
+                                : Colors.grey.shade500,
+                        size: 20,
+                      ),
+              suffixIcon: suffixIcon,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -686,76 +800,14 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildPinInput() {
-    final isFocused = _pinFocusNode.hasFocus;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        color:
-            isFocused
-                ? const Color(0xFF2E7D32).withOpacity(0.04)
-                : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isFocused ? const Color(0xFF2E7D32) : Colors.grey.shade200,
-          width: isFocused ? 2 : 1.5,
-        ),
-      ),
-      child: TextField(
-        controller: _pinController,
-        focusNode: _pinFocusNode,
-        obscureText: !_isPinVisible,
-        keyboardType: TextInputType.number,
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(4),
-        ],
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF1B5E20),
-          letterSpacing: _isPinVisible ? 8 : 12,
-        ),
-        decoration: InputDecoration(
-          hintText: '••••',
-          hintStyle: TextStyle(
-            color: Colors.grey.shade400,
-            letterSpacing: 12,
-            fontSize: 20,
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-          prefixIcon: Icon(
-            Icons.lock_outline_rounded,
-            color: isFocused ? const Color(0xFF2E7D32) : Colors.grey.shade500,
-            size: 22,
-          ),
-          suffixIcon: IconButton(
-            onPressed: () => setState(() => _isPinVisible = !_isPinVisible),
-            icon: Icon(
-              _isPinVisible
-                  ? Icons.visibility_rounded
-                  : Icons.visibility_off_rounded,
-              color: Colors.grey.shade400,
-              size: 22,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoginButton() {
+  Widget _buildSignupButton() {
     return ScaleTransition(
       scale: _buttonScale,
       child: GestureDetector(
         onTapDown: (_) => _buttonScaleController.forward(),
         onTapUp: (_) {
           _buttonScaleController.reverse();
-          if (!_isLoading) _handleLogin();
+          if (!_isLoading) _handleSignup();
         },
         onTapCancel: () => _buttonScaleController.reverse(),
         child: AnimatedContainer(
@@ -791,7 +843,7 @@ class _LoginScreenState extends State<LoginScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Sign In',
+                          'Create Account',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -831,17 +883,24 @@ class _DotPatternPainter extends CustomPainter {
 }
 
 // ==========================================
-// PLACEHOLDERS (So the app compiles perfectly)
+// PLACEHOLDER (So the app compiles perfectly)
 // ==========================================
 
-class HomeDashboard extends StatelessWidget {
-  const HomeDashboard({super.key});
+class OtpVerificationScreenPlaceholder extends StatelessWidget {
+  final String phoneNumber;
+  final String countryCode;
+
+  const OtpVerificationScreenPlaceholder({
+    super.key,
+    required this.phoneNumber,
+    required this.countryCode,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text('Verify OTP'),
         backgroundColor: const Color(0xFF2E7D32),
         foregroundColor: Colors.white,
       ),
@@ -850,39 +909,23 @@ class HomeDashboard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.dashboard_rounded,
+              Icons.message_rounded,
               size: 64,
               color: Color(0xFF2E7D32),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Welcome to Krishi Sakhi!',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              'OTP sent to $countryCode $phoneNumber',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed:
-                  () => Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  ),
-              child: const Text('Log Out'),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Go Back'),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class SignupScreenPlaceholder extends StatelessWidget {
-  const SignupScreenPlaceholder({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Sign Up')),
-      body: const Center(child: Text('Sign Up Screen UI goes here')),
     );
   }
 }
