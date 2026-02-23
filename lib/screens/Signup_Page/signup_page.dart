@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -24,6 +26,10 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   bool _isPinVisible = false;
   bool _isConfirmPinVisible = false;
   bool _isLoading = false;
+
+  // Image handling variables
+  File? _profileImage;
+  final ImagePicker _picker = ImagePicker();
 
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -93,9 +99,33 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  // --- Image Picker Function ---
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality:
+            80, // Compresses the image slightly for better performance
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _profileImage = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      _showError('Failed to pick image: $e');
+    }
+  }
+
   Future<void> _handleSignup() async {
     FocusScope.of(context).unfocus();
 
+    if (_profileImage == null) {
+      // Optional: enforce profile picture upload
+      // _showError('Please select a profile picture');
+      // return;
+    }
     if (_nameController.text.isEmpty) {
       _showError('Please enter your name');
       return;
@@ -248,7 +278,6 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    // Scaffold now prevents the UI from resizing and shrinking when the keyboard pops up
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFF1B5E20),
@@ -405,7 +434,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
-                                '🌱  Create your account to get started',
+                                '🌱  Create your account to get started',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -447,6 +476,69 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              // --- Profile Picture Upload Avatar ---
+                              Center(
+                                child: GestureDetector(
+                                  onTap: _pickImage,
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: const Color(
+                                              0xFF2E7D32,
+                                            ).withOpacity(0.3),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: CircleAvatar(
+                                          radius: 40,
+                                          backgroundColor: const Color(
+                                            0xFF2E7D32,
+                                          ).withOpacity(0.08),
+                                          backgroundImage:
+                                              _profileImage != null
+                                                  ? FileImage(_profileImage!)
+                                                  : null,
+                                          child:
+                                              _profileImage == null
+                                                  ? const Icon(
+                                                    Icons
+                                                        .person_add_alt_1_rounded,
+                                                    size: 32,
+                                                    color: Color(0xFF2E7D32),
+                                                  )
+                                                  : null,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        right: 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF2E7D32),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: 2,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.camera_alt_rounded,
+                                            size: 14,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+
                               // Name Field
                               _buildInputField(
                                 controller: _nameController,
