@@ -5,6 +5,8 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import '../../auth/auth_service.dart';
+import '../../auth/auth_repository.dart';
+import '../otp_screen.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -158,13 +160,9 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
 
     setState(() => _isLoading = true);
 
-    final service = AuthService(
-      // Default local backend (Android emulator -> 10.0.2.2). Replace with
-      // your API host when testing on a real device (e.g. http://192.168.x.y:8000)
-      baseUrl: 'https://krishi-sakhi-backend-app.onrender.com',
-    );
+    final repo = AuthRepository(service: AuthService());
     try {
-      final res = await service.register(
+      await repo.register(
         name: _nameController.text.trim(),
         mobile: _mobileController.text.trim(),
         pin: _pinController.text.trim(),
@@ -172,53 +170,37 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
         imagePath: _profileImage?.path,
       );
 
-      // Print response to console for confirmation
-      print('Register response: ${res.statusCode} ${res.body}');
-
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        _showSuccess(
-          'Account created. OTP sent to $_selectedCountryCode ${_mobileController.text}',
-        );
+      _showSuccess(
+        'Account created. OTP sent to $_selectedCountryCode ${_mobileController.text}',
+      );
 
-        Future.delayed(const Duration(milliseconds: 800)).then((_) {
-          if (!mounted) return;
-          Navigator.push(
-            context,
-            PageRouteBuilder(
-              pageBuilder:
-                  (_, __, ___) => OtpVerificationScreenPlaceholder(
-                    phoneNumber: _mobileController.text.trim(),
-                    countryCode: _selectedCountryCode,
-                  ),
-              transitionsBuilder:
-                  (_, a, __, child) => FadeTransition(
-                    opacity: a,
-                    child: SlideTransition(
-                      position: Tween(
-                        begin: const Offset(0.08, 0),
-                        end: Offset.zero,
-                      ).animate(
-                        CurvedAnimation(parent: a, curve: Curves.easeOut),
-                      ),
-                      child: child,
-                    ),
-                  ),
-              transitionDuration: const Duration(milliseconds: 400),
-            ),
-          );
-        });
-      } else {
-        String msg;
-        try {
-          final body = jsonDecode(res.body);
-          msg = body['message']?.toString() ?? res.body;
-        } catch (_) {
-          msg = res.body;
-        }
-        _showError('Signup failed: ${res.statusCode} - $msg');
+      // navigate to OTP screen and wait for verification
+      final verified = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => OtpVerificationScreen(
+                phoneNumber: _mobileController.text.trim(),
+                countryCode: _selectedCountryCode,
+                verifyCallback:
+                    (code) => repo
+                        .verifySignup(
+                          mobile: _mobileController.text.trim(),
+                          code: code,
+                        )
+                        .then((_) => true)
+                        .catchError((_) => false),
+              ),
+        ),
+      );
+
+      if (verified == true && mounted) {
+        // after signup OTP confirmed, take user to sign in
+        _showSuccess('Signup verified! Please sign in.');
+        Navigator.pop(context);
       }
     } catch (e) {
       if (!mounted) return;
@@ -965,52 +947,4 @@ class _DotPatternPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// ==========================================
-// PLACEHOLDER (So the app compiles perfectly)
-// ==========================================
-
-class OtpVerificationScreenPlaceholder extends StatelessWidget {
-  final String phoneNumber;
-  final String countryCode;
-
-  const OtpVerificationScreenPlaceholder({
-    super.key,
-    required this.phoneNumber,
-    required this.countryCode,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Verify OTP'),
-        backgroundColor: const Color(0xFF2E7D32),
-        foregroundColor: Colors.white,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.message_rounded,
-              size: 64,
-              color: Color(0xFF2E7D32),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'OTP sent to $countryCode $phoneNumber',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Go Back'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

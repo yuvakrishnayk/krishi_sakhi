@@ -5,6 +5,8 @@ import 'dart:convert';
 
 import 'package:krishi_sakhi/screens/Signup_Page/signup_page.dart';
 import 'package:krishi_sakhi/auth/auth_service.dart';
+import 'package:krishi_sakhi/auth/auth_repository.dart';
+import '../otp_screen.dart';
 
 // import 'package:krishi_sakhi/screens/Signup_Page/signup_page.dart'; // Uncomment if you have this file
 
@@ -123,73 +125,49 @@ class _LoginScreenState extends State<LoginScreen>
     }
 
     setState(() => _isLoading = true);
-
-    // Perform real login request to /login and print response
+    final repo = AuthRepository(service: AuthService());
     try {
-      final service = AuthService();
-      final response = await service.login(
+      await repo.requestLoginOtp(
         mobile: _mobileController.text.trim(),
         pin: _pinController.text.trim(),
       );
+      if (!mounted) return;
+      _showSuccess(
+        'OTP sent to $_selectedCountryCode ${_mobileController.text}',
+      );
 
-      // Try decode JSON and print to console (as requested)
-      try {
-        final decoded = jsonDecode(response.body);
-        // Print decoded JSON object
-        // Example expected output:
-        // {"success": true, "message": "Logged in successfully", "data": "<token>"}
-        // The user asked for the op to be printed in console.
-        // We print the full decoded response.
-        // ignore: avoid_print
-        print('Login response decoded: $decoded');
+      final verified = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => OtpVerificationScreen(
+                phoneNumber: _mobileController.text.trim(),
+                countryCode: _selectedCountryCode,
+                verifyCallback:
+                    (code) => repo
+                        .verifyLogin(
+                          mobile: _mobileController.text.trim(),
+                          code: code,
+                        )
+                        .then((_) => true)
+                        .catchError((_) => false),
+              ),
+        ),
+      );
 
-        if (response.statusCode == 200 &&
-            (decoded['success'] == true || decoded['data'] != null)) {
-          if (mounted) {
-            _showSuccess(
-              decoded['message']?.toString() ?? 'Logged in successfully',
-            );
-            Navigator.pushReplacement(
-              context,
-              PageRouteBuilder(
-                pageBuilder: (_, __, ___) => const HomeDashboard(),
-                transitionsBuilder:
-                    (_, a, __, child) =>
-                        FadeTransition(opacity: a, child: child),
-                transitionDuration: const Duration(milliseconds: 400),
-              ),
-            );
-          }
-        } else {
-          if (mounted)
-            _showError(decoded['message']?.toString() ?? 'Login failed');
-        }
-      } catch (e) {
-        // Print raw body if JSON decoding fails
-        // ignore: avoid_print
-        print('Login response (raw): ${response.body}');
-        if (response.statusCode == 200) {
-          if (mounted) {
-            _showSuccess('Logged in');
-            Navigator.pushReplacement(
-              context,
-              PageRouteBuilder(
-                pageBuilder: (_, __, ___) => const HomeDashboard(),
-                transitionsBuilder:
-                    (_, a, __, child) =>
-                        FadeTransition(opacity: a, child: child),
-                transitionDuration: const Duration(milliseconds: 400),
-              ),
-            );
-          }
-        } else {
-          if (mounted) _showError('Login failed: ${response.statusCode}');
-        }
+      if (verified == true && mounted) {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => const HomeDashboard(),
+            transitionsBuilder:
+                (_, a, __, child) => FadeTransition(opacity: a, child: child),
+            transitionDuration: const Duration(milliseconds: 400),
+          ),
+        );
       }
     } catch (e) {
-      // ignore: avoid_print
-      print('Login request error: $e');
-      if (mounted) _showError('Network error. Please try again.');
+      if (mounted) _showError('Login failed: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -895,11 +873,14 @@ class HomeDashboard extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed:
-                  () => Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  ),
+              onPressed: () async {
+                final repo = AuthRepository(service: AuthService());
+                await repo.logout();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              },
               child: const Text('Log Out'),
             ),
           ],

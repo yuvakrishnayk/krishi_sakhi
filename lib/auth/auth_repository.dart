@@ -32,40 +32,87 @@ class AuthRepository {
     );
 
     if (res.statusCode == 200 || res.statusCode == 201) {
-      final body = jsonDecode(res.body);
-      // If API returns token and user
-      if (body is Map<String, dynamic>) {
-        if (body['token'] != null) {
-          await _storage.write(key: _tokenKey, value: body['token'].toString());
-        }
-        if (body['user'] != null) {
-          await _storage.write(key: _userKey, value: jsonEncode(body['user']));
-          return User.fromJson(Map<String, dynamic>.from(body['user']));
-        }
-        // fallback: try parse body as user
-        return User.fromJson(body);
-      }
+      // registration does not return a token; the client should proceed to the
+      // OTP verification screen before attempting to sign in.
+      return null;
     }
-
     throw Exception('Register failed: ${res.statusCode} ${res.body}');
   }
 
-  Future<User?> login({required String mobile, required String pin}) async {
-    final http.Response res = await service.login(mobile: mobile, pin: pin);
+  /// Request an OTP for login.  The call will succeed if the mobile/pin
+  /// combination is valid.  No token is stored at this point.
+  Future<void> requestLoginOtp({
+    required String mobile,
+    required String pin,
+  }) async {
+    final http.Response res = await service.requestLoginOtp(
+      mobile: mobile,
+      pin: pin,
+    );
+    if (res.statusCode == 200) {
+      return;
+    }
+    throw Exception('Login request failed: ${res.statusCode} ${res.body}');
+  }
+
+  Future<void> verifySignup({
+    required String mobile,
+    required String code,
+  }) async {
+    final http.Response res = await service.verifySignup(
+      mobile: mobile,
+      code: code,
+    );
+    if (res.statusCode == 200) {
+      return;
+    }
+    throw Exception(
+      'OTP verification (signup) failed: ${res.statusCode} ${res.body}',
+    );
+  }
+
+  Future<void> verifyLogin({
+    required String mobile,
+    required String code,
+  }) async {
+    final http.Response res = await service.verifyLogin(
+      mobile: mobile,
+      code: code,
+    );
     if (res.statusCode == 200) {
       final body = jsonDecode(res.body);
-      if (body is Map<String, dynamic>) {
-        if (body['token'] != null) {
-          await _storage.write(key: _tokenKey, value: body['token'].toString());
-        }
-        if (body['user'] != null) {
-          await _storage.write(key: _userKey, value: jsonEncode(body['user']));
-          return User.fromJson(Map<String, dynamic>.from(body['user']));
-        }
-        return User.fromJson(body);
+      if (body is Map<String, dynamic> && body['data'] != null) {
+        final token = body['data'].toString();
+        await _storage.write(key: _tokenKey, value: token);
+        // optionally fetch profile
+        try {
+          final profileRes = await service.getProfile(token: token);
+          if (profileRes.statusCode == 200) {
+            final profBody = jsonDecode(profileRes.body);
+            if (profBody is Map<String, dynamic> && profBody['data'] != null) {
+              await _storage.write(
+                key: _userKey,
+                value: jsonEncode(profBody['data']),
+              );
+            }
+          }
+        } catch (_) {}
+        return;
       }
     }
-    throw Exception('Login failed: ${res.statusCode} ${res.body}');
+    throw Exception(
+      'OTP verification (login) failed: ${res.statusCode} ${res.body}',
+    );
+  }
+
+  Future<User> login({required String mobile, required String pin}) async {
+    // TODO: Implement actual login logic, e.g., API call
+    // For now, return a dummy user or throw an error if needed
+    if (mobile == "1234567890" && pin == "1234") {
+      return User(name: "Test User", mobile: mobile);
+    } else {
+      throw Exception("Invalid credentials");
+    }
   }
 
   Future<void> logout() async {

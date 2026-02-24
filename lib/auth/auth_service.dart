@@ -45,7 +45,10 @@ class AuthService {
     return response;
   }
 
-  Future<http.Response> login({
+  /// Request login by mobile/pin.  The server will send an OTP to the
+  /// provided number if the credentials are valid.  No token is returned at
+  /// this stage.
+  Future<http.Response> requestLoginOtp({
     required String mobile,
     required String pin,
   }) async {
@@ -54,6 +57,36 @@ class AuthService {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'mobile': mobile, 'pin': pin}),
+    );
+    return response;
+  }
+
+  /// Verify an OTP that was previously sent during the signup process.  If
+  /// successful the user account will be marked verified on the backend.
+  Future<http.Response> verifySignup({
+    required String mobile,
+    required String code,
+  }) async {
+    final uri = Uri.parse('$baseUrl/verify_signup');
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'mobile': mobile, 'code': code}),
+    );
+    return response;
+  }
+
+  /// Verify an OTP sent as part of a login request.  On success the response
+  /// will include a JWT token in the `data` field.
+  Future<http.Response> verifyLogin({
+    required String mobile,
+    required String code,
+  }) async {
+    final uri = Uri.parse('$baseUrl/verify_login');
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'mobile': mobile, 'code': code}),
     );
     return response;
   }
