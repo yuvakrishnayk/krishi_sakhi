@@ -27,130 +27,207 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFF43A047)],
-            stops: [0.0, 0.4, 1.0],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF1B5E20), // Darker Forest Green
+              Color(0xFF2E7D32), // Medium Green
+              Color(0xFF66BB6A), // Lighter soft green
+            ],
+            stops: [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
               child: FutureBuilder<User?>(
                 future: _profileFuture,
                 builder: (context, snapshot) {
+                  // 1. Loading State
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF2E7D32),
-                        ),
-                      ),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Could not load profile',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 18,
-                        ),
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        strokeWidth: 3,
                       ),
                     );
                   }
 
+                  // 2. Error State
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.error_outline_rounded,
+                            color: Colors.white70,
+                            size: 48,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Could not load profile',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  // 3. Success State
                   final user = snapshot.data;
                   return Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(height: 40),
+                      // Welcome Text
                       const Text(
-                        'Welcome to Krishi Sakhi',
+                        'Welcome to\nKrishi Sakhi',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 28,
+                          fontSize: 32,
+                          height: 1.2,
                           fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                      const SizedBox(height: 32),
-                      CircleAvatar(
-                        radius: 60,
-                        backgroundColor: Colors.white24,
-                        child:
-                            user?.imageUrl != null
-                                ? null
-                                : const Icon(
-                                  Icons.person,
-                                  size: 60,
-                                  color: Colors.white70,
-                                ),
-                        backgroundImage:
-                            user?.imageUrl != null
-                                ? NetworkImage(user!.imageUrl!)
-                                : null,
+                      const SizedBox(height: 48),
+
+                      // Profile Avatar with premium border & shadow
+                      Container(
+                        padding: const EdgeInsets.all(4), // Border width
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: 65,
+                          backgroundColor: Colors.white24,
+                          backgroundImage:
+                              user?.imageUrl != null
+                                  ? NetworkImage(user!.imageUrl!)
+                                  : null,
+                          child:
+                              user?.imageUrl != null
+                                  ? null
+                                  : const Icon(
+                                    Icons.person_rounded,
+                                    size: 65,
+                                    color: Colors.white,
+                                  ),
+                        ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
+
+                      // User Name
                       Text(
                         user?.name ?? 'Farmer',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3,
                         ),
                       ),
-                      if (user?.farm != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            user!.farm!,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      const SizedBox(height: 48),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2E7D32),
+
+                      // Farm Name (if available)
+                      if (user?.farm != null) ...[
+                        const SizedBox(height: 8),
+                        Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 40,
-                            vertical: 14,
+                            horizontal: 16,
+                            vertical: 6,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                          elevation: 8,
-                        ),
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder:
-                                  (_, __, ___) => const HomeDashboard(),
-                              transitionsBuilder:
-                                  (_, a, __, child) =>
-                                      FadeTransition(opacity: a, child: child),
-                              transitionDuration: const Duration(
-                                milliseconds: 400,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.eco_rounded,
+                                color: Colors.white70,
+                                size: 16,
                               ),
+                              const SizedBox(width: 6),
+                              Text(
+                                user!.farm!,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 56),
+
+                      // Continue Button (High Contrast)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(
+                              0xFF1B5E20,
+                            ), // Dark green text
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                          );
-                        },
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                            elevation: 8,
+                            shadowColor: Colors.black.withOpacity(0.3),
+                          ),
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              PageRouteBuilder(
+                                pageBuilder:
+                                    (_, __, ___) => const HomeDashboard(),
+                                transitionsBuilder:
+                                    (_, a, __, child) => FadeTransition(
+                                      opacity: a,
+                                      child: child,
+                                    ),
+                                transitionDuration: const Duration(
+                                  milliseconds: 400,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 22,
+                          ),
+                          label: const Text(
+                            'Continue',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 20), // Bottom padding
                     ],
                   );
                 },
