@@ -128,4 +128,25 @@ class AuthRepository {
     final map = jsonDecode(raw);
     return User.fromJson(Map<String, dynamic>.from(map));
   }
+
+  /// Fetch the latest profile information from the backend using the
+  /// stored token.  If the call succeeds the local cache will be updated
+  /// so subsequent calls to [currentUser] return the fresh data.
+  Future<User?> fetchProfile() async {
+    final token = await _storage.read(key: _tokenKey);
+    if (token == null) return null;
+    try {
+      final res = await service.getProfile(token: token);
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        if (body is Map<String, dynamic> && body['data'] != null) {
+          final user = User.fromJson(Map<String, dynamic>.from(body['data']));
+          // update stored value
+          await _storage.write(key: _userKey, value: jsonEncode(body['data']));
+          return user;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
 }

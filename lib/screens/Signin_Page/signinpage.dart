@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
-import 'dart:convert';
 
 import 'package:krishi_sakhi/screens/Signup_Page/signup_page.dart';
 import 'package:krishi_sakhi/auth/auth_service.dart';
 import 'package:krishi_sakhi/auth/auth_repository.dart';
 import '../otp_screen.dart';
+import '../welcome_screen.dart';
 
 // import 'package:krishi_sakhi/screens/Signup_Page/signup_page.dart'; // Uncomment if you have this file
 
@@ -156,10 +156,11 @@ class _LoginScreenState extends State<LoginScreen>
       );
 
       if (verified == true && mounted) {
+        // once OTP is verified we want to show the welcome/profile screen
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const HomeDashboard(),
+            pageBuilder: (_, __, ___) => const WelcomeScreen(),
             transitionsBuilder:
                 (_, a, __, child) => FadeTransition(opacity: a, child: child),
             transitionDuration: const Duration(milliseconds: 400),
