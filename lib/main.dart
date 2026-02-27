@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
-import 'package:krishi_sakhi/screens/Signin_Page/signinpage.dart';
+import 'package:krishi_sakhi/screens/map_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,7 +62,7 @@ class _MyAppState extends State<MyApp> {
       ),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: SigninPage(),
+      home: MapScreen(),
     );
   }
 }
