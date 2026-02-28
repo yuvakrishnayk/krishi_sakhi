@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:krishi_sakhi/screens/home_screen.dart';
 
 import '../auth/auth_repository.dart';
 import '../auth/auth_service.dart';
@@ -201,7 +202,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               context,
                               PageRouteBuilder(
                                 pageBuilder:
-                                    (_, __, ___) => const HomeDashboard(),
+                                    (_, __, ___) => const HomeScreen(),
                                 transitionsBuilder:
                                     (_, a, __, child) => FadeTransition(
                                       opacity: a,

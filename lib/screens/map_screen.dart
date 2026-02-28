@@ -108,17 +108,15 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       final lng = center.longitude;
       const radius = 1000;
 
-      // Overpass QL query: amenities + shops + tourism within 200m
+      // Overpass QL query: only farmland (nodes, ways, relations) within radius
       final query = '''
-[out:json][timeout:15];
+[out:json][timeout:25];
 (
-  node["amenity"](around:$radius,$lat,$lng);
-  node["shop"](around:$radius,$lat,$lng);
-  node["tourism"](around:$radius,$lat,$lng);
-  node["leisure"](around:$radius,$lat,$lng);
-  node["office"](around:$radius,$lat,$lng);
+  node["landuse"="farmland"](around:$radius,$lat,$lng);
+  way["landuse"="farmland"](around:$radius,$lat,$lng);
+  relation["landuse"="farmland"](around:$radius,$lat,$lng);
 );
-out body 40;
+out center 40;
 ''';
 
       final uri = Uri.parse('https://overpass-api.de/api/interpreter');
@@ -135,41 +133,28 @@ out body 40;
         final places = <NearbyPlace>[];
         for (final el in elements) {
           final tags = el['tags'] as Map<String, dynamic>? ?? {};
-          final elLat = (el['lat'] as num?)?.toDouble();
-          final elLon = (el['lon'] as num?)?.toDouble();
+
+          // Ways/relations return a 'center' object; nodes have lat/lon
+          double? elLat;
+          double? elLon;
+          if (el['lat'] != null && el['lon'] != null) {
+            elLat = (el['lat'] as num).toDouble();
+            elLon = (el['lon'] as num).toDouble();
+          } else if (el['center'] != null) {
+            elLat = (el['center']['lat'] as num?)?.toDouble();
+            elLon = (el['center']['lon'] as num?)?.toDouble();
+          }
           if (elLat == null || elLon == null) continue;
 
-          final name =
-              tags['name'] as String? ?? tags['brand'] as String? ?? '';
-          if (name.isEmpty) continue;
+          // Farmlands often have no name — provide a sensible default
+          final name = tags['name'] as String? ??
+              tags['ref'] as String? ??
+              'Farmland';
 
-          // Determine type
-          String type = 'Place';
-          if (tags.containsKey('amenity')) {
-            type = _formatType(tags['amenity'] as String);
-          } else if (tags.containsKey('shop')) {
-            type = 'Shop · ${_formatType(tags['shop'] as String)}';
-          } else if (tags.containsKey('tourism')) {
-            type = 'Tourism · ${_formatType(tags['tourism'] as String)}';
-          } else if (tags.containsKey('leisure')) {
-            type = 'Leisure · ${_formatType(tags['leisure'] as String)}';
-          } else if (tags.containsKey('office')) {
-            type = 'Office · ${_formatType(tags['office'] as String)}';
-          }
+          final type = _formatType((tags['landuse'] as String?) ?? 'farmland');
 
-          // Build address
-          final addressParts = <String>[];
-          if (tags['addr:housenumber'] != null)
-            addressParts.add(tags['addr:housenumber']);
-          if (tags['addr:street'] != null)
-            addressParts.add(tags['addr:street']);
-          if (tags['addr:suburb'] != null)
-            addressParts.add(tags['addr:suburb']);
-          if (tags['addr:city'] != null) addressParts.add(tags['addr:city']);
           final address =
-              addressParts.isNotEmpty
-                  ? addressParts.join(', ')
-                  : '~${_distanceStr(center, LatLng(elLat, elLon))} away';
+              '~${_distanceStr(center, LatLng(elLat, elLon))} away';
 
           places.add(
             NearbyPlace(
@@ -623,13 +608,14 @@ class _NearbyPlacesPanel extends StatelessWidget {
     if (t.contains('restaurant') ||
         t.contains('food') ||
         t.contains('cafe') ||
-        t.contains('bar'))
+        t.contains('bar')) {
       return const Color(0xFFE67E22);
-    if (t.contains('hospital') ||
+    } else if (t.contains('hospital') ||
         t.contains('pharmacy') ||
-        t.contains('clinic'))
+        t.contains('clinic') ||
+        t.contains('doctor')) {
       return const Color(0xFFE74C3C);
-    if (t.contains('school') || t.contains('university'))
+    } else if (t.contains('school') || t.contains('university'))
       return const Color(0xFF9B59B6);
     if (t.contains('bank') || t.contains('atm') || t.contains('office'))
       return const Color(0xFF2980B9);

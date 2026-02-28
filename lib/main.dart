@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
-import 'package:krishi_sakhi/screens/map_screen.dart';
+import 'package:krishi_sakhi/screens/Signin_Page/signinpage.dart';
+import 'package:krishi_sakhi/screens/welcome_screen.dart';
+import 'package:krishi_sakhi/auth/auth_repository.dart';
+import 'package:krishi_sakhi/auth/auth_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   runApp(MyApp());
 }
 
@@ -20,6 +23,25 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   Locale? _locale = const Locale('en'); // default English
+  Widget? _initialScreen;
+
+  @override
+  void initState() {
+    super.initState();
+    _determineInitialScreen();
+  }
+
+  Future<void> _determineInitialScreen() async {
+    final repo = AuthRepository(service: AuthService());
+    try {
+      final token = await repo.token;
+      if (token != null) {
+        setState(() => _initialScreen = const WelcomeScreen());
+        return;
+      }
+    } catch (_) {}
+    setState(() => _initialScreen = SigninPage());
+  }
 
   void changeLocale(Locale locale) {
     if (_locale == locale) return;
@@ -62,7 +84,9 @@ class _MyAppState extends State<MyApp> {
       ),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: MapScreen(),
+      home:
+          _initialScreen ??
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
     );
   }
 }
