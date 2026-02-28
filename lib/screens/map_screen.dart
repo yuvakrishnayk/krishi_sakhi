@@ -1,10 +1,30 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MapScreen — Google Maps-style UI using flutter_map + OpenStreetMap
+// Model
+// ─────────────────────────────────────────────────────────────────────────────
+
+class NearbyPlace {
+  final String name;
+  final String address;
+  final String type;
+  final LatLng latLng;
+
+  const NearbyPlace({
+    required this.name,
+    required this.address,
+    required this.type,
+    required this.latLng,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MapScreen
 // ─────────────────────────────────────────────────────────────────────────────
 
 class MapScreen extends StatefulWidget {
@@ -19,12 +39,17 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   LatLng _currentCenter = const LatLng(20.5937, 78.9629);
   LatLng? _userLocation;
+  LatLng? _selectedPlace;
   bool _isLoading = false;
   bool _showInfoSheet = false;
-  String _mapStyle = 'Standard'; // Standard / Satellite / Terrain
+  bool _showNearbyPanel = false;
+  bool _loadingNearby = false;
+  String _mapStyle = 'Standard';
   double _currentZoom = 5.0;
 
-  // Tile URLs for different styles
+  List<NearbyPlace> _nearbyPlaces = [];
+  NearbyPlace? _highlightedPlace;
+
   static const Map<String, String> _tileUrls = {
     'Standard': 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     'Satellite':
@@ -32,7 +57,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     'Terrain': 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
   };
 
-  // ─── Animate camera ────────────────────────────────────────────────────────
+  // ─── Animate camera ───────────────────────────────────────────────────────
   void _animateTo(LatLng target, {double zoom = 15.0}) {
     final latTween = Tween<double>(
       begin: _mapController.camera.center.latitude,
@@ -70,11 +95,127 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     controller.forward();
   }
 
-  // ─── Get location ──────────────────────────────────────────────────────────
+  // ─── Fetch nearby places via Overpass API ─────────────────────────────────
+  Future<void> _fetchNearbyPlaces(LatLng center) async {
+    setState(() {
+      _loadingNearby = true;
+      _nearbyPlaces = [];
+      _showNearbyPanel = true;
+    });
+
+    try {
+      final lat = center.latitude;
+      final lng = center.longitude;
+      const radius = 1000;
+
+      // Overpass QL query: amenities + shops + tourism within 200m
+      final query = '''
+[out:json][timeout:15];
+(
+  node["amenity"](around:$radius,$lat,$lng);
+  node["shop"](around:$radius,$lat,$lng);
+  node["tourism"](around:$radius,$lat,$lng);
+  node["leisure"](around:$radius,$lat,$lng);
+  node["office"](around:$radius,$lat,$lng);
+);
+out body 40;
+''';
+
+      final uri = Uri.parse('https://overpass-api.de/api/interpreter');
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'data=${Uri.encodeComponent(query)}',
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final elements = data['elements'] as List<dynamic>;
+
+        final places = <NearbyPlace>[];
+        for (final el in elements) {
+          final tags = el['tags'] as Map<String, dynamic>? ?? {};
+          final elLat = (el['lat'] as num?)?.toDouble();
+          final elLon = (el['lon'] as num?)?.toDouble();
+          if (elLat == null || elLon == null) continue;
+
+          final name =
+              tags['name'] as String? ?? tags['brand'] as String? ?? '';
+          if (name.isEmpty) continue;
+
+          // Determine type
+          String type = 'Place';
+          if (tags.containsKey('amenity')) {
+            type = _formatType(tags['amenity'] as String);
+          } else if (tags.containsKey('shop')) {
+            type = 'Shop · ${_formatType(tags['shop'] as String)}';
+          } else if (tags.containsKey('tourism')) {
+            type = 'Tourism · ${_formatType(tags['tourism'] as String)}';
+          } else if (tags.containsKey('leisure')) {
+            type = 'Leisure · ${_formatType(tags['leisure'] as String)}';
+          } else if (tags.containsKey('office')) {
+            type = 'Office · ${_formatType(tags['office'] as String)}';
+          }
+
+          // Build address
+          final addressParts = <String>[];
+          if (tags['addr:housenumber'] != null)
+            addressParts.add(tags['addr:housenumber']);
+          if (tags['addr:street'] != null)
+            addressParts.add(tags['addr:street']);
+          if (tags['addr:suburb'] != null)
+            addressParts.add(tags['addr:suburb']);
+          if (tags['addr:city'] != null) addressParts.add(tags['addr:city']);
+          final address =
+              addressParts.isNotEmpty
+                  ? addressParts.join(', ')
+                  : '~${_distanceStr(center, LatLng(elLat, elLon))} away';
+
+          places.add(
+            NearbyPlace(
+              name: name,
+              address: address,
+              type: type,
+              latLng: LatLng(elLat, elLon),
+            ),
+          );
+        }
+
+        setState(() {
+          _nearbyPlaces = places;
+          _loadingNearby = false;
+        });
+      } else {
+        setState(() => _loadingNearby = false);
+        _snack('Could not load nearby places.', error: true);
+      }
+    } catch (e) {
+      setState(() => _loadingNearby = false);
+      _snack('Error loading nearby places: $e', error: true);
+    }
+  }
+
+  String _formatType(String raw) {
+    return raw
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : w)
+        .join(' ');
+  }
+
+  String _distanceStr(LatLng a, LatLng b) {
+    final dist = const Distance().as(LengthUnit.Meter, a, b);
+    return dist >= 1000
+        ? '${(dist / 1000).toStringAsFixed(1)} km'
+        : '${dist.toStringAsFixed(0)} m';
+  }
+
+  // ─── Get user location ────────────────────────────────────────────────────
   Future<void> _fetchLocation() async {
     setState(() {
       _isLoading = true;
       _showInfoSheet = false;
+      _showNearbyPanel = false;
     });
 
     try {
@@ -115,11 +256,20 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
         _showInfoSheet = true;
       });
 
-      _animateTo(loc, zoom: 15.0);
+      _animateTo(loc, zoom: 17.0);
+      _fetchNearbyPlaces(loc);
     } catch (e) {
       setState(() => _isLoading = false);
       _snack('Error: ${e.toString()}', error: true);
     }
+  }
+
+  void _onPlaceTapped(NearbyPlace place) {
+    setState(() {
+      _highlightedPlace = place;
+      _selectedPlace = place.latLng;
+    });
+    _animateTo(place.latLng, zoom: 18.0);
   }
 
   void _snack(String msg, {bool error = false}) {
@@ -142,13 +292,79 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
     setState(() => _currentZoom = newZoom);
   }
 
+  // ─── Marker color by type ─────────────────────────────────────────────────
+  Color _typeColor(String type) {
+    final t = type.toLowerCase();
+    if (t.contains('restaurant') ||
+        t.contains('food') ||
+        t.contains('cafe') ||
+        t.contains('bar')) {
+      return const Color(0xFFE67E22);
+    } else if (t.contains('hospital') ||
+        t.contains('pharmacy') ||
+        t.contains('clinic') ||
+        t.contains('doctor')) {
+      return const Color(0xFFE74C3C);
+    } else if (t.contains('school') ||
+        t.contains('university') ||
+        t.contains('college')) {
+      return const Color(0xFF9B59B6);
+    } else if (t.contains('bank') ||
+        t.contains('atm') ||
+        t.contains('office')) {
+      return const Color(0xFF2980B9);
+    } else if (t.contains('shop') ||
+        t.contains('supermarket') ||
+        t.contains('store')) {
+      return const Color(0xFF27AE60);
+    } else if (t.contains('park') ||
+        t.contains('leisure') ||
+        t.contains('garden')) {
+      return const Color(0xFF1ABC9C);
+    } else if (t.contains('hotel') ||
+        t.contains('tourism') ||
+        t.contains('museum')) {
+      return const Color(0xFFF39C12);
+    }
+    return const Color(0xFF1A73E8);
+  }
+
+  IconData _typeIcon(String type) {
+    final t = type.toLowerCase();
+    if (t.contains('restaurant') || t.contains('food')) return Icons.restaurant;
+    if (t.contains('cafe') || t.contains('coffee')) return Icons.local_cafe;
+    if (t.contains('bar') || t.contains('pub')) return Icons.local_bar;
+    if (t.contains('hospital') || t.contains('clinic'))
+      return Icons.local_hospital;
+    if (t.contains('pharmacy')) return Icons.local_pharmacy;
+    if (t.contains('school') || t.contains('university')) return Icons.school;
+    if (t.contains('bank') || t.contains('atm')) return Icons.account_balance;
+    if (t.contains('shop') || t.contains('supermarket'))
+      return Icons.shopping_bag;
+    if (t.contains('park') || t.contains('garden')) return Icons.park;
+    if (t.contains('hotel')) return Icons.hotel;
+    if (t.contains('museum')) return Icons.museum;
+    if (t.contains('fuel') || t.contains('gas')) return Icons.local_gas_station;
+    if (t.contains('parking')) return Icons.local_parking;
+    if (t.contains('place of worship') ||
+        t.contains('church') ||
+        t.contains('mosque'))
+      return Icons.place;
+    return Icons.place;
+  }
+
+  // ─── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final bottomPanelHeight = _showNearbyPanel ? 320.0 : 0.0;
+    final infoSheetHeight = _showInfoSheet ? 160.0 : 0.0;
+    final totalBottom = bottomPanelHeight + infoSheetHeight;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // ── Map ─────────────────────────────────────────────────────────────
+          // ── Map ────────────────────────────────────────────────────────────
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -169,21 +385,60 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 userAgentPackageName: 'com.example.flutter_map_app',
                 maxNativeZoom: 19,
               ),
-              if (_userLocation != null)
-                MarkerLayer(
-                  markers: [
+              // Nearby place markers
+              MarkerLayer(
+                markers: [
+                  ..._nearbyPlaces.map((place) {
+                    final isSelected = _highlightedPlace == place;
+                    final color = _typeColor(place.type);
+                    return Marker(
+                      point: place.latLng,
+                      width: isSelected ? 52 : 36,
+                      height: isSelected ? 52 : 36,
+                      child: GestureDetector(
+                        onTap: () => _onPlaceTapped(place),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: isSelected ? 52 : 36,
+                          height: isSelected ? 52 : 36,
+                          decoration: BoxDecoration(
+                            color: isSelected ? color : color.withOpacity(0.85),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: isSelected ? 3 : 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: color.withOpacity(0.4),
+                                blurRadius: isSelected ? 12 : 6,
+                                spreadRadius: isSelected ? 2 : 0,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            _typeIcon(place.type),
+                            color: Colors.white,
+                            size: isSelected ? 26 : 18,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                  // User location marker
+                  if (_userLocation != null)
                     Marker(
                       point: _userLocation!,
                       width: 72,
                       height: 72,
                       child: const _PulsingMarker(),
                     ),
-                  ],
-                ),
+                ],
+              ),
             ],
           ),
 
-          // ── Search Bar (top) ─────────────────────────────────────────────────
+          // ── Search Bar ────────────────────────────────────────────────────
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
@@ -191,13 +446,12 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ),
           ),
 
-          // ── Right-side Controls ──────────────────────────────────────────────
+          // ── Right Controls ────────────────────────────────────────────────
           Positioned(
             right: 12,
-            bottom: _showInfoSheet ? 230 : 120,
+            bottom: totalBottom + 120,
             child: Column(
               children: [
-                // Layers button
                 _CircleButton(
                   child: const Icon(
                     Icons.layers_outlined,
@@ -208,7 +462,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   tooltip: 'Map type',
                 ),
                 const SizedBox(height: 8),
-                // Zoom in
                 _CircleButton(
                   child: const Icon(
                     Icons.add,
@@ -218,7 +471,6 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                   onTap: () => _zoom(1),
                 ),
                 const SizedBox(height: 4),
-                // Zoom out
                 _CircleButton(
                   child: const Icon(
                     Icons.remove,
@@ -231,10 +483,10 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ),
           ),
 
-          // ── My Location FAB ──────────────────────────────────────────────────
+          // ── My Location FAB ───────────────────────────────────────────────
           Positioned(
             right: 12,
-            bottom: _showInfoSheet ? 170 : 60,
+            bottom: totalBottom + 60,
             child: _MyLocationFab(
               isLoading: _isLoading,
               isLocated: _userLocation != null,
@@ -242,26 +494,18 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
             ),
           ),
 
-          // ── Bottom Info Sheet ────────────────────────────────────────────────
-          if (_showInfoSheet && _userLocation != null)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: _LocationBottomSheet(
-                location: _userLocation!,
-                onClose: () => setState(() => _showInfoSheet = false),
-                onNavigate: () {
-                  _animateTo(_userLocation!, zoom: 17);
-                },
-              ),
-            ),
+          // ── Scale bar ─────────────────────────────────────────────────────
+          Positioned(
+            left: 16,
+            bottom: totalBottom + 65,
+            child: _ScaleBar(zoom: _currentZoom),
+          ),
 
-          // ── Map style badge ─────────────────────────────────────────────────
+          // ── Map style badge ───────────────────────────────────────────────
           if (_mapStyle != 'Standard')
             Positioned(
               left: 12,
-              bottom: _showInfoSheet ? 235 : 125,
+              bottom: totalBottom + 130,
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -301,12 +545,39 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               ),
             ),
 
-          // ── Scale indicator ──────────────────────────────────────────────────
-          Positioned(
-            left: 16,
-            bottom: _showInfoSheet ? 240 : 130,
-            child: _ScaleBar(zoom: _currentZoom),
-          ),
+          // ── Info Sheet ────────────────────────────────────────────────────
+          if (_showInfoSheet && _userLocation != null)
+            Positioned(
+              bottom: bottomPanelHeight,
+              left: 0,
+              right: 0,
+              child: _LocationBottomSheet(
+                location: _userLocation!,
+                onClose: () => setState(() => _showInfoSheet = false),
+                onNavigate: () => _animateTo(_userLocation!, zoom: 17),
+              ),
+            ),
+
+          // ── Nearby Places Panel ───────────────────────────────────────────
+          if (_showNearbyPanel)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 320,
+              child: _NearbyPlacesPanel(
+                places: _nearbyPlaces,
+                loading: _loadingNearby,
+                highlighted: _highlightedPlace,
+                onPlaceTap: _onPlaceTapped,
+                onClose:
+                    () => setState(() {
+                      _showNearbyPanel = false;
+                      _highlightedPlace = null;
+                      _selectedPlace = null;
+                    }),
+              ),
+            ),
         ],
       ),
     );
@@ -324,6 +595,294 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
               Navigator.pop(context);
             },
           ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Nearby Places Panel
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _NearbyPlacesPanel extends StatelessWidget {
+  final List<NearbyPlace> places;
+  final bool loading;
+  final NearbyPlace? highlighted;
+  final ValueChanged<NearbyPlace> onPlaceTap;
+  final VoidCallback onClose;
+
+  const _NearbyPlacesPanel({
+    required this.places,
+    required this.loading,
+    required this.highlighted,
+    required this.onPlaceTap,
+    required this.onClose,
+  });
+
+  Color _typeColor(String type) {
+    final t = type.toLowerCase();
+    if (t.contains('restaurant') ||
+        t.contains('food') ||
+        t.contains('cafe') ||
+        t.contains('bar'))
+      return const Color(0xFFE67E22);
+    if (t.contains('hospital') ||
+        t.contains('pharmacy') ||
+        t.contains('clinic'))
+      return const Color(0xFFE74C3C);
+    if (t.contains('school') || t.contains('university'))
+      return const Color(0xFF9B59B6);
+    if (t.contains('bank') || t.contains('atm') || t.contains('office'))
+      return const Color(0xFF2980B9);
+    if (t.contains('shop') || t.contains('supermarket'))
+      return const Color(0xFF27AE60);
+    if (t.contains('park') || t.contains('leisure'))
+      return const Color(0xFF1ABC9C);
+    if (t.contains('hotel') || t.contains('tourism') || t.contains('museum'))
+      return const Color(0xFFF39C12);
+    return const Color(0xFF1A73E8);
+  }
+
+  IconData _typeIcon(String type) {
+    final t = type.toLowerCase();
+    if (t.contains('restaurant') || t.contains('food')) return Icons.restaurant;
+    if (t.contains('cafe') || t.contains('coffee')) return Icons.local_cafe;
+    if (t.contains('bar') || t.contains('pub')) return Icons.local_bar;
+    if (t.contains('hospital') || t.contains('clinic'))
+      return Icons.local_hospital;
+    if (t.contains('pharmacy')) return Icons.local_pharmacy;
+    if (t.contains('school') || t.contains('university')) return Icons.school;
+    if (t.contains('bank') || t.contains('atm')) return Icons.account_balance;
+    if (t.contains('shop') || t.contains('supermarket'))
+      return Icons.shopping_bag;
+    if (t.contains('park') || t.contains('garden')) return Icons.park;
+    if (t.contains('hotel')) return Icons.hotel;
+    if (t.contains('museum')) return Icons.museum;
+    if (t.contains('fuel') || t.contains('gas')) return Icons.local_gas_station;
+    if (t.contains('parking')) return Icons.local_parking;
+    return Icons.place;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 20,
+            offset: Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Handle + header
+          Container(
+            width: 36,
+            height: 4,
+            margin: const EdgeInsets.only(top: 10, bottom: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDADADA),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 8, 4),
+            child: Row(
+              children: [
+                const Icon(Icons.near_me, color: Color(0xFF1A73E8), size: 18),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Nearby (200 m)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: Color(0xFF202124),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: onClose,
+                  icon: const Icon(
+                    Icons.close,
+                    color: Color(0xFF80868B),
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+
+          // Content
+          Expanded(
+            child:
+                loading
+                    ? const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            color: Color(0xFF1A73E8),
+                            strokeWidth: 2.5,
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            'Fetching nearby places…',
+                            style: TextStyle(
+                              color: Color(0xFF80868B),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    : places.isEmpty
+                    ? const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.location_off,
+                            color: Color(0xFFDADADA),
+                            size: 40,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'No named places found within 200 m',
+                            style: TextStyle(
+                              color: Color(0xFF80868B),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    : ListView.separated(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      itemCount: places.length,
+                      separatorBuilder:
+                          (_, __) => const Divider(height: 1, indent: 68),
+                      itemBuilder: (context, i) {
+                        final place = places[i];
+                        final isSelected = highlighted == place;
+                        final color = _typeColor(place.type);
+
+                        return InkWell(
+                          onTap: () => onPlaceTap(place),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            color:
+                                isSelected
+                                    ? color.withOpacity(0.07)
+                                    : Colors.transparent,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              children: [
+                                // Icon badge
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: color.withOpacity(0.12),
+                                    shape: BoxShape.circle,
+                                    border:
+                                        isSelected
+                                            ? Border.all(color: color, width: 2)
+                                            : null,
+                                  ),
+                                  child: Icon(
+                                    _typeIcon(place.type),
+                                    color: color,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                // Details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        place.name,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                          color:
+                                              isSelected
+                                                  ? color
+                                                  : const Color(0xFF202124),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        place.type,
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w500,
+                                          color: color,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        place.address,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF80868B),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // LatLng chip
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      place.latLng.latitude.toStringAsFixed(4),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: Color(0xFFAAAAAA),
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
+                                    Text(
+                                      place.latLng.longitude.toStringAsFixed(4),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: Color(0xFFAAAAAA),
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Icon(
+                                        Icons.location_on,
+                                        color: color,
+                                        size: 14,
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -373,8 +932,8 @@ class _GoogleSearchBar extends StatelessWidget {
             width: 36,
             height: 36,
             margin: const EdgeInsets.only(right: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A73E8),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A73E8),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.person, color: Colors.white, size: 20),
@@ -386,12 +945,11 @@ class _GoogleSearchBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Pulsing user location marker
+// Pulsing marker
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PulsingMarker extends StatefulWidget {
   const _PulsingMarker();
-
   @override
   State<_PulsingMarker> createState() => _PulsingMarkerState();
 }
@@ -428,7 +986,6 @@ class _PulsingMarkerState extends State<_PulsingMarker>
           (_, __) => Stack(
             alignment: Alignment.center,
             children: [
-              // Accuracy ring pulse
               Container(
                 width: 72 * _pulse.value,
                 height: 72 * _pulse.value,
@@ -439,7 +996,6 @@ class _PulsingMarkerState extends State<_PulsingMarker>
                   ).withOpacity((1 - _pulse.value) * 0.25),
                 ),
               ),
-              // Blue accuracy circle (static)
               Container(
                 width: 36,
                 height: 36,
@@ -448,7 +1004,6 @@ class _PulsingMarkerState extends State<_PulsingMarker>
                   color: const Color(0xFF4285F4).withOpacity(0.18),
                 ),
               ),
-              // White border + blue dot
               Container(
                 width: 20,
                 height: 20,
@@ -472,7 +1027,7 @@ class _PulsingMarkerState extends State<_PulsingMarker>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Circle icon button (zoom / layers)
+// Circle Button
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CircleButton extends StatelessWidget {
@@ -510,7 +1065,7 @@ class _CircleButton extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// My Location FAB (Google-style blue when located)
+// My Location FAB
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MyLocationFab extends StatelessWidget {
@@ -568,7 +1123,7 @@ class _MyLocationFab extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Bottom sheet that appears when location is found
+// Location Bottom Sheet
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _LocationBottomSheet extends StatelessWidget {
@@ -599,7 +1154,6 @@ class _LocationBottomSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
           Container(
             width: 36,
             height: 4,
@@ -609,7 +1163,6 @@ class _LocationBottomSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 12, 0),
             child: Row(
@@ -662,10 +1215,7 @@ class _LocationBottomSheet extends StatelessWidget {
               ],
             ),
           ),
-
           const Divider(height: 20, indent: 20, endIndent: 20),
-
-          // Action buttons (Google Maps style)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: Row(
@@ -746,7 +1296,7 @@ class _SheetActionButton extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Layer Picker Bottom Sheet
+// Layer Picker
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _LayerPickerSheet extends StatelessWidget {
@@ -836,7 +1386,7 @@ class _LayerPickerSheet extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Simple Scale Bar
+// Scale Bar
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ScaleBar extends StatelessWidget {
@@ -844,9 +1394,8 @@ class _ScaleBar extends StatelessWidget {
   const _ScaleBar({required this.zoom});
 
   String _scaleLabel() {
-    // Rough scale approximation at equator
     final metersPerPx = 156543.03 / (1 << zoom.round());
-    final barMeters = metersPerPx * 60; // 60px bar
+    final barMeters = metersPerPx * 60;
     if (barMeters >= 1000) return '${(barMeters / 1000).toStringAsFixed(0)} km';
     return '${barMeters.toStringAsFixed(0)} m';
   }
