@@ -4,6 +4,7 @@ class User {
   final String mobile;
   final String? imageUrl;
   final String? farm; // optional farm name returned by profile
+  final String? username; // optional username/handle returned by profile
 
   User({
     this.id,
@@ -11,6 +12,7 @@ class User {
     required this.mobile,
     this.imageUrl,
     this.farm,
+    this.username,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class User {
       mobile: json['mobile'] ?? '',
       imageUrl: json['image_url'] ?? json['image'] ?? null,
       farm: json['farm'] ?? json['farm_name'] ?? null,
+      username: json['username'] ?? json['user_name'] ?? json['handle'] ?? null,
     );
   }
 
@@ -29,5 +32,6 @@ class User {
     'mobile': mobile,
     'image_url': imageUrl,
     'farm': farm,
+    'username': username,
   };
 }

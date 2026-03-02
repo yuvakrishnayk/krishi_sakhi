@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:krishi_sakhi/screens/create_post_screen.dart';
 import 'package:krishi_sakhi/screens/form_screen.dart';
+import 'package:krishi_sakhi/providers/auth_provider.dart';
 import 'forum_detail_screen.dart';
 import '../models/forum_models.dart';
 
@@ -1925,14 +1927,12 @@ class _CommunityCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Flexible(
-                          child: Text(
-                            item.name,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                            ),
+                        Text(
+                          item.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
                           ),
                         ),
                         if (isChannel) ...[
@@ -2034,11 +2034,36 @@ class _CommunityCard extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════════
 // TAB 4 — PROFILE
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════════════════════
 class _ProfilePage extends StatelessWidget {
   const _ProfilePage();
+
+  String _getInitials(String name) {
+    final parts = name.split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        final user = authProvider.user;
+        return _ProfileContent(user: user, getInitials: _getInitials);
+      },
+    );
+  }
+}
+
+class _ProfileContent extends StatelessWidget {
+  final dynamic user;
+  final String Function(String) getInitials;
+
+  const _ProfileContent({required this.user, required this.getInitials});
 
   @override
   Widget build(BuildContext context) {
@@ -2071,23 +2096,31 @@ class _ProfilePage extends StatelessWidget {
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 3),
                         ),
-                        child: const CircleAvatar(
+                        child: CircleAvatar(
                           radius: 48,
-                          backgroundColor: Color(0xFF1B5E20),
-                          child: Text(
-                            'KS',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 30,
-                            ),
-                          ),
+                          backgroundColor: const Color(0xFF1B5E20),
+                          backgroundImage:
+                              user?.imageUrl != null &&
+                                      user!.imageUrl!.isNotEmpty
+                                  ? NetworkImage(user.imageUrl!)
+                                  : null,
+                          child:
+                              user?.imageUrl == null || user!.imageUrl!.isEmpty
+                                  ? Text(
+                                    getInitials(user?.name ?? 'KS'),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 30,
+                                    ),
+                                  )
+                                  : null,
                         ),
                       ),
                       const SizedBox(height: 14),
-                      const Text(
-                        'Krishi Sakhi User',
-                        style: TextStyle(
+                      Text(
+                        user?.name ?? 'Krishi Sakhi User',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
                           fontSize: 22,
@@ -2095,7 +2128,7 @@ class _ProfilePage extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '@krishisakhi • Organic Farmer',
+                        '@${user?.username ?? 'krishisakhi'} • Organic Farmer',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.8),
                           fontSize: 14,

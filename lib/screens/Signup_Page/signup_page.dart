@@ -16,11 +16,13 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _mobileController = TextEditingController();
   final _pinController = TextEditingController();
   final _confirmPinController = TextEditingController();
 
   final _nameFocusNode = FocusNode();
+  final _usernameFocusNode = FocusNode();
   final _mobileFocusNode = FocusNode();
   final _pinFocusNode = FocusNode();
   final _confirmPinFocusNode = FocusNode();
@@ -77,6 +79,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
 
     for (final node in [
       _nameFocusNode,
+      _usernameFocusNode,
       _mobileFocusNode,
       _pinFocusNode,
       _confirmPinFocusNode,
@@ -88,10 +91,12 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _nameController.dispose();
+    _usernameController.dispose();
     _mobileController.dispose();
     _pinController.dispose();
     _confirmPinController.dispose();
     _nameFocusNode.dispose();
+    _usernameFocusNode.dispose();
     _mobileFocusNode.dispose();
     _pinFocusNode.dispose();
     _confirmPinFocusNode.dispose();
@@ -130,6 +135,18 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
     }
     if (_nameController.text.length < 3) {
       _showError('Name must be at least 3 characters');
+      return;
+    }
+    if (_usernameController.text.isEmpty) {
+      _showError('Please choose a username');
+      return;
+    }
+    if (_usernameController.text.length < 3) {
+      _showError('Username must be at least 3 characters');
+      return;
+    }
+    if (_usernameController.text.contains(' ')) {
+      _showError('Username cannot contain spaces');
       return;
     }
     if (_mobileController.text.isEmpty) {
@@ -289,8 +306,8 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Keep this false to prevent the background from squeezing when keyboard opens
-      resizeToAvoidBottomInset: false,
+      // Allow resize when keyboard opens to avoid overflow
+      resizeToAvoidBottomInset: true,
       backgroundColor: const Color(0xFF1B5E20),
       body: Container(
         decoration: const BoxDecoration(
@@ -377,12 +394,17 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
             SafeArea(
               child: FadeTransition(
                 opacity: _fadeController,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24.0,
+                    vertical: 20.0,
+                  ),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Spacer(flex: 1),
+                      const SizedBox(height: 24),
 
                       // Header Section
                       SlideTransition(
@@ -438,7 +460,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                         ),
                       ),
 
-                      const Spacer(flex: 1),
+                      const SizedBox(height: 20),
 
                       // Form Card
                       SlideTransition(
@@ -538,6 +560,17 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                                 label: 'FULL NAME',
                                 hint: 'Enter your full name',
                                 icon: Icons.person_outline_rounded,
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Username Field
+                              _buildInputField(
+                                controller: _usernameController,
+                                focusNode: _usernameFocusNode,
+                                label: 'USERNAME',
+                                hint: 'Choose a username',
+                                icon: Icons.alternate_email_rounded,
+                                keyboardType: TextInputType.text,
                               ),
                               const SizedBox(height: 16),
 
@@ -664,7 +697,7 @@ class _SignupPageState extends State<SignupPage> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-                      const Spacer(flex: 2),
+                      const SizedBox(height: 32),
                     ],
                   ),
                 ),

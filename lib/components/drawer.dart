@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
 import 'package:krishi_sakhi/screens/chatbot_screen.dart';
 import 'package:krishi_sakhi/screens/courses_screen.dart';
 import 'package:krishi_sakhi/screens/forum_screen.dart';
 import 'package:krishi_sakhi/screens/home_screen.dart';
 import 'package:krishi_sakhi/screens/settings_screen.dart';
+import 'package:krishi_sakhi/providers/auth_provider.dart';
+import 'package:krishi_sakhi/auth/auth_repository.dart';
+import 'package:krishi_sakhi/auth/auth_service.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
@@ -76,7 +80,20 @@ class CustomDrawer extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ForumScreen(),
+                              builder:
+                                  (context) => MultiProvider(
+                                    providers: [
+                                      ChangeNotifierProvider(
+                                        create:
+                                            (_) => AuthProvider(
+                                              repository: AuthRepository(
+                                                service: AuthService(),
+                                              ),
+                                            ),
+                                      ),
+                                    ],
+                                    child: const ForumScreen(),
+                                  ),
                             ),
                           );
                         },
