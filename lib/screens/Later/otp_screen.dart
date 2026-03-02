@@ -8,8 +8,11 @@ class OtpVerificationScreen extends StatefulWidget {
   final String countryCode;
 
   /// Callback that performs the actual OTP verification.
-  /// Should return `true` if the OTP was accepted, `false` otherwise.
-  final Future<bool> Function(String code) verifyCallback;
+  /// Can return either a `bool` or a non-null result object.
+  /// - If a `bool` is returned, `true` means accepted, `false` means rejected.
+  /// - If a non-bool non-null object is returned, it is treated as success
+  ///   and the object will be printed and returned to the caller via `pop()`.
+  final Future<Object?> Function(String code) verifyCallback;
 
   /// Optional callback used when the user requests a resend.  The screen
   /// will still perform the timer/reset logic; this allows the caller to
@@ -131,9 +134,15 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     }
 
     setState(() => _isLoading = true);
+    Object? result;
     bool success = false;
     try {
-      success = await widget.verifyCallback(otp);
+      result = await widget.verifyCallback(otp);
+      if (result is bool) {
+        success = result;
+      } else {
+        success = result != null;
+      }
     } catch (e) {
       success = false;
     }
@@ -147,6 +156,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
         c.clear();
       }
       _otpFocusNodes[0].requestFocus();
+      return;
+    }
+
+    // On success: if the verifier returned a non-bool result, print it
+    // and return it to the caller. Otherwise behave as before.
+    if (result != null && result is! bool) {
+      try {
+        print('OTP verified data: $result');
+      } catch (_) {}
+      _showSuccess('OTP verified — data printed to console.');
+      Navigator.of(context).pop(result);
       return;
     }
 

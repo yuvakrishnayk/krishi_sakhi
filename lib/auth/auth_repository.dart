@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -84,6 +85,10 @@ class AuthRepository {
       if (body is Map<String, dynamic> && body['data'] != null) {
         final token = body['data'].toString();
         await _storage.write(key: _tokenKey, value: token);
+        // Print bearer token to console for debugging
+        // NOTE: Remove this in production to avoid leaking sensitive tokens
+        // Use debugPrint which is safe for large outputs and respects debug mode
+        debugPrint('Bearer token: $token');
         // optionally fetch profile
         try {
           final profileRes = await service.getProfile(token: token);
