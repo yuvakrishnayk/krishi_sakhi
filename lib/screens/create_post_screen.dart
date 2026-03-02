@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:krishi_sakhi/posts/post_repository.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -19,7 +20,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   File? _selectedMedia;
   Uint8List? _webImage;
   bool _isVideo = false;
+  bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
+  final PostRepository _postRepository = PostRepository();
 
   final List<String> _popularTags = [
     'Irrigation',
@@ -650,107 +653,326 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: _createPost,
+        onPressed: _isLoading ? null : _createPost,
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF2E7D32),
           foregroundColor: Colors.white,
+          disabledBackgroundColor: Color(0xFF81C784),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           elevation: 8,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.publish, size: 24),
-            SizedBox(width: 12),
-            Flexible(
-              child: Text(
-                'Create Post',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
+        child:
+            _isLoading
+                ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Publishing...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                )
+                : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.publish, size: 24),
+                    SizedBox(width: 12),
+                    Flexible(
+                      child: Text(
+                        'Create Post',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
       ),
     );
   }
 
-  void _createPost() {
-    if (_formKey.currentState!.validate()) {
-      // Show success dialog
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Row(
+  Future<void> _createPost() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    // Image is required by the API
+    if (_selectedMedia == null && _webImage == null) {
+      _showErrorSnackBar('Please select an image before publishing.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final result = await _postRepository.createPost(
+      title: _titleController.text.trim(),
+      tags: _selectedTags.isNotEmpty ? List<String>.from(_selectedTags) : null,
+      description:
+          _descriptionController.text.trim().isNotEmpty
+              ? _descriptionController.text.trim()
+              : null,
+      imageFile: _selectedMedia,
+      imageBytes: _webImage,
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result.success) {
+      _showSuccessDialog();
+    } else {
+      _showApiErrorDialog(result.message);
+    }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentPadding: EdgeInsets.zero,
+          content: Container(
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 28),
-                SizedBox(width: 8),
-                Flexible(child: Text('Success!')),
+                // Green header banner
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 28),
+                  decoration: BoxDecoration(
+                    color: Color(0xFF2E7D32),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.check_rounded,
+                          color: Color(0xFF2E7D32),
+                          size: 40,
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        'Post Published!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Body
+                Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Your agricultural post has been shared with the community!',
+                        style: TextStyle(fontSize: 15, color: Colors.black87),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 16),
+                      _infoRow(Icons.title, 'Title', _titleController.text),
+                      if (_selectedTags.isNotEmpty)
+                        _infoRow(
+                          Icons.label_outline,
+                          'Tags',
+                          _selectedTags.join(', '),
+                        ),
+                      if (_selectedMedia != null || _webImage != null)
+                        _infoRow(
+                          _isVideo ? Icons.videocam : Icons.image,
+                          'Media',
+                          _isVideo ? 'Video attached' : 'Image attached',
+                        ),
+                    ],
+                  ),
+                ),
+                // Action button
+                Padding(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        _resetForm();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF2E7D32),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Great!',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
-            content: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.6,
-                maxWidth: MediaQuery.of(context).size.width * 0.9,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: Color(0xFF2E7D32)),
+          SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+                children: [
+                  TextSpan(
+                    text: '$label: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: value),
+                ],
               ),
-              child: SingleChildScrollView(
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showApiErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentPadding: EdgeInsets.zero,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Red header banner
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 24),
+                decoration: BoxDecoration(
+                  color: Color(0xFFC62828),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Your agricultural post has been created successfully!',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      'Title: ${_titleController.text}',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                    ),
-                    if (_selectedTags.isNotEmpty) ...[
-                      SizedBox(height: 8),
-                      Text(
-                        'Tags: ${_selectedTags.join(", ")}',
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 3,
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
                       ),
-                    ],
-                    if (_selectedMedia != null || _webImage != null) ...[
-                      SizedBox(height: 8),
-                      Text(
-                        'Media: ${_isVideo ? "Video" : "Image"} attached',
-                        overflow: TextOverflow.ellipsis,
+                      child: Icon(
+                        Icons.error_outline_rounded,
+                        color: Color(0xFFC62828),
+                        size: 38,
                       ),
-                    ],
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Failed to Publish',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
-            actions: [
-              Container(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _resetForm();
-                  },
-                  child: Text('OK', style: TextStyle(color: Color(0xFF2E7D32))),
+              Padding(
+                padding: EdgeInsets.all(20),
+                child: Text(
+                  message,
+                  style: TextStyle(fontSize: 15, color: Colors.black87),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFFC62828),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Try Again',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
-          );
-        },
-      );
-    }
+          ),
+        );
+      },
+    );
   }
 
   void _resetForm() {
