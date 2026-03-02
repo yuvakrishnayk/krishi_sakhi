@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../models/forum_models.dart';
 
 class ForumDetailScreen extends StatefulWidget {
   final PostData post;
@@ -28,6 +29,7 @@ class _ForumDetailScreenState extends State<ForumDetailScreen> {
   @override
   void initState() {
     super.initState();
+    isLiked = widget.post.isLiked;
     isBookmarked = widget.post.isBookmarked;
     likeCount = widget.post.likes;
     _initializeComments();
@@ -470,50 +472,4 @@ What sustainable practices have you found most effective?''';
       SnackBar(content: Text('Comment added!'), duration: Duration(seconds: 1)),
     );
   }
-}
-
-// Simplified data models
-class CommentData {
-  final String id;
-  final String author;
-  final String content;
-  final String timeAgo;
-  final int likes;
-  final bool isExpert;
-
-  CommentData({
-    required this.id,
-    required this.author,
-    required this.content,
-    required this.timeAgo,
-    required this.likes,
-    required this.isExpert,
-  });
-}
-
-class PostData {
-  final String id;
-  final String title;
-  final String author;
-  final String timeAgo;
-  final String category;
-  final int likes;
-  final int comments;
-  bool isBookmarked;
-  final String imageUrl;
-  final IconData icon;
-
-  PostData({
-    required this.id,
-    required this.title,
-    required this.author,
-    required this.timeAgo,
-    required this.category,
-    required this.likes,
-    required this.comments,
-    required this.isBookmarked,
-    this.imageUrl = '',
-    required this.icon,
-    required LinearGradient gradient,
-  });
 }

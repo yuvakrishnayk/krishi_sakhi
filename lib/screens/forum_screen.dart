@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'forum_detail_screen.dart';
+import '../models/forum_models.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // THEME CONSTANTS
@@ -17,37 +19,6 @@ const Color kDivider = Color(0xFFE0E0E0);
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA MODELS
 // ─────────────────────────────────────────────────────────────────────────────
-class PostData {
-  final String id;
-  final String title;
-  final String author;
-  final String timeAgo;
-  final String category;
-  int likes;
-  final int comments;
-  bool isBookmarked;
-  bool isLiked;
-  final String imageUrl;
-  final IconData icon;
-  final String description;
-  final String avatarUrl;
-
-  PostData({
-    required this.id,
-    required this.title,
-    required this.author,
-    required this.timeAgo,
-    required this.category,
-    required this.likes,
-    required this.comments,
-    this.isBookmarked = false,
-    this.isLiked = false,
-    this.imageUrl = '',
-    required this.icon,
-    this.description = '',
-    this.avatarUrl = '',
-  });
-}
 
 class ChatMessage {
   final String id;
@@ -773,189 +744,201 @@ class _PostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasImg = post.imageUrl.isNotEmpty;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: kCard,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: _avatarColorFor(post.author),
-                  child: Text(
-                    post.author[0].toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+    return GestureDetector(
+      onTap: () => _navigateToDetail(context),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: kCard,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: _avatarColorFor(post.author),
+                    child: Text(
+                      post.author[0].toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        post.author,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          post.author,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Text(
-                            post.timeAgo,
-                            style: TextStyle(
-                              color: kTextSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            width: 4,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: kTextSecondary,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: kPrimary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              post.category,
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Text(
+                              post.timeAgo,
                               style: TextStyle(
-                                color: kPrimary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                                color: kTextSecondary,
+                                fontSize: 12,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            const SizedBox(width: 6),
+                            Container(
+                              width: 4,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: kTextSecondary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: kPrimary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                post.category,
+                                style: TextStyle(
+                                  color: kPrimary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    post.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                    color: post.isBookmarked ? kPrimary : kTextSecondary,
+                  IconButton(
+                    icon: Icon(
+                      post.isBookmarked
+                          ? Icons.bookmark
+                          : Icons.bookmark_border,
+                      color: post.isBookmarked ? kPrimary : kTextSecondary,
+                    ),
+                    onPressed: onBookmark,
                   ),
-                  onPressed: onBookmark,
-                ),
-              ],
-            ),
-          ),
-
-          // Title & description
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-            child: Text(
-              post.title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                height: 1.3,
+                ],
               ),
             ),
-          ),
-          if (post.description.isNotEmpty)
+
+            // Title & description
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
               child: Text(
-                post.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: kTextSecondary,
-                  fontSize: 13,
-                  height: 1.4,
+                post.title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
                 ),
               ),
             ),
+            if (post.description.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+                child: Text(
+                  post.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: kTextSecondary,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ),
 
-          // Image
-          if (hasImg)
+            // Image
+            if (hasImg)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.network(
+                    post.imageUrl,
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (_, child, progress) {
+                      if (progress == null) return child;
+                      return Container(
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Center(
+                          child: CircularProgressIndicator(color: kPrimary),
+                        ),
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+
+            // Actions
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: Image.network(
-                  post.imageUrl,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (_, child, progress) {
-                    if (progress == null) return child;
-                    return Container(
-                      height: 180,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Center(
-                        child: CircularProgressIndicator(color: kPrimary),
-                      ),
-                    );
-                  },
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                ),
+              padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
+              child: Row(
+                children: [
+                  _ActionBtn(
+                    icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
+                    label: post.likes.toString(),
+                    color: post.isLiked ? Colors.red : kTextSecondary,
+                    onTap: onLike,
+                  ),
+                  _ActionBtn(
+                    icon: Icons.chat_bubble_outline,
+                    label: post.comments.toString(),
+                    onTap: () {},
+                  ),
+                  _ActionBtn(
+                    icon: Icons.share_outlined,
+                    label: 'Share',
+                    onTap: () {},
+                  ),
+                  const Spacer(),
+                  _ActionBtn(icon: Icons.more_horiz, label: '', onTap: () {}),
+                ],
               ),
             ),
-
-          // Actions
-          Padding(
-            padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
-            child: Row(
-              children: [
-                _ActionBtn(
-                  icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
-                  label: post.likes.toString(),
-                  color: post.isLiked ? Colors.red : kTextSecondary,
-                  onTap: onLike,
-                ),
-                _ActionBtn(
-                  icon: Icons.chat_bubble_outline,
-                  label: post.comments.toString(),
-                  onTap: () {},
-                ),
-                _ActionBtn(
-                  icon: Icons.share_outlined,
-                  label: 'Share',
-                  onTap: () {},
-                ),
-                const Spacer(),
-                _ActionBtn(icon: Icons.more_horiz, label: '', onTap: () {}),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  void _navigateToDetail(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ForumDetailScreen(post: post)),
     );
   }
 }
