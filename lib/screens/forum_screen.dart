@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:krishi_sakhi/screens/create_post_screen.dart';
+import 'package:krishi_sakhi/screens/form_screen.dart';
 import 'forum_detail_screen.dart';
 import '../models/forum_models.dart';
 
@@ -683,11 +685,19 @@ class _FeedPageState extends State<_FeedPage> {
   }
 
   void _showCreatePost(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => const _CreatePostSheet(),
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder: (_, __, ___) => const CreatePostScreen(),
+        transitionsBuilder: (_, anim, __, child) {
+          return SlideTransition(
+            position: Tween(begin: const Offset(0, 1), end: Offset.zero)
+                .animate(anim),
+            child: child,
+          );
+        },
+      ),
     );
   }
 }
