@@ -576,35 +576,67 @@ class _FeedPageState extends State<_FeedPage> {
           // Search
           Container(
             color: kPrimary,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Container(
-              height: 46,
+              height: 50,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(14),
+                color: Colors.white.withOpacity(0.95),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: TextField(
                 controller: _searchCtrl,
                 onChanged: _filter,
-                style: const TextStyle(color: Colors.white, fontSize: 15),
+                style: const TextStyle(
+                  color: kTextPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Search posts, topics...',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
-                  prefixIcon:
+                  hintStyle: TextStyle(
+                    color: kTextSecondary.withOpacity(0.6),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.only(left: 14),
+                    child: Icon(
+                      Icons.search_rounded,
+                      color:
+                          _searching
+                              ? kPrimary
+                              : kTextSecondary.withOpacity(0.5),
+                      size: 22,
+                    ),
+                  ),
+                  suffixIcon:
                       _searching
-                          ? IconButton(
-                            icon: const Icon(Icons.close, color: Colors.white),
-                            onPressed: () {
+                          ? GestureDetector(
+                            onTap: () {
                               _searchCtrl.clear();
                               _filter('');
                             },
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Icon(
+                                Icons.close_rounded,
+                                color: kPrimary,
+                                size: 20,
+                              ),
+                            ),
                           )
-                          : Icon(
-                            Icons.search,
-                            color: Colors.white.withOpacity(0.7),
-                          ),
+                          : null,
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 4,
+                  ),
                 ),
               ),
             ),
@@ -692,8 +724,10 @@ class _FeedPageState extends State<_FeedPage> {
         pageBuilder: (_, __, ___) => const CreatePostScreen(),
         transitionsBuilder: (_, anim, __, child) {
           return SlideTransition(
-            position: Tween(begin: const Offset(0, 1), end: Offset.zero)
-                .animate(anim),
+            position: Tween(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(anim),
             child: child,
           );
         },
@@ -1241,26 +1275,67 @@ class _ChatPageState extends State<_ChatPage> {
           // Search
           Container(
             color: kPrimary,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Container(
-              height: 44,
+              height: 48,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(14),
+                color: Colors.white.withOpacity(0.95),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: TextField(
                 controller: _searchCtrl,
                 onChanged: _filter,
-                style: const TextStyle(color: Colors.white, fontSize: 15),
+                style: const TextStyle(
+                  color: kTextPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Search conversations...',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.6)),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Colors.white.withOpacity(0.7),
+                  hintStyle: TextStyle(
+                    color: kTextSecondary.withOpacity(0.6),
+                    fontWeight: FontWeight.w500,
                   ),
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.only(left: 14),
+                    child: Icon(
+                      Icons.search_rounded,
+                      color:
+                          _searching
+                              ? kPrimary
+                              : kTextSecondary.withOpacity(0.5),
+                      size: 22,
+                    ),
+                  ),
+                  suffixIcon:
+                      _searching
+                          ? GestureDetector(
+                            onTap: () {
+                              _searchCtrl.clear();
+                              _filter('');
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Icon(
+                                Icons.close_rounded,
+                                color: kPrimary,
+                                size: 20,
+                              ),
+                            ),
+                          )
+                          : null,
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 4,
+                  ),
                 ),
               ),
             ),
