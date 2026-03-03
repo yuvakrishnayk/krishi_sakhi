@@ -18,14 +18,7 @@ void main() => runApp(
 // Enums & Models
 // ─────────────────────────────────────────────────────────────────────────────
 
-enum AppFlow {
-  idle, // Initial state — waiting for location
-  scanning, // Fetching nearby land
-  selectLand, // Showing land selection panel
-  navigating, // Navigated to selected land
-  drawing, // Drawing boundary on the land
-  done, // Boundary saved
-}
+enum AppFlow { idle, scanning, selectLand, navigating, drawing, done }
 
 enum DrawMode { none, auto, manual, freehand }
 
@@ -109,7 +102,6 @@ String distanceStr(LatLng a, LatLng b) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class MapScreen extends StatefulWidget {
-  // FIX: All optional named params properly typed and nullable
   final LatLng? initialLocation;
   final double? initialAcres;
   final bool enableDrawing;
@@ -130,7 +122,6 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   final MapController _mapController = MapController();
 
-  // App state
   AppFlow _flow = AppFlow.idle;
   LatLng _center = const LatLng(20.5937, 78.9629);
   LatLng? _userLocation;
@@ -139,38 +130,44 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   bool _isFetchingLand = false;
   String _mapStyle = 'Standard';
 
-  // Land parcels
   List<LandParcel> _landParcels = [];
   LandParcel? _selectedLand;
   LandParcel? _highlightedLand;
 
-  // Drawing
   DrawMode _drawMode = DrawMode.none;
   List<LatLng> _polygonPoints = [];
   bool _isDrawing = false;
   List<Offset> _freehandOffsets = [];
 
-  // Saved boundary
   List<LatLng>? _savedPolygon;
   double? _savedAreaAcres;
 
-  // Acres target (for auto-draw)
   double _targetAcres = 1.0;
 
-  // Custom markers
   List<_CustomMarker> _customMarkers = [];
-  // FIX: Removed unused _selectedMarker field
   bool _addMarkerMode = false;
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // FIX: All tile URLs use free, no-key-required providers
+  //   Standard  → OpenStreetMap (the original, works everywhere)
+  //   Satellite → Esri World Imagery (free, no API key)
+  //   Terrain   → Esri World Topo Map (free, no API key)
+  //   Hybrid    → Esri World Imagery + OSM labels overlay
+  // ─────────────────────────────────────────────────────────────────────────
   static const Map<String, String> _tileUrls = {
     'Standard': 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    'Satellite': 'https://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}',
-    'Terrain': 'https://mt0.google.com/vt/lyrs=p&hl=en&x={x}&y={y}&z={z}',
-    'Hybrid': 'https://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}',
+    'Satellite':
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    'Terrain':
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    'Hybrid':
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
   };
 
-  // ─── Initialise from widget params ────────────────────────────────────────
-  // FIX: Actually use the widget's optional parameters
+  // Optional overlay for Hybrid mode: OSM labels on top of Esri satellite
+  static const String _hybridOverlayUrl =
+      'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
   @override
   void initState() {
     super.initState();
@@ -488,7 +485,6 @@ out center 80;
     });
   }
 
-  // Douglas-Peucker simplification for freehand paths
   List<LatLng> _simplify(List<LatLng> points, double epsilon) {
     if (points.length < 3) return points;
     double dmax = 0;
@@ -613,7 +609,6 @@ out center 80;
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        // FIX: withOpacity replaced with withValues for newer Flutter
                         color: marker.color.withOpacity(0.12),
                         shape: BoxShape.circle,
                       ),
@@ -700,7 +695,6 @@ out center 80;
     );
   }
 
-  // FIX: Made async/await consistent — method is async, all call sites use await
   Future<void> _showAddMarkerDialog(BuildContext context, LatLng latLng) async {
     final labelCtrl = TextEditingController();
     final noteCtrl = TextEditingController();
@@ -769,7 +763,6 @@ out center 80;
             ],
           ),
     );
-    // Dispose controllers after dialog closes
     labelCtrl.dispose();
     noteCtrl.dispose();
   }
@@ -798,8 +791,6 @@ out center 80;
     return Icons.terrain;
   }
 
-  // ─── Getter for current polygon area ─────────────────────────────────────
-  // FIX: Renamed getter to avoid confusion with the top-level function
   double get _currentPolygonAreaAcres =>
       _polygonPoints.length >= 3 ? polygonAreaAcres(_polygonPoints) : 0;
 
@@ -807,10 +798,8 @@ out center 80;
 
   @override
   Widget build(BuildContext context) {
-    // FIX: Use the renamed getter consistently
     final double currentAreaAcres = _currentPolygonAreaAcres;
 
-    // Calculate bottom panel height based on flow
     double bottomPanelH = 0;
     if (_flow == AppFlow.selectLand) bottomPanelH = 340;
     if (_flow == AppFlow.navigating) bottomPanelH = 220;
@@ -829,7 +818,6 @@ out center 80;
               initialCenter: _center,
               initialZoom: _zoom,
               onTap: (tapPos, latLng) async {
-                // FIX: onTap is async to properly await _showAddMarkerDialog
                 if (_addMarkerMode) {
                   await _showAddMarkerDialog(context, latLng);
                 } else if (_isDrawing && _drawMode == DrawMode.manual) {
@@ -837,7 +825,6 @@ out center 80;
                 }
               },
               onLongPress: (tapPos, latLng) async {
-                // FIX: await the async dialog
                 if (!_isDrawing) {
                   await _showAddMarkerDialog(context, latLng);
                 }
@@ -855,11 +842,24 @@ out center 80;
               ),
             ),
             children: [
+              // ── Base tile layer ─────────────────────────────────────────
               TileLayer(
                 urlTemplate: _tileUrls[_mapStyle]!,
                 userAgentPackageName: 'com.example.krishi_sakhi',
                 maxNativeZoom: 19,
+                // Esri tiles use {z}/{y}/{x} order — already handled in the URL string above
               ),
+
+              // ── Hybrid label overlay (OSM on top of Esri satellite) ──────
+              if (_mapStyle == 'Hybrid')
+                Opacity(
+                  opacity: 0.45,
+                  child: TileLayer(
+                    urlTemplate: _hybridOverlayUrl,
+                    userAgentPackageName: 'com.example.krishi_sakhi',
+                    maxNativeZoom: 19,
+                  ),
+                ),
 
               // Saved polygon (green solid)
               if (_savedPolygon != null && _savedPolygon!.length >= 3)
@@ -1251,22 +1251,17 @@ out center 80;
           ),
 
           // ── Flow Panels ───────────────────────────────────────────────────────
-
-          // IDLE
           if (_flow == AppFlow.idle)
             _IdleOverlay(isLocating: _isLocating, onLocate: _getLocation),
 
-          // SCANNING
           if (_flow == AppFlow.scanning)
             const Positioned(
               bottom: 0,
               left: 0,
               right: 0,
-              // FIX: _ScanningPanel is now const-constructible
               child: _ScanningPanel(),
             ),
 
-          // SELECT LAND
           if (_flow == AppFlow.selectLand)
             Positioned(
               bottom: 0,
@@ -1293,7 +1288,6 @@ out center 80;
               ),
             ),
 
-          // NAVIGATING
           if (_flow == AppFlow.navigating)
             Positioned(
               bottom: 0,
@@ -1316,7 +1310,6 @@ out center 80;
               ),
             ),
 
-          // DRAWING
           if (_flow == AppFlow.drawing)
             Positioned(
               bottom: 0,
@@ -1334,7 +1327,6 @@ out center 80;
               ),
             ),
 
-          // DONE
           if (_flow == AppFlow.done)
             Positioned(
               bottom: 0,
@@ -1484,7 +1476,6 @@ class _IdleOverlay extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Scanning Panel
-// FIX: Added const constructor so it can be used as const widget
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ScanningPanel extends StatelessWidget {
@@ -2743,6 +2734,8 @@ class _TopBar extends StatelessWidget {
                         ? Icons.satellite_alt
                         : mapStyle == 'Terrain'
                         ? Icons.terrain
+                        : mapStyle == 'Hybrid'
+                        ? Icons.layers
                         : Icons.map_outlined,
                     size: 14,
                     color: const Color(0xFF444444),
@@ -2856,7 +2849,6 @@ class _TopBar extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared small widgets
-// FIX: Added const constructors to _DragHandle, _CircleButton, _MyLocationFab
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _DragHandle extends StatelessWidget {
