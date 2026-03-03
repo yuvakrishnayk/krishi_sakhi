@@ -106,6 +106,7 @@ class MapScreen extends StatefulWidget {
   final double? initialAcres;
   final bool enableDrawing;
   final List<LatLng>? initialPolygon;
+  final bool editMode;
 
   const MapScreen({
     super.key,
@@ -113,6 +114,7 @@ class MapScreen extends StatefulWidget {
     this.initialAcres,
     required this.enableDrawing,
     this.initialPolygon,
+    this.editMode = false,
   });
 
   @override
@@ -146,6 +148,7 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
 
   List<_CustomMarker> _customMarkers = [];
   bool _addMarkerMode = false;
+  bool _isEditMode = false;
 
   // ─────────────────────────────────────────────────────────────────────────
   // FIX: All tile URLs use free, no-key-required providers
@@ -180,10 +183,31 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       _targetAcres = widget.initialAcres!;
     }
     if (widget.initialPolygon != null && widget.initialPolygon!.length >= 3) {
-      _savedPolygon = widget.initialPolygon;
-      _savedAreaAcres = polygonAreaAcres(widget.initialPolygon!);
-      _flow = AppFlow.done;
+      if (widget.editMode) {
+        // Edit mode: Load polygon for editing
+        _polygonPoints = List.from(widget.initialPolygon!);
+        _isDrawing = true;
+        _drawMode = DrawMode.manual;
+        _flow = AppFlow.drawing;
+        _isEditMode = true;
+        // Center on polygon
+        _center = _getPolygonCenter(widget.initialPolygon!);
+        _zoom = 17.0;
+      } else {
+        _savedPolygon = widget.initialPolygon;
+        _savedAreaAcres = polygonAreaAcres(widget.initialPolygon!);
+        _flow = AppFlow.done;
+      }
     }
+  }
+
+  LatLng _getPolygonCenter(List<LatLng> points) {
+    double latSum = 0, lngSum = 0;
+    for (final p in points) {
+      latSum += p.latitude;
+      lngSum += p.longitude;
+    }
+    return LatLng(latSum / points.length, lngSum / points.length);
   }
 
   // ─── Animation ────────────────────────────────────────────────────────────
@@ -535,6 +559,11 @@ out center 80;
   }
 
   void _clearDraw() {
+    if (_isEditMode) {
+      // In edit mode, go back to form without saving
+      Navigator.pop(context);
+      return;
+    }
     setState(() {
       _polygonPoints = [];
       _isDrawing = false;
@@ -1327,7 +1356,29 @@ out center 80;
               ),
             ),
 
-          if (_flow == AppFlow.done)
+          if (_flow == AppFlow.done && _isEditMode)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _EditDonePanel(
+                areaAcres: _savedAreaAcres ?? 0,
+                pointCount: _savedPolygon?.length ?? 0,
+                onRedraw: () {
+                  setState(() {
+                    _savedPolygon = null;
+                    _polygonPoints = List.from(widget.initialPolygon ?? []);
+                    _isDrawing = true;
+                    _drawMode = DrawMode.manual;
+                    _flow = AppFlow.drawing;
+                  });
+                },
+                onCancel: () => Navigator.pop(context),
+                onUseInForm: _returnToForm,
+              ),
+            ),
+
+          if (_flow == AppFlow.done && !_isEditMode)
             Positioned(
               bottom: 0,
               left: 0,
@@ -2571,6 +2622,222 @@ class _DonePanel extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: const Text(
                 'Map Another Land',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF80868B),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Edit Done Panel (for edit mode from form)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _EditDonePanel extends StatelessWidget {
+  final double areaAcres;
+  final int pointCount;
+  final VoidCallback onRedraw;
+  final VoidCallback onCancel;
+  final VoidCallback onUseInForm;
+
+  const _EditDonePanel({
+    required this.areaAcres,
+    required this.pointCount,
+    required this.onRedraw,
+    required this.onCancel,
+    required this.onUseInForm,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 36),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 20,
+            offset: Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const _DragHandle(),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2E7D32).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check_circle,
+                  color: Color(0xFF2E7D32),
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Boundary Updated!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1B5E20),
+                      ),
+                    ),
+                    Text(
+                      'Your farm boundary has been modified',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF80868B)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2E7D32).withOpacity(0.06),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: const Color(0xFF2E7D32).withOpacity(0.15),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _StatChip(
+                    label: 'Area',
+                    value: '${areaAcres.toStringAsFixed(2)} ac',
+                    icon: Icons.crop_landscape,
+                    color: const Color(0xFF2E7D32),
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: const Color(0xFF2E7D32).withOpacity(0.2),
+                ),
+                Expanded(
+                  child: _StatChip(
+                    label: 'Points',
+                    value: '$pointCount',
+                    icon: Icons.place,
+                    color: const Color(0xFF2E7D32),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: onRedraw,
+                  child: Container(
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(23),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: const Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.refresh,
+                            size: 16,
+                            color: Color(0xFF444444),
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Redraw',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF444444),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 2,
+                child: GestureDetector(
+                  onTap: onUseInForm,
+                  child: Container(
+                    height: 46,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1B5E20), Color(0xFF388E3C)],
+                      ),
+                      borderRadius: BorderRadius.circular(23),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF2E7D32).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.assignment_turned_in_outlined,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Save Changes',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          GestureDetector(
+            onTap: onCancel,
+            child: Container(
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: const Text(
+                'Cancel',
                 style: TextStyle(
                   fontSize: 12,
                   color: Color(0xFF80868B),

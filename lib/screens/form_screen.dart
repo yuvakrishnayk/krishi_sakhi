@@ -895,6 +895,7 @@ class _FormScreensState extends State<FormScreens>
   Future<void> _openMapForDrawing() async {
     final acresText = _acresController.text;
     final acres = double.tryParse(acresText);
+    final hasExistingPolygon = _polygonPoints.length >= 3;
 
     final result = await Navigator.push<List<LatLng>>(
       context,
@@ -905,6 +906,7 @@ class _FormScreensState extends State<FormScreens>
               initialAcres: acres,
               initialPolygon: _polygonPoints.isNotEmpty ? _polygonPoints : null,
               enableDrawing: true,
+              editMode: hasExistingPolygon,
             ),
       ),
     );
