@@ -14,11 +14,23 @@ const Color kPrimary = Color(0xFF2E7D32);
 const Color kPrimaryDark = Color(0xFF1B5E20);
 const Color kPrimaryLight = Color(0xFF81C784);
 const Color kAccent = Color(0xFF66BB6A);
-const Color kBg = Color(0xFFF6F7FB);
+const Color kBg = Color(0xFFF5F7FA);
 const Color kCard = Colors.white;
-const Color kTextPrimary = Color(0xFF212121);
-const Color kTextSecondary = Color(0xFF757575);
-const Color kDivider = Color(0xFFE0E0E0);
+const Color kTextPrimary = Color(0xFF1A1A2E);
+const Color kTextSecondary = Color(0xFF6B7280);
+const Color kDivider = Color(0xFFE5E7EB);
+const Color kSurface = Color(0xFFFFFFFF);
+const Color kOnlineGreen = Color(0xFF22C55E);
+const Color kLikeRed = Color(0xFFEF4444);
+const Color kWarning = Color(0xFFF59E0B);
+const Color kInfo = Color(0xFF3B82F6);
+
+// Gradient for premium feel
+const LinearGradient kPrimaryGradient = LinearGradient(
+  colors: [Color(0xFF1B5E20), Color(0xFF2E7D32), Color(0xFF43A047)],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA MODELS
@@ -369,42 +381,48 @@ class _ForumScreenState extends State<ForumScreen> {
       body: IndexedStack(index: _currentIndex, children: _pages),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: kCard,
+          color: kSurface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 24,
+              spreadRadius: 0,
+              offset: const Offset(0, -8),
             ),
           ],
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _NavItem(
-                  icon: Icons.dynamic_feed_rounded,
+                  icon: Icons.home_rounded,
+                  activeIcon: Icons.home,
                   label: 'Feed',
                   isActive: _currentIndex == 0,
                   onTap: () => setState(() => _currentIndex = 0),
                 ),
                 _NavItem(
-                  icon: Icons.chat_bubble_rounded,
+                  icon: Icons.chat_bubble_outline_rounded,
+                  activeIcon: Icons.chat_bubble_rounded,
                   label: 'Chat',
                   isActive: _currentIndex == 1,
                   badge: 6,
                   onTap: () => setState(() => _currentIndex = 1),
                 ),
                 _NavItem(
-                  icon: Icons.people_rounded,
+                  icon: Icons.groups_outlined,
+                  activeIcon: Icons.groups_rounded,
                   label: 'Community',
                   isActive: _currentIndex == 2,
                   onTap: () => setState(() => _currentIndex = 2),
                 ),
                 _NavItem(
-                  icon: Icons.person_rounded,
+                  icon: Icons.person_outline_rounded,
+                  activeIcon: Icons.person_rounded,
                   label: 'Profile',
                   isActive: _currentIndex == 3,
                   onTap: () => setState(() => _currentIndex = 3),
@@ -423,6 +441,7 @@ class _ForumScreenState extends State<ForumScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 class _NavItem extends StatelessWidget {
   final IconData icon;
+  final IconData activeIcon;
   final String label;
   final bool isActive;
   final int badge;
@@ -430,6 +449,7 @@ class _NavItem extends StatelessWidget {
 
   const _NavItem({
     required this.icon,
+    required this.activeIcon,
     required this.label,
     required this.isActive,
     this.badge = 0,
@@ -438,19 +458,25 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
         padding: EdgeInsets.symmetric(
-          horizontal: isActive ? 16 : 12,
-          vertical: 8,
+          horizontal: isActive ? 18 : 14,
+          vertical: 10,
         ),
         decoration: BoxDecoration(
-          color: isActive ? kPrimary.withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          color: isActive ? kPrimary.withOpacity(0.12) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border:
+              isActive
+                  ? Border.all(color: kPrimary.withOpacity(0.2), width: 1)
+                  : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -458,44 +484,68 @@ class _NavItem extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                Icon(
-                  icon,
-                  color: isActive ? kPrimary : kTextSecondary,
-                  size: 24,
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    isActive ? activeIcon : icon,
+                    key: ValueKey(isActive),
+                    color:
+                        isActive ? kPrimary : kTextSecondary.withOpacity(0.7),
+                    size: isActive ? 26 : 24,
+                  ),
                 ),
                 if (badge > 0)
                   Positioned(
-                    right: -6,
-                    top: -4,
+                    right: -8,
+                    top: -6,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFEF4444), Color(0xFFF87171)],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFEF4444).withOpacity(0.4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Text(
-                        badge.toString(),
+                        badge > 9 ? '9+' : badge.toString(),
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                   ),
               ],
             ),
-            if (isActive) ...[
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: kPrimary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ],
+            AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              child:
+                  isActive
+                      ? Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Text(
+                          label,
+                          style: const TextStyle(
+                            color: kPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      )
+                      : const SizedBox.shrink(),
+            ),
           ],
         ),
       ),
@@ -545,49 +595,119 @@ class _FeedPageState extends State<_FeedPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
-      appBar: AppBar(
-        backgroundColor: kPrimary,
-        elevation: 0,
-        centerTitle: false,
-        title: const Text(
-          'Krishi Feed',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            fontSize: 22,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: const BoxDecoration(gradient: kPrimaryGradient),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: false,
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.eco_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Krishi Feed',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      'Discover farming insights',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.notifications_outlined,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  onPressed: () {},
+                ),
+              ),
+            ],
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreatePost(context),
-        backgroundColor: kPrimary,
-        icon: const Icon(Icons.edit, color: Colors.white, size: 20),
-        label: const Text(
-          'Post',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: kPrimaryGradient,
+          boxShadow: [
+            BoxShadow(
+              color: kPrimary.withOpacity(0.4),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () => _showCreatePost(context),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          icon: const Icon(Icons.edit_rounded, color: Colors.white, size: 20),
+          label: const Text(
+            'Post',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
         ),
       ),
       body: Column(
         children: [
           // Search
           Container(
-            color: kPrimary,
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            decoration: const BoxDecoration(
+              gradient: kPrimaryGradient,
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
             child: Container(
-              height: 50,
+              height: 52,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.95),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 16,
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
                 ],
@@ -601,20 +721,20 @@ class _FeedPageState extends State<_FeedPage> {
                   fontWeight: FontWeight.w500,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Search posts, topics...',
+                  hintText: 'Search posts, topics, farmers...',
                   hintStyle: TextStyle(
-                    color: kTextSecondary.withOpacity(0.6),
-                    fontWeight: FontWeight.w500,
+                    color: kTextSecondary.withOpacity(0.5),
+                    fontWeight: FontWeight.w400,
                   ),
                   prefixIcon: Padding(
-                    padding: const EdgeInsets.only(left: 14),
+                    padding: const EdgeInsets.only(left: 16, right: 12),
                     child: Icon(
                       Icons.search_rounded,
                       color:
                           _searching
                               ? kPrimary
-                              : kTextSecondary.withOpacity(0.5),
-                      size: 22,
+                              : kTextSecondary.withOpacity(0.4),
+                      size: 24,
                     ),
                   ),
                   suffixIcon:
@@ -624,19 +744,24 @@ class _FeedPageState extends State<_FeedPage> {
                               _searchCtrl.clear();
                               _filter('');
                             },
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Icon(
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: kBg,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
                                 Icons.close_rounded,
-                                color: kPrimary,
-                                size: 20,
+                                color: kTextSecondary,
+                                size: 16,
                               ),
                             ),
                           )
                           : null,
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
-                    vertical: 14,
+                    vertical: 16,
                     horizontal: 4,
                   ),
                 ),
@@ -645,13 +770,14 @@ class _FeedPageState extends State<_FeedPage> {
           ),
 
           // Category chips
-          SizedBox(
-            height: 50,
+          Container(
+            height: 56,
+            margin: const EdgeInsets.only(top: 4),
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               children: [
-                _Chip(label: 'All', selected: true, onTap: () {}),
+                _Chip(label: '✨ All', selected: true, onTap: () {}),
                 _Chip(label: '🌿 Organic', onTap: () {}),
                 _Chip(label: '💧 Irrigation', onTap: () {}),
                 _Chip(label: '🐛 Pests', onTap: () {}),
@@ -698,20 +824,48 @@ class _FeedPageState extends State<_FeedPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 64,
-            color: kTextSecondary.withOpacity(0.4),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: kPrimary.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.search_off_rounded,
+              size: 56,
+              color: kPrimary.withOpacity(0.6),
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           const Text(
             'No posts found',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: kTextPrimary,
+            ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
-            'Try different keywords',
+            'Try different keywords or browse categories',
             style: TextStyle(color: kTextSecondary, fontSize: 14),
+          ),
+          const SizedBox(height: 24),
+          TextButton.icon(
+            onPressed: () {
+              _searchCtrl.clear();
+              _filter('');
+            },
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: const Text('Clear Search'),
+            style: TextButton.styleFrom(
+              foregroundColor: kPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+                side: const BorderSide(color: kPrimary),
+              ),
+            ),
           ),
         ],
       ),
@@ -752,15 +906,36 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.only(right: 10),
       child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: selected ? kPrimary : kCard,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: selected ? kPrimary : kDivider),
+            gradient: selected ? kPrimaryGradient : null,
+            color: selected ? null : kSurface,
+            borderRadius: BorderRadius.circular(24),
+            border: selected ? null : Border.all(color: kDivider),
+            boxShadow:
+                selected
+                    ? [
+                      BoxShadow(
+                        color: kPrimary.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                    : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
           ),
           child: Text(
             label,
@@ -768,6 +943,7 @@ class _Chip extends StatelessWidget {
               color: selected ? Colors.white : kTextPrimary,
               fontWeight: FontWeight.w600,
               fontSize: 13,
+              letterSpacing: 0.2,
             ),
           ),
         ),
@@ -795,13 +971,20 @@ class _PostCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: kCard,
-          borderRadius: BorderRadius.circular(18),
+          color: kSurface,
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
-              blurRadius: 12,
+              blurRadius: 16,
+              spreadRadius: 0,
               offset: const Offset(0, 4),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 4,
+              spreadRadius: 0,
+              offset: const Offset(0, 1),
             ),
           ],
         ),
@@ -810,65 +993,88 @@ class _PostCard extends StatelessWidget {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+              padding: const EdgeInsets.fromLTRB(16, 16, 12, 0),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: _avatarColorFor(post.author),
-                    child: Text(
-                      post.author[0].toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _avatarColorFor(post.author).withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 22,
+                      backgroundColor: _avatarColorFor(post.author),
+                      child: Text(
+                        post.author[0].toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          post.author,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
                         Row(
                           children: [
+                            Text(
+                              post.author,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                color: kTextPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.verified_rounded,
+                              size: 14,
+                              color: kInfo,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              size: 12,
+                              color: kTextSecondary.withOpacity(0.7),
+                            ),
+                            const SizedBox(width: 4),
                             Text(
                               post.timeAgo,
                               style: TextStyle(
                                 color: kTextSecondary,
                                 fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            const SizedBox(width: 6),
-                            Container(
-                              width: 4,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: kTextSecondary,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 10),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
+                                horizontal: 10,
+                                vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: kPrimary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    kPrimary.withOpacity(0.1),
+                                    kAccent.withOpacity(0.1),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 post.category,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: kPrimary,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -881,11 +1087,19 @@ class _PostCard extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(
-                      post.isBookmarked
-                          ? Icons.bookmark
-                          : Icons.bookmark_border,
-                      color: post.isBookmarked ? kPrimary : kTextSecondary,
+                    icon: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        post.isBookmarked
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_outline_rounded,
+                        key: ValueKey(post.isBookmarked),
+                        color:
+                            post.isBookmarked
+                                ? kPrimary
+                                : kTextSecondary.withOpacity(0.6),
+                        size: 24,
+                      ),
                     ),
                     onPressed: onBookmark,
                   ),
@@ -895,27 +1109,29 @@ class _PostCard extends StatelessWidget {
 
             // Title & description
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
               child: Text(
                 post.title,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 17,
                   fontWeight: FontWeight.w700,
-                  height: 1.3,
+                  height: 1.35,
+                  color: kTextPrimary,
+                  letterSpacing: -0.3,
                 ),
               ),
             ),
             if (post.description.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Text(
                   post.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: kTextSecondary,
-                    fontSize: 13,
-                    height: 1.4,
+                    fontSize: 14,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -923,24 +1139,27 @@ class _PostCard extends StatelessWidget {
             // Image
             if (hasImg)
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
                   child: Image.network(
                     post.imageUrl,
-                    height: 180,
+                    height: 200,
                     width: double.infinity,
                     fit: BoxFit.cover,
                     loadingBuilder: (_, child, progress) {
                       if (progress == null) return child;
                       return Container(
-                        height: 180,
+                        height: 200,
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(14),
+                          color: kBg,
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Center(
-                          child: CircularProgressIndicator(color: kPrimary),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: kPrimary,
+                            strokeWidth: 2,
+                          ),
                         ),
                       );
                     },
@@ -951,17 +1170,20 @@ class _PostCard extends StatelessWidget {
 
             // Actions
             Padding(
-              padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
               child: Row(
                 children: [
                   _ActionBtn(
-                    icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
+                    icon:
+                        post.isLiked
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_outline_rounded,
                     label: post.likes.toString(),
-                    color: post.isLiked ? Colors.red : kTextSecondary,
+                    color: post.isLiked ? kLikeRed : kTextSecondary,
                     onTap: onLike,
                   ),
                   _ActionBtn(
-                    icon: Icons.chat_bubble_outline,
+                    icon: Icons.chat_bubble_outline_rounded,
                     label: post.comments.toString(),
                     onTap: () {},
                   ),
@@ -971,7 +1193,11 @@ class _PostCard extends StatelessWidget {
                     onTap: () {},
                   ),
                   const Spacer(),
-                  _ActionBtn(icon: Icons.more_horiz, label: '', onTap: () {}),
+                  _ActionBtn(
+                    icon: Icons.more_horiz_rounded,
+                    label: '',
+                    onTap: () {},
+                  ),
                 ],
               ),
             ),
@@ -1003,26 +1229,36 @@ class _ActionBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: color ?? kTextSecondary),
-            if (label.isNotEmpty) ...[
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  color: color ?? kTextSecondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: color ?? kTextSecondary.withOpacity(0.7),
               ),
+              if (label.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: color ?? kTextSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -1253,40 +1489,92 @@ class _ChatPageState extends State<_ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
-      appBar: AppBar(
-        backgroundColor: kPrimary,
-        elevation: 0,
-        centerTitle: false,
-        title: const Text(
-          'Messages',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            fontSize: 22,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: const BoxDecoration(gradient: kPrimaryGradient),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: false,
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.chat_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Messages',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      '4 unread conversations',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.edit_note_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  onPressed: () {},
+                ),
+              ),
+            ],
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_square, color: Colors.white, size: 22),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Column(
         children: [
           // Search
           Container(
-            color: kPrimary,
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            decoration: const BoxDecoration(
+              gradient: kPrimaryGradient,
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
             child: Container(
-              height: 48,
+              height: 52,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.95),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 16,
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
                 ],
@@ -1302,18 +1590,18 @@ class _ChatPageState extends State<_ChatPage> {
                 decoration: InputDecoration(
                   hintText: 'Search conversations...',
                   hintStyle: TextStyle(
-                    color: kTextSecondary.withOpacity(0.6),
-                    fontWeight: FontWeight.w500,
+                    color: kTextSecondary.withOpacity(0.5),
+                    fontWeight: FontWeight.w400,
                   ),
                   prefixIcon: Padding(
-                    padding: const EdgeInsets.only(left: 14),
+                    padding: const EdgeInsets.only(left: 16, right: 12),
                     child: Icon(
                       Icons.search_rounded,
                       color:
                           _searching
                               ? kPrimary
-                              : kTextSecondary.withOpacity(0.5),
-                      size: 22,
+                              : kTextSecondary.withOpacity(0.4),
+                      size: 24,
                     ),
                   ),
                   suffixIcon:
@@ -1323,19 +1611,24 @@ class _ChatPageState extends State<_ChatPage> {
                               _searchCtrl.clear();
                               _filter('');
                             },
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Icon(
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: kBg,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
                                 Icons.close_rounded,
-                                color: kPrimary,
-                                size: 20,
+                                color: kTextSecondary,
+                                size: 16,
                               ),
                             ),
                           )
                           : null,
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
-                    vertical: 12,
+                    vertical: 16,
                     horizontal: 4,
                   ),
                 ),
@@ -1345,10 +1638,10 @@ class _ChatPageState extends State<_ChatPage> {
 
           // Online users horizontal
           Container(
-            color: kCard,
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            color: kSurface,
+            padding: const EdgeInsets.symmetric(vertical: 14),
             child: SizedBox(
-              height: 80,
+              height: 90,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -1360,24 +1653,34 @@ class _ChatPageState extends State<_ChatPage> {
                       child: Column(
                         children: [
                           Container(
-                            width: 52,
-                            height: 52,
+                            width: 56,
+                            height: 56,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: kDivider, width: 2),
+                              gradient: LinearGradient(
+                                colors: [
+                                  kPrimary.withOpacity(0.1),
+                                  kAccent.withOpacity(0.1),
+                                ],
+                              ),
+                              border: Border.all(
+                                color: kPrimary.withOpacity(0.3),
+                                width: 2,
+                              ),
                             ),
                             child: const Icon(
-                              Icons.add,
+                              Icons.add_rounded,
                               color: kPrimary,
-                              size: 24,
+                              size: 26,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           const Text(
                             'New',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
+                              color: kTextPrimary,
                             ),
                           ),
                         ],
@@ -1392,15 +1695,24 @@ class _ChatPageState extends State<_ChatPage> {
                       children: [
                         Stack(
                           children: [
-                            CircleAvatar(
-                              radius: 26,
-                              backgroundColor: online.avatarColor,
-                              child: Text(
-                                online.senderName[0],
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
+                            Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: online.avatarColor.withOpacity(0.3),
+                                  width: 2,
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                radius: 26,
+                                backgroundColor: online.avatarColor,
+                                child: Text(
+                                  online.senderName[0],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 18,
+                                  ),
                                 ),
                               ),
                             ),
@@ -1408,27 +1720,38 @@ class _ChatPageState extends State<_ChatPage> {
                               bottom: 2,
                               right: 2,
                               child: Container(
-                                width: 14,
-                                height: 14,
+                                width: 16,
+                                height: 16,
                                 decoration: BoxDecoration(
-                                  color: Color(0xFF4CAF50),
+                                  color: kOnlineGreen,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: kCard, width: 2),
+                                  border: Border.all(
+                                    color: kSurface,
+                                    width: 2.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: kOnlineGreen.withOpacity(0.4),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         SizedBox(
-                          width: 56,
+                          width: 60,
                           child: Text(
                             online.senderName.split(' ')[0],
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
+                              color: kTextPrimary,
                             ),
                           ),
                         ),
@@ -1440,18 +1763,15 @@ class _ChatPageState extends State<_ChatPage> {
             ),
           ),
 
-          const Divider(height: 1, color: kDivider),
-
           // Chat list
           Expanded(
             child: ListView.separated(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: _chats.length,
               separatorBuilder:
-                  (_, __) => Divider(
-                    height: 1,
-                    indent: 80,
-                    color: kDivider.withOpacity(0.5),
+                  (_, __) => Padding(
+                    padding: const EdgeInsets.only(left: 80),
+                    child: Divider(color: kDivider.withOpacity(0.5), height: 2),
                   ),
               itemBuilder: (ctx, i) {
                 final chat = _chats[i];
@@ -1471,89 +1791,173 @@ class _ChatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      leading: Stack(
-        children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: chat.avatarColor,
-            child: Text(
-              chat.senderName[0],
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      decoration: BoxDecoration(
+        color: chat.unreadCount > 0 ? kPrimary.withOpacity(0.04) : kSurface,
+        borderRadius: BorderRadius.circular(16),
+        border:
+            chat.unreadCount > 0
+                ? Border.all(color: kPrimary.withOpacity(0.1), width: 1)
+                : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          if (chat.isOnline)
-            Positioned(
-              bottom: 1,
-              right: 1,
-              child: Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: kCard, width: 2),
-                ),
-              ),
-            ),
         ],
       ),
-      title: Text(
-        chat.senderName,
-        style: TextStyle(
-          fontWeight: chat.unreadCount > 0 ? FontWeight.w800 : FontWeight.w600,
-          fontSize: 15,
-        ),
-      ),
-      subtitle: Text(
-        chat.lastMessage,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: chat.unreadCount > 0 ? kTextPrimary : kTextSecondary,
-          fontWeight:
-              chat.unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
-          fontSize: 13,
-        ),
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            chat.time,
-            style: TextStyle(
-              color: chat.unreadCount > 0 ? kPrimary : kTextSecondary,
-              fontSize: 12,
-              fontWeight:
-                  chat.unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _openChat(context, chat),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Stack(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: chat.avatarColor.withOpacity(0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 26,
+                        backgroundColor: chat.avatarColor,
+                        child: Text(
+                          chat.senderName[0],
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (chat.isOnline)
+                      Positioned(
+                        bottom: 2,
+                        right: 2,
+                        child: Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: kOnlineGreen,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: kSurface, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: kOnlineGreen.withOpacity(0.4),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              chat.senderName,
+                              style: TextStyle(
+                                fontWeight:
+                                    chat.unreadCount > 0
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                fontSize: 15,
+                                color: kTextPrimary,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            chat.time,
+                            style: TextStyle(
+                              color:
+                                  chat.unreadCount > 0
+                                      ? kPrimary
+                                      : kTextSecondary,
+                              fontSize: 12,
+                              fontWeight:
+                                  chat.unreadCount > 0
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              chat.lastMessage,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color:
+                                    chat.unreadCount > 0
+                                        ? kTextPrimary
+                                        : kTextSecondary,
+                                fontWeight:
+                                    chat.unreadCount > 0
+                                        ? FontWeight.w500
+                                        : FontWeight.w400,
+                                fontSize: 13,
+                                height: 1.3,
+                              ),
+                            ),
+                          ),
+                          if (chat.unreadCount > 0) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: kPrimaryGradient,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: kPrimary.withOpacity(0.3),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                chat.unreadCount.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          if (chat.unreadCount > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                color: kPrimary,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                chat.unreadCount.toString(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-        ],
+        ),
       ),
-      onTap: () => _openChat(context, chat),
     );
   }
 
@@ -1822,39 +2226,125 @@ class _CommunityPageState extends State<_CommunityPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
-      appBar: AppBar(
-        backgroundColor: kPrimary,
-        elevation: 0,
-        centerTitle: false,
-        title: const Text(
-          'Community',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            fontSize: 22,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(110),
+        child: Container(
+          decoration: const BoxDecoration(gradient: kPrimaryGradient),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: false,
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.groups_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Community',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      'Connect with fellow farmers',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              Container(
+                margin: const EdgeInsets.only(right: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.search_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  onPressed: () {},
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.add_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  onPressed: () {},
+                ),
+              ),
+            ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(48),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: TabBar(
+                  controller: _tabCtrl,
+                  indicator: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Colors.transparent,
+                  labelColor: kPrimary,
+                  unselectedLabelColor: Colors.white,
+                  labelStyle: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                  padding: const EdgeInsets.all(4),
+                  tabs: const [Tab(text: 'Channels'), Tab(text: 'Groups')],
+                ),
+              ),
+            ),
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabCtrl,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
-          labelStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
-          ),
-          tabs: const [Tab(text: 'Channels'), Tab(text: 'Groups')],
         ),
       ),
       body: TabBarView(
@@ -1876,7 +2366,7 @@ class _CommunityList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
       itemCount: items.length,
       itemBuilder:
           (ctx, i) => _CommunityCard(item: items[i], isChannel: isChannel),
@@ -1892,141 +2382,250 @@ class _CommunityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: kCard,
-        borderRadius: BorderRadius.circular(16),
+        color: kSurface,
+        borderRadius: BorderRadius.circular(20),
+        border:
+            item.isJoined
+                ? Border.all(color: kPrimary.withOpacity(0.15), width: 1)
+                : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            blurRadius: 16,
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () {},
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: item.color.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(item.icon, color: item.color, size: 26),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          item.name,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                        ),
-                        if (isChannel) ...[
-                          const SizedBox(width: 6),
-                          Icon(
-                            Icons.volume_up,
-                            size: 14,
-                            color: kTextSecondary,
-                          ),
-                        ],
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {},
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        item.color.withOpacity(0.15),
+                        item.color.withOpacity(0.08),
                       ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.description,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: kTextSecondary, fontSize: 13),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.people_outline,
-                          size: 14,
-                          color: kTextSecondary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${_formatCount(item.members)} members',
-                          style: TextStyle(
-                            color: kTextSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          width: 4,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: kTextSecondary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          item.lastActive,
-                          style: TextStyle(color: kTextSecondary, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              item.isJoined
-                  ? Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: kPrimary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'Joined',
-                      style: TextStyle(
-                        color: kPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                    ),
-                  )
-                  : Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: kPrimary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'Join',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: item.color.withOpacity(0.2),
+                      width: 1,
                     ),
                   ),
-            ],
+                  child: Icon(item.icon, color: item.color, size: 28),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    item.name,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                      color: kTextPrimary,
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
+                                ),
+                                if (isChannel) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.all(3),
+                                    decoration: BoxDecoration(
+                                      color: kInfo.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Icon(
+                                      Icons.campaign_rounded,
+                                      size: 12,
+                                      color: kInfo,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.description,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: kTextSecondary,
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: kBg,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.people_rounded,
+                                  size: 12,
+                                  color: kTextSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _formatCount(item.members),
+                                  style: const TextStyle(
+                                    color: kTextSecondary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: kOnlineGreen.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: kOnlineGreen,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  item.lastActive,
+                                  style: TextStyle(
+                                    color: kOnlineGreen,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Spacer(),
+                          item.isJoined
+                              ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: kPrimary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                    color: kPrimary.withOpacity(0.2),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.check_rounded,
+                                      size: 14,
+                                      color: kPrimary,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      'Joined',
+                                      style: TextStyle(
+                                        color: kPrimary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                              : Container(
+                                decoration: BoxDecoration(
+                                  gradient: kPrimaryGradient,
+                                  borderRadius: BorderRadius.circular(24),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: kPrimary.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(24),
+                                    onTap: () {},
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 8,
+                                      ),
+                                      child: Text(
+                                        'Join',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -2073,88 +2672,158 @@ class _ProfileContent extends StatelessWidget {
         slivers: [
           // Profile header
           SliverAppBar(
-            expandedHeight: 280,
+            expandedHeight: 320,
             pinned: true,
             backgroundColor: kPrimary,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [kPrimaryDark, kPrimary, kAccent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
+                decoration: const BoxDecoration(gradient: kPrimaryGradient),
                 child: SafeArea(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
+                      // Avatar with glow effect
                       Container(
-                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.3),
+                              blurRadius: 24,
+                              spreadRadius: 4,
+                            ),
+                          ],
                         ),
-                        child: CircleAvatar(
-                          radius: 48,
-                          backgroundColor: const Color(0xFF1B5E20),
-                          backgroundImage:
-                              user?.imageUrl != null &&
-                                      user!.imageUrl!.isNotEmpty
-                                  ? NetworkImage(user.imageUrl!)
-                                  : null,
-                          child:
-                              user?.imageUrl == null || user!.imageUrl!.isEmpty
-                                  ? Text(
-                                    getInitials(user?.name ?? 'KS'),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 30,
-                                    ),
-                                  )
-                                  : null,
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 3),
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withOpacity(0.3),
+                                Colors.white.withOpacity(0.1),
+                              ],
+                            ),
+                          ),
+                          child: CircleAvatar(
+                            radius: 52,
+                            backgroundColor: kPrimaryDark,
+                            backgroundImage:
+                                user?.imageUrl != null &&
+                                        user!.imageUrl!.isNotEmpty
+                                    ? NetworkImage(user.imageUrl!)
+                                    : null,
+                            child:
+                                user?.imageUrl == null ||
+                                        user!.imageUrl!.isEmpty
+                                    ? Text(
+                                      getInitials(user?.name ?? 'KS'),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 32,
+                                        letterSpacing: 1,
+                                      ),
+                                    )
+                                    : null,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
                       Text(
                         user?.name ?? 'Krishi Sakhi User',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
-                          fontSize: 22,
+                          fontSize: 24,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '@${user?.username ?? 'krishisakhi'} • Organic Farmer',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 14,
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.eco_rounded,
+                              color: Colors.white70,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '@${user?.username ?? 'krishisakhi'} • Organic Farmer',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       // Stats
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _ProfileStat(count: '24', label: 'Posts'),
-                          Container(
-                            width: 1,
-                            height: 30,
-                            color: Colors.white24,
-                            margin: const EdgeInsets.symmetric(horizontal: 20),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 24),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 20,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.15),
                           ),
-                          _ProfileStat(count: '1.2k', label: 'Followers'),
-                          Container(
-                            width: 1,
-                            height: 30,
-                            color: Colors.white24,
-                            margin: const EdgeInsets.symmetric(horizontal: 20),
-                          ),
-                          _ProfileStat(count: '348', label: 'Following'),
-                        ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _ProfileStat(count: '24', label: 'Posts'),
+                            Container(
+                              width: 1,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.white.withOpacity(0),
+                                    Colors.white.withOpacity(0.3),
+                                    Colors.white.withOpacity(0),
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                ),
+                              ),
+                            ),
+                            _ProfileStat(count: '1.2k', label: 'Followers'),
+                            Container(
+                              width: 1,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.white.withOpacity(0),
+                                    Colors.white.withOpacity(0.3),
+                                    Colors.white.withOpacity(0),
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                ),
+                              ),
+                            ),
+                            _ProfileStat(count: '348', label: 'Following'),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -2167,7 +2836,7 @@ class _ProfileContent extends StatelessWidget {
           SliverToBoxAdapter(
             child: Column(
               children: [
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 // Edit profile button
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -2177,32 +2846,87 @@ class _ProfileContent extends StatelessWidget {
                   child: Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.edit, size: 18),
-                          label: const Text('Edit Profile'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: kPrimary,
-                            side: const BorderSide(color: kPrimary),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: kPrimary.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(14),
+                              onTap: () {},
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.edit_rounded,
+                                      size: 18,
+                                      color: kPrimary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      'Edit Profile',
+                                      style: TextStyle(
+                                        color: kPrimary,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.share, size: 18),
-                          label: const Text('Share Profile'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrimary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: kPrimaryGradient,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: kPrimary.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(14),
+                              onTap: () {},
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 14),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.share_rounded,
+                                      size: 18,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Share Profile',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -2211,11 +2935,12 @@ class _ProfileContent extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
 
                 // About card
                 _ProfileSection(
                   title: 'About',
+                  icon: Icons.info_outline_rounded,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -2237,7 +2962,7 @@ class _ProfileContent extends StatelessWidget {
                         text: 'Joined January 2024',
                       ),
                       _InfoRow(
-                        icon: Icons.agriculture,
+                        icon: Icons.agriculture_rounded,
                         text: '5 acres farmland',
                       ),
                     ],
@@ -2247,16 +2972,17 @@ class _ProfileContent extends StatelessWidget {
                 // Menu items
                 _ProfileSection(
                   title: 'Settings',
+                  icon: Icons.settings_rounded,
                   child: Column(
                     children: [
                       _MenuItem(
-                        icon: Icons.bookmark_outline,
+                        icon: Icons.bookmark_outline_rounded,
                         label: 'Saved Posts',
                         trailing: '12',
                         onTap: () {},
                       ),
                       _MenuItem(
-                        icon: Icons.history,
+                        icon: Icons.history_rounded,
                         label: 'Activity History',
                         onTap: () {},
                       ),
@@ -2267,7 +2993,7 @@ class _ProfileContent extends StatelessWidget {
                         onTap: () {},
                       ),
                       _MenuItem(
-                        icon: Icons.language,
+                        icon: Icons.language_rounded,
                         label: 'Language',
                         trailing: 'English',
                         onTap: () {},
@@ -2279,12 +3005,12 @@ class _ProfileContent extends StatelessWidget {
                         onTap: () {},
                       ),
                       _MenuItem(
-                        icon: Icons.help_outline,
+                        icon: Icons.help_outline_rounded,
                         label: 'Help & Support',
                         onTap: () {},
                       ),
                       _MenuItem(
-                        icon: Icons.info_outline,
+                        icon: Icons.info_outline_rounded,
                         label: 'About App',
                         trailing: 'v2.1.0',
                         onTap: () {},
@@ -2295,23 +3021,46 @@ class _ProfileContent extends StatelessWidget {
 
                 // Logout
                 Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SizedBox(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Container(
                     width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Icons.logout,
-                        color: Colors.red,
-                        size: 20,
-                      ),
-                      label: const Text('Log Out'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: kLikeRed.withOpacity(0.3)),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () {},
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: kLikeRed.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.logout_rounded,
+                                  color: kLikeRed,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Log Out',
+                                style: TextStyle(
+                                  color: kLikeRed,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -2341,13 +3090,19 @@ class _ProfileStat extends StatelessWidget {
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w800,
-            fontSize: 20,
+            fontSize: 22,
+            letterSpacing: -0.5,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13),
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.85),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.3,
+          ),
         ),
       ],
     );
@@ -2357,32 +3112,59 @@ class _ProfileStat extends StatelessWidget {
 class _ProfileSection extends StatelessWidget {
   final String title;
   final Widget child;
-  const _ProfileSection({required this.title, required this.child});
+  final IconData? icon;
+  const _ProfileSection({required this.title, required this.child, this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: kCard,
-        borderRadius: BorderRadius.circular(16),
+        color: kSurface,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 16,
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+          Row(
+            children: [
+              if (icon != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: kPrimary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 18, color: kPrimary),
+                ),
+                const SizedBox(width: 12),
+              ],
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                  color: kTextPrimary,
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           child,
         ],
       ),
@@ -2398,12 +3180,26 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: kPrimary),
-          const SizedBox(width: 8),
-          Text(text, style: TextStyle(color: kTextSecondary, fontSize: 14)),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: kPrimary.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 14, color: kPrimary),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            text,
+            style: const TextStyle(
+              color: kTextSecondary,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -2424,31 +3220,61 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, size: 22, color: kPrimary),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: kPrimary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 20, color: kPrimary),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: kTextPrimary,
+                  ),
                 ),
               ),
-            ),
-            if (trailing.isNotEmpty)
-              Text(
-                trailing,
-                style: TextStyle(color: kTextSecondary, fontSize: 13),
+              if (trailing.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: kBg,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    trailing,
+                    style: const TextStyle(
+                      color: kTextSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 22,
+                color: kTextSecondary.withOpacity(0.5),
               ),
-            const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 20, color: kTextSecondary),
-          ],
+            ],
+          ),
         ),
       ),
     );

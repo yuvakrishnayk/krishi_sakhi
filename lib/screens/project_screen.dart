@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+void main() => runApp(const MaterialApp(home: ProjectScreen(),debugShowCheckedModeBanner: false,));
 // ─────────────────────────────────────────────
 // MAIN NAVIGATION
 // ─────────────────────────────────────────────
@@ -16,6 +16,9 @@ class _ProjectScreenState extends State<ProjectScreen>
     with TickerProviderStateMixin {
   int _currentIndex = 0;
   late AnimationController _fabController;
+  late AnimationController _navController;
+  late Animation<double> _navAnimation;
+  bool _showQuickActions = false;
 
   final List<Widget> _screens = const [
     DashboardScreen(),
@@ -31,111 +34,309 @@ class _ProjectScreenState extends State<ProjectScreen>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
+    _navController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _navAnimation = CurvedAnimation(
+      parent: _navController,
+      curve: Curves.easeOutBack,
+    );
+    _navController.forward();
   }
 
   @override
   void dispose() {
     _fabController.dispose();
+    _navController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        transitionBuilder: (child, animation) {
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.05, 0),
-                end: Offset.zero,
-              ).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOut),
-              ),
-              child: child,
+      body: Stack(
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.03),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            child: KeyedSubtree(
+              key: ValueKey(_currentIndex),
+              child: _screens[_currentIndex],
             ),
-          );
-        },
-        child: KeyedSubtree(
-          key: ValueKey(_currentIndex),
-          child: _screens[_currentIndex],
-        ),
-      ),
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    const items = [
-      {'icon': Icons.dashboard_rounded, 'label': 'Dashboard'},
-      {'icon': Icons.map_rounded, 'label': 'Fields'},
-      {'icon': Icons.bar_chart_rounded, 'label': 'Analytics'},
-      {'icon': Icons.person_rounded, 'label': 'Profile'},
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
+          ),
+          // Floating Quick Actions
+          if (_showQuickActions) _buildQuickActionsOverlay(),
+          // Innovative Floating Navigation Dock
+          Positioned(
+            bottom: 20,
+            left: 20,
+            right: 20,
+            child: _buildFloatingNavDock(),
           ),
         ],
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(items.length, (index) {
-              final isSelected = _currentIndex == index;
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _currentIndex = index);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isSelected ? 20 : 12,
-                    vertical: 10,
-                  ),
+    );
+  }
+
+  Widget _buildQuickActionsOverlay() {
+    return GestureDetector(
+      onTap: () => setState(() => _showQuickActions = false),
+      child: Container(
+        color: Colors.black54,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildQuickActionItem(
+                Icons.camera_alt_rounded,
+                'Scan Crop',
+                () {},
+              ),
+              const SizedBox(height: 16),
+              _buildQuickActionItem(Icons.mic_rounded, 'Voice Query', () {}),
+              const SizedBox(height: 16),
+              _buildQuickActionItem(Icons.add_task_rounded, 'Add Task', () {}),
+              const SizedBox(height: 32),
+              GestureDetector(
+                onTap: () => setState(() => _showQuickActions = false),
+                child: Container(
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
-                    color:
-                        isSelected
-                            ? const Color(0xFF2E7D32)
-                            : Colors.transparent,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        items[index]['icon'] as IconData,
-                        color: isSelected ? Colors.white : Colors.grey.shade500,
-                        size: 22,
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 20,
                       ),
-                      if (isSelected) ...[
-                        const SizedBox(width: 8),
-                        Text(
-                          items[index]['label'] as String,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
                     ],
                   ),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: Color(0xFF1B5E20),
+                  ),
                 ),
-              );
-            }),
+              ),
+            ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionItem(
+    IconData icon,
+    String label,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        setState(() => _showQuickActions = false);
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(50),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 20),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: const Color(0xFF1B5E20), size: 22),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF1B5E20),
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingNavDock() {
+    return ScaleTransition(
+      scale: _navAnimation,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.white.withOpacity(0.95),
+              Colors.white.withOpacity(0.85),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1B5E20).withOpacity(0.15),
+              blurRadius: 30,
+              offset: const Offset(0, 10),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildNavItem(0, Icons.space_dashboard_rounded, 'Home'),
+            _buildNavItem(1, Icons.terrain_rounded, 'Fields'),
+            _buildCenterActionButton(),
+            _buildNavItem(2, Icons.insights_rounded, 'Stats'),
+            _buildNavItem(3, Icons.person_rounded, 'Me'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData icon, String label) {
+    final isSelected = _currentIndex == index;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        setState(() => _currentIndex = index);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          gradient:
+              isSelected
+                  ? const LinearGradient(
+                    colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                  : null,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow:
+              isSelected
+                  ? [
+                    BoxShadow(
+                      color: const Color(0xFF2E7D32).withOpacity(0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                  : null,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedScale(
+              scale: isSelected ? 1.1 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                icon,
+                color: isSelected ? Colors.white : Colors.grey.shade500,
+                size: 22,
+              ),
+            ),
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: isSelected ? 1.0 : 0.0,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: isSelected ? 14 : 0,
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterActionButton() {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        setState(() => _showQuickActions = true);
+      },
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF43A047), Color(0xFF1B5E20)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1B5E20).withOpacity(0.5),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Animated ring
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(seconds: 2),
+              builder: (context, value, child) {
+                return Container(
+                  width: 50 + (value * 6),
+                  height: 50 + (value * 6),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3 * (1 - value)),
+                      width: 2,
+                    ),
+                  ),
+                );
+              },
+            ),
+            const Icon(
+              Icons.auto_awesome_rounded,
+              color: Colors.white,
+              size: 26,
+            ),
+          ],
         ),
       ),
     );
@@ -192,11 +393,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                   _buildWeatherHeroCard(),
                   _buildDateStrip(),
                   _buildQuickStatsRow(),
-                  _buildMiniLandMapCard(),
+                  _buildFieldHealthSummary(),
                   _buildAdvisoryCard(),
                   _buildRoadmapTimeline(),
                   _buildTasksSection(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -641,114 +842,237 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildMiniLandMapCard() {
+  Widget _buildFieldHealthSummary() {
+    final fields = [
+      {
+        'name': 'North Plot',
+        'crop': 'Samba Rice',
+        'health': 0.78,
+        'status': 'Tillering',
+        'alert': true,
+        'alertText': 'Pest Alert',
+        'color': const Color(0xFF4CAF50),
+      },
+      {
+        'name': 'South Plot',
+        'crop': 'Ponni Rice',
+        'health': 0.91,
+        'status': 'Panicle Init.',
+        'alert': false,
+        'alertText': '',
+        'color': const Color(0xFF66BB6A),
+      },
+    ];
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF43A047), Color(0xFF2E7D32)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.terrain_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Field Health',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1A2E1A),
+                        ),
+                      ),
+                      Text(
+                        '2 active fields • 3.2 acres',
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
                   children: const [
-                    Icon(Icons.map_rounded, color: Color(0xFF2E7D32), size: 18),
-                    SizedBox(width: 8),
+                    Icon(
+                      Icons.visibility_rounded,
+                      size: 14,
+                      color: Color(0xFF2E7D32),
+                    ),
+                    SizedBox(width: 4),
                     Text(
-                      'My Land Map',
+                      'View Map',
                       style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A2E1A),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2E7D32),
                       ),
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    '3.2 acres',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF2E7D32),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...fields.map((field) {
+            final health = field['health'] as double;
+            final hasAlert = field['alert'] as bool;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    (field['color'] as Color).withOpacity(0.08),
+                    (field['color'] as Color).withOpacity(0.02),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: (field['color'] as Color).withOpacity(0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  // Health Ring
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: CircularProgressIndicator(
+                            value: health,
+                            strokeWidth: 5,
+                            backgroundColor: Colors.grey.shade200,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              field['color'] as Color,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${(health * 100).toInt()}%',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1A2E1A),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.zero),
-            child: _LandMapCanvas(),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                _buildLandLegend(const Color(0xFF4CAF50), 'Rice Field'),
-                const SizedBox(width: 12),
-                _buildLandLegend(const Color(0xFF2196F3), 'Water Channel'),
-                const SizedBox(width: 12),
-                _buildLandLegend(const Color(0xFFFF9800), 'Storage Area'),
-                const Spacer(),
-                TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF2E7D32),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              field['name'] as String,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                color: Color(0xFF1A2E1A),
+                              ),
+                            ),
+                            if (hasAlert) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFEBEE),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  children: const [
+                                    Icon(
+                                      Icons.warning_rounded,
+                                      size: 10,
+                                      color: Color(0xFFD32F2F),
+                                    ),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      'Alert',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFFD32F2F),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${field['crop']} • ${field['status']}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
                     ),
-                    minimumSize: Size.zero,
                   ),
-                  child: const Text(
-                    'Full Map →',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.grey.shade400,
+                    size: 22,
                   ),
-                ),
-              ],
-            ),
-          ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
-    );
-  }
-
-  Widget _buildLandLegend(Color color, String label) {
-    return Row(
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 9, color: Colors.grey.shade600)),
-      ],
     );
   }
 
@@ -1241,228 +1565,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 }
 
 // ─────────────────────────────────────────────
-// LAND MAP CANVAS (Custom Painter)
-// ─────────────────────────────────────────────
-class _LandMapCanvas extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 200,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFFE8F5E9),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: CustomPaint(
-          painter: _LandMapPainter(),
-          child: Stack(
-            children: [
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.location_on_rounded,
-                        color: Color(0xFF2E7D32),
-                        size: 12,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        'North Plot',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    '⚠ Pest Alert Zone',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFFD32F2F),
-                    ),
-                  ),
-                ),
-              ),
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.95),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.my_location_rounded,
-                    color: Color(0xFF2E7D32),
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LandMapPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Background
-    final bgPaint = Paint()..color = const Color(0xFFDCEDC8);
-    canvas.drawRect(Offset.zero & size, bgPaint);
-
-    // Main rice field (green polygon)
-    final fieldPaint =
-        Paint()..color = const Color(0xFF81C784).withOpacity(0.7);
-    final fieldPath =
-        Path()
-          ..moveTo(size.width * 0.05, size.height * 0.1)
-          ..lineTo(size.width * 0.7, size.height * 0.08)
-          ..lineTo(size.width * 0.75, size.height * 0.6)
-          ..lineTo(size.width * 0.45, size.height * 0.85)
-          ..lineTo(size.width * 0.05, size.height * 0.8)
-          ..close();
-    canvas.drawPath(fieldPath, fieldPaint);
-
-    // Field border
-    final borderPaint =
-        Paint()
-          ..color = const Color(0xFF388E3C)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2;
-    canvas.drawPath(fieldPath, borderPaint);
-
-    // Grid lines (rice rows)
-    final gridPaint =
-        Paint()
-          ..color = const Color(0xFF2E7D32).withOpacity(0.15)
-          ..strokeWidth = 0.8;
-    for (int i = 1; i < 8; i++) {
-      canvas.drawLine(
-        Offset(size.width * 0.05, size.height * (0.1 + i * 0.09)),
-        Offset(size.width * 0.72, size.height * (0.08 + i * 0.08)),
-        gridPaint,
-      );
-    }
-
-    // Water channel (blue)
-    final waterPaint =
-        Paint()
-          ..color = const Color(0xFF42A5F5).withOpacity(0.8)
-          ..strokeWidth = 8
-          ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      Offset(size.width * 0.72, size.height * 0.1),
-      Offset(size.width * 0.95, size.height * 0.5),
-      waterPaint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.45, size.height * 0.85),
-      Offset(size.width * 0.95, size.height * 0.85),
-      waterPaint,
-    );
-
-    // Storage area (orange)
-    final storagePaint =
-        Paint()..color = const Color(0xFFFFB74D).withOpacity(0.8);
-    final storageRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        size.width * 0.78,
-        size.height * 0.55,
-        size.width * 0.16,
-        size.height * 0.25,
-      ),
-      const Radius.circular(4),
-    );
-    canvas.drawRRect(storageRect, storagePaint);
-
-    // Pest alert zone (red hatching)
-    final pestPaint = Paint()..color = const Color(0xFFEF9A9A).withOpacity(0.4);
-    final pestPath =
-        Path()
-          ..moveTo(size.width * 0.5, size.height * 0.08)
-          ..lineTo(size.width * 0.7, size.height * 0.08)
-          ..lineTo(size.width * 0.72, size.height * 0.45)
-          ..lineTo(size.width * 0.5, size.height * 0.5)
-          ..close();
-    canvas.drawPath(pestPath, pestPaint);
-
-    final pestBorder =
-        Paint()
-          ..color = const Color(0xFFD32F2F)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5
-          ..strokeDash = [4, 4];
-    canvas.drawPath(pestPath, pestBorder);
-
-    // Compass
-    final compassCenter = Offset(size.width * 0.92, size.height * 0.12);
-    final compassPaint = Paint()..color = Colors.white.withOpacity(0.9);
-    canvas.drawCircle(compassCenter, 16, compassPaint);
-    final textPainter = TextPainter(
-      text: const TextSpan(
-        text: 'N',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF1B5E20),
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      compassCenter - Offset(textPainter.width / 2, textPainter.height / 2),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-extension on Paint {
-  set strokeDash(List<double> _) {}
-}
-
-// ─────────────────────────────────────────────
 // FIELD MAP SCREEN
 // ─────────────────────────────────────────────
 class FieldMapScreen extends StatefulWidget {
@@ -1472,8 +1574,12 @@ class FieldMapScreen extends StatefulWidget {
   State<FieldMapScreen> createState() => _FieldMapScreenState();
 }
 
-class _FieldMapScreenState extends State<FieldMapScreen> {
+class _FieldMapScreenState extends State<FieldMapScreen>
+    with TickerProviderStateMixin {
   int _selectedField = 0;
+  int _mapLayer = 0; // 0: Satellite, 1: NDVI, 2: Moisture
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   final fields = [
     {
@@ -1487,6 +1593,7 @@ class _FieldMapScreenState extends State<FieldMapScreen> {
       'ndvi': '0.68',
       'pest': 'High Risk',
       'harvest': 'Dec 15',
+      'color': const Color(0xFF8BC34A),
     },
     {
       'name': 'South Plot',
@@ -1499,178 +1606,548 @@ class _FieldMapScreenState extends State<FieldMapScreen> {
       'ndvi': '0.82',
       'pest': 'Low Risk',
       'harvest': 'Nov 28',
+      'color': const Color(0xFF4CAF50),
     },
   ];
+
+  final mapLayers = ['Satellite', 'NDVI', 'Moisture'];
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4F0),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1B5E20),
-        title: const Text(
-          'Field Overview',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            fontSize: 16,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.add_location_alt_rounded,
-              color: Colors.white,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          _buildSliverAppBar(),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                _buildInteractiveMap(),
+                _buildLayerSelector(),
+                _buildFieldCards(),
+                _buildFieldDetails(fields[_selectedField]),
+                const SizedBox(height: 100),
+              ],
             ),
-            onPressed: () {},
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+    );
+  }
+
+  SliverAppBar _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 0,
+      floating: true,
+      snap: true,
+      backgroundColor: const Color(0xFF1B5E20),
+      systemOverlayStyle: SystemUiOverlayStyle.light,
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.terrain_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Field Map',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                '3.2 acres total',
+                style: TextStyle(color: Colors.white60, fontSize: 10),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.gps_fixed_rounded, color: Colors.white),
+          onPressed: () {},
+        ),
+        IconButton(
+          icon: const Icon(Icons.fullscreen_rounded, color: Colors.white),
+          onPressed: () {},
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInteractiveMap() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      height: 300,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1B5E20).withOpacity(0.25),
+            blurRadius: 30,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Stack(
           children: [
-            // Full interactive map
-            Container(
-              height: 320,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
-                  ),
+            // Map Canvas with 3D Transform
+            Transform(
+              transform:
+                  Matrix4.identity()
+                    ..setEntry(3, 2, 0.001)
+                    ..rotateX(-0.05),
+              alignment: Alignment.center,
+              child: _Enhanced3DMapCanvas(
+                selectedField: _selectedField,
+                mapLayer: _mapLayer,
+              ),
+            ),
+            // Animated Alert Marker
+            if (fields[0]['pest'] == 'High Risk')
+              Positioned(
+                top: 80,
+                left: 100,
+                child: AnimatedBuilder(
+                  animation: _pulseAnimation,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: _pulseAnimation.value,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFFD32F2F).withOpacity(0.3),
+                        ),
+                        child: Center(
+                          child: Container(
+                            width: 18,
+                            height: 18,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFFD32F2F),
+                            ),
+                            child: const Icon(
+                              Icons.warning_rounded,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            // Glassmorphism Control Buttons
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Column(
+                children: [
+                  _buildGlassButton(Icons.add_rounded, () {}),
+                  const SizedBox(height: 8),
+                  _buildGlassButton(Icons.remove_rounded, () {}),
+                  const SizedBox(height: 8),
+                  _buildGlassButton(Icons.my_location_rounded, () {}),
                 ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Stack(
+            ),
+            // Compass
+            Positioned(
+              top: 12,
+              left: 12,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withOpacity(0.9),
+                      Colors.white.withOpacity(0.7),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _FullLandMapCanvas(),
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: Column(
-                        children: [
-                          _mapButton(Icons.add_rounded, () {}),
-                          const SizedBox(height: 6),
-                          _mapButton(Icons.remove_rounded, () {}),
-                          const SizedBox(height: 6),
-                          _mapButton(Icons.layers_rounded, () {}),
-                        ],
+                    const Text(
+                      'N',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF1B5E20),
                       ),
                     ),
-                    Positioned(
-                      bottom: 16,
-                      left: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.95),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.satellite_alt_rounded,
-                              size: 14,
-                              color: Color(0xFF2E7D32),
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Satellite View',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
+                    Container(
+                      width: 8,
+                      height: 2,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B5E20),
+                        borderRadius: BorderRadius.circular(1),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            // Field selector tabs
-            Row(
-              children:
-                  fields.asMap().entries.map((e) {
-                    final selected = e.key == _selectedField;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedField = e.key),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color:
-                                selected
-                                    ? const Color(0xFF2E7D32)
-                                    : Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 8,
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                e.value['name'] as String,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13,
-                                  color:
-                                      selected
-                                          ? Colors.white
-                                          : Colors.grey.shade700,
-                                ),
-                              ),
-                              Text(
-                                e.value['area'] as String,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color:
-                                      selected
-                                          ? Colors.white70
-                                          : Colors.grey.shade500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+            // Scale indicator
+            Positioned(
+              bottom: 12,
+              left: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                    );
-                  }).toList(),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      '50m',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
-            _buildFieldDetails(fields[_selectedField]),
+            // Legend
+            Positioned(
+              bottom: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withOpacity(0.95),
+                      Colors.white.withOpacity(0.85),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLegendItem(const Color(0xFF8BC34A), 'North Plot'),
+                    const SizedBox(height: 4),
+                    _buildLegendItem(const Color(0xFF4CAF50), 'South Plot'),
+                    const SizedBox(height: 4),
+                    _buildLegendItem(const Color(0xFF29B6F6), 'Water'),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _mapButton(IconData icon, VoidCallback onTap) {
+  Widget _buildGlassButton(IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 36,
-        height: 36,
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(10),
+          gradient: LinearGradient(
+            colors: [
+              Colors.white.withOpacity(0.9),
+              Colors.white.withOpacity(0.7),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+          ],
+          border: Border.all(color: Colors.white.withOpacity(0.3)),
         ),
-        child: Icon(icon, size: 18, color: Colors.grey.shade700),
+        child: Icon(icon, size: 20, color: const Color(0xFF1B5E20)),
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+            boxShadow: [
+              BoxShadow(color: color.withOpacity(0.4), blurRadius: 4),
+            ],
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1A2E1A),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLayerSelector() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+        ],
+      ),
+      child: Row(
+        children:
+            mapLayers.asMap().entries.map((e) {
+              final selected = e.key == _mapLayer;
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _mapLayer = e.key),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient:
+                          selected
+                              ? const LinearGradient(
+                                colors: [Color(0xFF43A047), Color(0xFF2E7D32)],
+                              )
+                              : null,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          e.key == 0
+                              ? Icons.satellite_alt_rounded
+                              : e.key == 1
+                              ? Icons.grass_rounded
+                              : Icons.water_drop_rounded,
+                          size: 16,
+                          color: selected ? Colors.white : Colors.grey.shade500,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          e.value,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color:
+                                selected ? Colors.white : Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildFieldCards() {
+    return Container(
+      height: 100,
+      margin: const EdgeInsets.only(top: 16),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: fields.length,
+        itemBuilder: (context, index) {
+          final field = fields[index];
+          final selected = index == _selectedField;
+          return GestureDetector(
+            onTap: () => setState(() => _selectedField = index),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: 160,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                gradient:
+                    selected
+                        ? const LinearGradient(
+                          colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                        : LinearGradient(
+                          colors: [Colors.white, Colors.grey.shade50],
+                        ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color:
+                        selected
+                            ? const Color(0xFF2E7D32).withOpacity(0.35)
+                            : Colors.black.withOpacity(0.06),
+                    blurRadius: selected ? 16 : 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                border: Border.all(
+                  color:
+                      selected
+                          ? Colors.transparent
+                          : (field['color'] as Color).withOpacity(0.3),
+                  width: 2,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        field['name'] as String,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                          color:
+                              selected ? Colors.white : const Color(0xFF1A2E1A),
+                        ),
+                      ),
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: field['color'] as Color,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: (field['color'] as Color).withOpacity(0.5),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    field['crop'] as String,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: selected ? Colors.white70 : Colors.grey.shade500,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      _buildMiniStat(
+                        '${((field['health'] as double) * 100).toInt()}%',
+                        selected,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildMiniStat(field['area'] as String, selected),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMiniStat(String value, bool selected) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color:
+            selected ? Colors.white.withOpacity(0.2) : const Color(0xFFE8F5E9),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        value,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: selected ? Colors.white : const Color(0xFF2E7D32),
+        ),
       ),
     );
   }
@@ -1681,12 +2158,17 @@ class _FieldMapScreenState extends State<FieldMapScreen> {
     final isHighRisk = pestRisk.contains('High');
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -1694,68 +2176,133 @@ class _FieldMapScreenState extends State<FieldMapScreen> {
         children: [
           Row(
             children: [
-              Text(
-                field['name'] as String,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1A2E1A),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      (field['color'] as Color).withOpacity(0.2),
+                      (field['color'] as Color).withOpacity(0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  Icons.landscape_rounded,
+                  color: field['color'] as Color,
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  field['status'] as String,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF2E7D32),
-                    fontWeight: FontWeight.w700,
-                  ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          field['name'] as String,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1A2E1A),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF4CAF50).withOpacity(0.2),
+                                const Color(0xFF2E7D32).withOpacity(0.1),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            field['status'] as String,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF2E7D32),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      '${field['crop']} • ${field['stage']} Stage',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          Text(
-            '${field['crop']} • ${field['stage']} Stage',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-          ),
-          const SizedBox(height: 16),
-          // Health bar
+          const SizedBox(height: 20),
+          // Health Progress with Gradient
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Crop Health',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                'Crop Health Index',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1A2E1A),
+                ),
               ),
               Text(
                 '${(health * 100).toInt()}%',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF2E7D32),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: field['color'] as Color,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: health,
-              backgroundColor: Colors.grey.shade100,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF4CAF50),
-              ),
-              minHeight: 10,
+          const SizedBox(height: 8),
+          Container(
+            height: 10,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: Stack(
+              children: [
+                FractionallySizedBox(
+                  widthFactor: health,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          (field['color'] as Color).withOpacity(0.7),
+                          field['color'] as Color,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (field['color'] as Color).withOpacity(0.4),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
+          // Stats Grid
           Row(
             children: [
               _buildFieldStat(
@@ -1765,7 +2312,7 @@ class _FieldMapScreenState extends State<FieldMapScreen> {
                 const Color(0xFF1565C0),
               ),
               _buildFieldStat(
-                'NDVI Index',
+                'NDVI',
                 field['ndvi'] as String,
                 Icons.satellite_alt_rounded,
                 const Color(0xFF2E7D32),
@@ -1779,7 +2326,7 @@ class _FieldMapScreenState extends State<FieldMapScreen> {
               _buildFieldStat(
                 'Harvest',
                 field['harvest'] as String,
-                Icons.calendar_month_rounded,
+                Icons.event_rounded,
                 const Color(0xFFF57F17),
               ),
             ],
@@ -1796,177 +2343,269 @@ class _FieldMapScreenState extends State<FieldMapScreen> {
     Color color,
   ) {
     return Expanded(
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
             ),
-          ),
-          Text(
-            label,
-            style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
-          ),
-        ],
+            Text(
+              label,
+              style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _FullLandMapCanvas extends StatelessWidget {
+// Enhanced 3D Map Canvas
+class _Enhanced3DMapCanvas extends StatelessWidget {
+  final int selectedField;
+  final int mapLayer;
+
+  const _Enhanced3DMapCanvas({
+    required this.selectedField,
+    required this.mapLayer,
+  });
+
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _FullMapPainter(),
+      painter: _Enhanced3DMapPainter(
+        selectedField: selectedField,
+        mapLayer: mapLayer,
+      ),
       child: const SizedBox.expand(),
     );
   }
 }
 
-class _FullMapPainter extends CustomPainter {
+class _Enhanced3DMapPainter extends CustomPainter {
+  final int selectedField;
+  final int mapLayer;
+
+  _Enhanced3DMapPainter({required this.selectedField, required this.mapLayer});
+
   @override
   void paint(Canvas canvas, Size size) {
-    // Satellite-like background
+    // Rich gradient background based on layer
+    final List<Color> bgColors =
+        mapLayer == 0
+            ? [
+              const Color(0xFF2E5A1C),
+              const Color(0xFF1B4512),
+              const Color(0xFF0D2D08),
+            ]
+            : mapLayer == 1
+            ? [
+              const Color(0xFF1E3A14),
+              const Color(0xFF2D5A1E),
+              const Color(0xFF4A7A32),
+            ]
+            : [
+              const Color(0xFF1A3A4A),
+              const Color(0xFF2A5A6A),
+              const Color(0xFF3A7A8A),
+            ];
+
     final bgPaint =
         Paint()
           ..shader = LinearGradient(
-            colors: [
-              const Color(0xFF558B2F),
-              const Color(0xFF33691E),
-              const Color(0xFF1B5E20),
-            ],
+            colors: bgColors,
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, bgPaint);
 
-    // Texture overlay
-    final texturePaint = Paint()..color = Colors.black.withOpacity(0.05);
-    for (int i = 0; i < 20; i++) {
-      for (int j = 0; j < 15; j++) {
-        if ((i + j) % 2 == 0) {
+    // Subtle pattern overlay
+    final patternPaint = Paint()..color = Colors.white.withOpacity(0.02);
+    for (int i = 0; i < 30; i++) {
+      for (int j = 0; j < 20; j++) {
+        if ((i + j) % 3 == 0) {
           canvas.drawRect(
             Rect.fromLTWH(
-              i * size.width / 20,
-              j * size.height / 15,
-              size.width / 20,
-              size.height / 15,
+              i * size.width / 30,
+              j * size.height / 20,
+              size.width / 30,
+              size.height / 20,
             ),
-            texturePaint,
+            patternPaint,
           );
         }
       }
     }
 
     // North plot
+    final northColor =
+        mapLayer == 0
+            ? const Color(0xFF8BC34A)
+            : mapLayer == 1
+            ? const Color(0xFFFFEB3B)
+            : const Color(0xFF4FC3F7);
     final northPaint =
-        Paint()..color = const Color(0xFF8BC34A).withOpacity(0.85);
+        Paint()
+          ..color = northColor.withOpacity(selectedField == 0 ? 0.95 : 0.7);
     final northPath =
         Path()
           ..moveTo(size.width * 0.05, size.height * 0.08)
           ..lineTo(size.width * 0.55, size.height * 0.06)
-          ..lineTo(size.width * 0.58, size.height * 0.55)
-          ..lineTo(size.width * 0.35, size.height * 0.75)
-          ..lineTo(size.width * 0.05, size.height * 0.7)
+          ..lineTo(size.width * 0.58, size.height * 0.52)
+          ..lineTo(size.width * 0.35, size.height * 0.72)
+          ..lineTo(size.width * 0.05, size.height * 0.68)
           ..close();
     canvas.drawPath(northPath, northPaint);
 
-    final northBorder =
+    // North plot glow when selected
+    if (selectedField == 0) {
+      final glowPaint =
+          Paint()
+            ..color = Colors.white.withOpacity(0.3)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 4
+            ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 8);
+      canvas.drawPath(northPath, glowPaint);
+    }
+
+    // North plot border
+    final borderPaint =
         Paint()
-          ..color = Colors.white.withOpacity(0.6)
+          ..color =
+              selectedField == 0 ? Colors.white : Colors.white.withOpacity(0.4)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2;
-    canvas.drawPath(northPath, northBorder);
+          ..strokeWidth = selectedField == 0 ? 3 : 2;
+    canvas.drawPath(northPath, borderPaint);
 
     // South plot
+    final southColor =
+        mapLayer == 0
+            ? const Color(0xFF4CAF50)
+            : mapLayer == 1
+            ? const Color(0xFF8BC34A)
+            : const Color(0xFF29B6F6);
     final southPaint =
-        Paint()..color = const Color(0xFF4CAF50).withOpacity(0.85);
+        Paint()
+          ..color = southColor.withOpacity(selectedField == 1 ? 0.95 : 0.7);
     final southPath =
         Path()
-          ..moveTo(size.width * 0.35, size.height * 0.75)
-          ..lineTo(size.width * 0.58, size.height * 0.55)
-          ..lineTo(size.width * 0.62, size.height * 0.95)
-          ..lineTo(size.width * 0.1, size.height * 0.95)
+          ..moveTo(size.width * 0.35, size.height * 0.74)
+          ..lineTo(size.width * 0.58, size.height * 0.54)
+          ..lineTo(size.width * 0.60, size.height * 0.92)
+          ..lineTo(size.width * 0.10, size.height * 0.92)
           ..close();
     canvas.drawPath(southPath, southPaint);
-    canvas.drawPath(southPath, northBorder);
 
-    // Water channel
+    if (selectedField == 1) {
+      final glowPaint =
+          Paint()
+            ..color = Colors.white.withOpacity(0.3)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 4
+            ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 8);
+      canvas.drawPath(southPath, glowPaint);
+    }
+
+    final southBorder =
+        Paint()
+          ..color =
+              selectedField == 1 ? Colors.white : Colors.white.withOpacity(0.4)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = selectedField == 1 ? 3 : 2;
+    canvas.drawPath(southPath, southBorder);
+
+    // Water channel with glow
     final waterPaint =
         Paint()
           ..color = const Color(0xFF29B6F6).withOpacity(0.9)
-          ..strokeWidth = 10
+          ..strokeWidth = 8
           ..strokeCap = StrokeCap.round;
+
+    final waterGlow =
+        Paint()
+          ..color = const Color(0xFF29B6F6).withOpacity(0.3)
+          ..strokeWidth = 16
+          ..strokeCap = StrokeCap.round
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+
     canvas.drawLine(
-      Offset(size.width * 0.6, 0),
+      Offset(size.width * 0.62, 0),
+      Offset(size.width * 0.65, size.height),
+      waterGlow,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.62, 0),
       Offset(size.width * 0.65, size.height),
       waterPaint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.65, size.height * 0.95),
-      Offset(size.width, size.height * 0.95),
-      waterPaint,
-    );
-
-    // Road
-    final roadPaint =
-        Paint()
-          ..color = const Color(0xFF795548).withOpacity(0.7)
-          ..strokeWidth = 14;
-    canvas.drawLine(
-      Offset(0, size.height * 0.85),
-      Offset(size.width, size.height * 0.85),
-      roadPaint,
     );
 
     // Buildings
     final buildPaint =
         Paint()..color = const Color(0xFFFFB74D).withOpacity(0.9);
-    canvas.drawRect(
-      Rect.fromLTWH(
-        size.width * 0.7,
-        size.height * 0.3,
-        size.width * 0.12,
-        size.height * 0.2,
+    final buildShadow =
+        Paint()
+          ..color = Colors.black.withOpacity(0.2)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          size.width * 0.72,
+          size.height * 0.32,
+          size.width * 0.12,
+          size.height * 0.18,
+        ),
+        const Radius.circular(4),
       ),
-      buildPaint,
+      buildShadow,
     );
-    canvas.drawRect(
-      Rect.fromLTWH(
-        size.width * 0.84,
-        size.height * 0.3,
-        size.width * 0.1,
-        size.height * 0.15,
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          size.width * 0.70,
+          size.height * 0.30,
+          size.width * 0.12,
+          size.height * 0.18,
+        ),
+        const Radius.circular(4),
       ),
       buildPaint,
     );
 
-    // North labels
+    // Labels
     _paintLabel(
       canvas,
       'North Plot',
-      Offset(size.width * 0.25, size.height * 0.35),
-    );
-    _paintLabel(
-      canvas,
-      'South Plot',
-      Offset(size.width * 0.32, size.height * 0.82),
+      Offset(size.width * 0.28, size.height * 0.35),
     );
     _paintLabel(
       canvas,
       '1.8 ac',
-      Offset(size.width * 0.25, size.height * 0.43),
+      Offset(size.width * 0.28, size.height * 0.43),
       small: true,
     );
     _paintLabel(
       canvas,
+      'South Plot',
+      Offset(size.width * 0.32, size.height * 0.78),
+    );
+    _paintLabel(
+      canvas,
       '1.4 ac',
-      Offset(size.width * 0.32, size.height * 0.9),
+      Offset(size.width * 0.32, size.height * 0.86),
       small: true,
     );
   }
@@ -1981,10 +2620,13 @@ class _FullMapPainter extends CustomPainter {
       text: TextSpan(
         text: text,
         style: TextStyle(
-          fontSize: small ? 10 : 12,
-          fontWeight: FontWeight.bold,
+          fontSize: small ? 10 : 13,
+          fontWeight: FontWeight.w800,
           color: Colors.white,
-          shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
+          shadows: const [
+            Shadow(color: Colors.black54, blurRadius: 6),
+            Shadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 2)),
+          ],
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -1994,7 +2636,9 @@ class _FullMapPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _Enhanced3DMapPainter oldDelegate) =>
+      selectedField != oldDelegate.selectedField ||
+      mapLayer != oldDelegate.mapLayer;
 }
 
 // ─────────────────────────────────────────────
@@ -2066,6 +2710,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
           _buildYieldHistoryChart(),
           const SizedBox(height: 16),
           _buildCropComparisonCard(),
+          const SizedBox(height: 100),
         ],
       ),
     );
@@ -2518,6 +3163,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               ],
             ),
           ),
+          const SizedBox(height: 100),
         ],
       ),
     );
@@ -2726,6 +3372,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               ],
             ),
           ),
+          const SizedBox(height: 100),
         ],
       ),
     );
@@ -2808,7 +3455,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildBadgesSection(),
                   const SizedBox(height: 16),
                   _buildProfileMenu(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
