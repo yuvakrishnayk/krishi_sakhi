@@ -4,7 +4,6 @@ import 'package:krishi_sakhi/screens/home_screen.dart';
 import '../auth/auth_repository.dart';
 import '../auth/auth_service.dart';
 import '../auth/models/user.dart';
-import 'package:krishi_sakhi/screens/Signin_Page/signinpage.dart'; // for HomeDashboard reference
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
@@ -201,8 +200,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             Navigator.pushReplacement(
                               context,
                               PageRouteBuilder(
-                                pageBuilder:
-                                    (_, __, ___) => const HomeScreen(),
+                                pageBuilder: (_, __, ___) => const HomeScreen(),
                                 transitionsBuilder:
                                     (_, a, __, child) => FadeTransition(
                                       opacity: a,

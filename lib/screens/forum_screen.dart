@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:krishi_sakhi/screens/create_post_screen.dart';
-import 'package:krishi_sakhi/screens/form_screen.dart';
 import 'package:krishi_sakhi/providers/auth_provider.dart';
 import 'forum_detail_screen.dart';
 import '../models/forum_models.dart';
