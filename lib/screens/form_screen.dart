@@ -7,7 +7,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import '../l10n/app_localizations.dart';
+import '../models/farm_project.dart';
 import 'map_screen.dart';
+import 'project_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Crop data model for suggestions
@@ -1614,7 +1616,34 @@ class _FormScreensState extends State<FormScreens>
               );
               return;
             }
-            _snack('Project created successfully!');
+            if (_selectedLatLng == null) {
+              _snack('Please select a location', error: true);
+              return;
+            }
+            if (_selectedCrop == null) {
+              _snack('Please select a crop', error: true);
+              return;
+            }
+
+            // Create FarmProject with all data
+            final project = FarmProject(
+              farmName: _farmNameController.text,
+              locationName: _locationController.text,
+              location: _selectedLatLng!,
+              acres: double.tryParse(_acresController.text) ?? 1.0,
+              polygonPoints: _polygonPoints,
+              cropName: _selectedCrop!,
+              irrigationMethods: Set.from(_selectedIrrigationMethods),
+              farmerLevel: _farmerLevel,
+            );
+
+            // Navigate to ProjectScreen with data
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProjectScreen(project: project),
+              ),
+            );
           }
         },
         style: ElevatedButton.styleFrom(
