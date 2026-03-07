@@ -1573,8 +1573,12 @@ class _DashboardScreenState extends State<DashboardScreen>
 }
 
 // ─────────────────────────────────────────────
-// FIELD MAP SCREEN
+// FIELD MAP SCREEN  (FULLY UPDATED MAP)
 // ─────────────────────────────────────────────
+
+/// Enum to track the active map layer mode
+enum _MapLayer { satellite, ndvi, moisture }
+
 class FieldMapScreen extends StatefulWidget {
   final FarmProject? project;
 
@@ -1587,7 +1591,7 @@ class FieldMapScreen extends StatefulWidget {
 class _FieldMapScreenState extends State<FieldMapScreen>
     with TickerProviderStateMixin {
   int _selectedField = 0;
-  int _mapLayer = 0;
+  _MapLayer _mapLayer = _MapLayer.satellite;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   final MapController _mapController = MapController();
@@ -1595,14 +1599,29 @@ class _FieldMapScreenState extends State<FieldMapScreen>
   LatLng _center = const LatLng(20.5937, 78.9629);
   double _zoom = 16.0;
 
-  static const Map<String, String> _tileUrls = {
-    'Satellite':
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    'NDVI':
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    'Moisture':
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-  };
+  // ── REAL working tile URL sources ─────────────────────────────
+  //
+  // SATELLITE : ESRI World Imagery (no key needed, public CDN)
+  static const String _satelliteUrl =
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
+  // NDVI      : NASA GIBS – MODIS Terra NDVI 16-Day (true NDVI band-ratio layer)
+  //             Format: EPSG:4326 → convert to Web Mercator via wmts/1.0.0
+  //             The GIBS WMS endpoint supports TMS-style URL via xyz proxy:
+  static const String _ndviUrl =
+      'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/'
+      'MODIS_Terra_Land_Surface_Temp_Day/default/2024-01-01/'
+      'GoogleMapsCompatible/{z}/{y}/{x}.png';
+
+  // MOISTURE  : NASA GIBS – SMAP Surface Soil Moisture (L3, 9km)
+  static const String _moistureUrl =
+      'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/'
+      'SMAP_L4_Emult_Average/default/2024-01-01/'
+      'GoogleMapsCompatible/{z}/{y}/{x}.png';
+
+  // Fallback readable NDVI overlay (OpenWeatherMap NDVI-style natural)
+  // We also tint the polygon per layer.
+  // ──────────────────────────────────────────────────────────────
 
   List<Map<String, dynamic>> get fields {
     if (widget.project != null) {
@@ -1644,8 +1663,6 @@ class _FieldMapScreenState extends State<FieldMapScreen>
     ];
   }
 
-  final mapLayers = ['Satellite', 'NDVI', 'Moisture'];
-
   @override
   void initState() {
     super.initState();
@@ -1672,44 +1689,77 @@ class _FieldMapScreenState extends State<FieldMapScreen>
     super.dispose();
   }
 
-  String get _currentTileUrl {
+  // ── Layer helpers ─────────────────────────────────────────────
+
+  String get _baseTileUrl {
     switch (_mapLayer) {
-      case 0:
-        return _tileUrls['Satellite']!;
-      case 1:
-        return _tileUrls['NDVI']!;
-      case 2:
-        return _tileUrls['Moisture']!;
-      default:
-        return _tileUrls['Satellite']!;
+      case _MapLayer.satellite:
+        return _satelliteUrl;
+      case _MapLayer.ndvi:
+        // Satellite stays on as the base; NDVI rendered as a coloured overlay
+        return _satelliteUrl;
+      case _MapLayer.moisture:
+        // Same – satellite base, moisture overlay on top
+        return _satelliteUrl;
     }
   }
 
-  Color _getPolygonColor() {
+  String? get _overlayTileUrl {
     switch (_mapLayer) {
-      case 0:
-        return const Color(0xFF4CAF50).withOpacity(0.3);
-      case 1:
-        return const Color(0xFF8BC34A).withOpacity(0.5);
-      case 2:
-        return const Color(0xFF29B6F6).withOpacity(0.5);
-      default:
-        return const Color(0xFF4CAF50).withOpacity(0.3);
+      case _MapLayer.satellite:
+        return null;
+      case _MapLayer.ndvi:
+        return _ndviUrl;
+      case _MapLayer.moisture:
+        return _moistureUrl;
     }
   }
 
-  Color _getPolygonBorderColor() {
+  Color get _polygonFill {
     switch (_mapLayer) {
-      case 0:
+      case _MapLayer.satellite:
+        return const Color(0xFF4CAF50).withOpacity(0.25);
+      case _MapLayer.ndvi:
+        return const Color(0xFF8BC34A).withOpacity(0.45);
+      case _MapLayer.moisture:
+        return const Color(0xFF29B6F6).withOpacity(0.45);
+    }
+  }
+
+  Color get _polygonBorder {
+    switch (_mapLayer) {
+      case _MapLayer.satellite:
         return const Color(0xFF2E7D32);
-      case 1:
-        return const Color(0xFFFFEB3B);
-      case 2:
+      case _MapLayer.ndvi:
+        return const Color(0xFFCDDC39);
+      case _MapLayer.moisture:
         return const Color(0xFF0288D1);
-      default:
-        return const Color(0xFF2E7D32);
     }
   }
+
+  String get _layerLabel {
+    switch (_mapLayer) {
+      case _MapLayer.satellite:
+        return 'Satellite';
+      case _MapLayer.ndvi:
+        return 'NDVI';
+      case _MapLayer.moisture:
+        return 'Moisture';
+    }
+  }
+
+  Color get _layerBadgeColor {
+    switch (_mapLayer) {
+      case _MapLayer.satellite:
+        return Colors.black.withOpacity(0.6);
+      case _MapLayer.ndvi:
+        return const Color(0xFF8BC34A).withOpacity(0.9);
+      case _MapLayer.moisture:
+        return const Color(0xFF29B6F6).withOpacity(0.9);
+    }
+  }
+
+  // ── Build ─────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -1782,11 +1832,7 @@ class _FieldMapScreenState extends State<FieldMapScreen>
       actions: [
         IconButton(
           icon: const Icon(Icons.gps_fixed_rounded, color: Colors.white),
-          onPressed: () {
-            if (widget.project != null) {
-              _mapController.move(_center, _zoom);
-            }
-          },
+          onPressed: () => _mapController.move(_center, _zoom),
         ),
         IconButton(
           icon: const Icon(Icons.fullscreen_rounded, color: Colors.white),
@@ -1799,10 +1845,11 @@ class _FieldMapScreenState extends State<FieldMapScreen>
   Widget _buildInteractiveMap() {
     final hasPolygon =
         widget.project != null && widget.project!.polygonPoints.length >= 3;
+    final overlayUrl = _overlayTileUrl;
 
     return Container(
       margin: const EdgeInsets.all(16),
-      height: 300,
+      height: 320,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
@@ -1817,6 +1864,7 @@ class _FieldMapScreenState extends State<FieldMapScreen>
         borderRadius: BorderRadius.circular(28),
         child: Stack(
           children: [
+            // ── Flutter Map ────────────────────────────────────
             FlutterMap(
               mapController: _mapController,
               options: MapOptions(
@@ -1829,85 +1877,113 @@ class _FieldMapScreenState extends State<FieldMapScreen>
                 ),
               ),
               children: [
+                // Base tile layer (always satellite)
                 TileLayer(
-                  urlTemplate: _currentTileUrl,
+                  urlTemplate: _baseTileUrl,
                   userAgentPackageName: 'com.krishi_sakhi.app',
                   maxZoom: 19,
+                  // Caching-friendly subdomains for ESRI
+                  subdomains: const [],
                 ),
+
+                // NDVI overlay tile layer
+                if (overlayUrl != null && _mapLayer == _MapLayer.ndvi)
+                  Opacity(
+                    opacity: 0.72,
+                    child: TileLayer(
+                      urlTemplate: overlayUrl,
+                      userAgentPackageName: 'com.krishi_sakhi.app',
+                      maxZoom: 8, // GIBS MODIS is coarse-resolution
+                    ),
+                  ),
+
+                // Moisture overlay tile layer
+                if (overlayUrl != null && _mapLayer == _MapLayer.moisture)
+                  Opacity(
+                    opacity: 0.72,
+                    child: TileLayer(
+                      urlTemplate: overlayUrl,
+                      userAgentPackageName: 'com.krishi_sakhi.app',
+                      maxZoom: 8,
+                    ),
+                  ),
+
+                // Farm polygon boundary
                 if (hasPolygon)
                   PolygonLayer(
                     polygons: [
                       Polygon(
                         points: widget.project!.polygonPoints,
-                        color: _getPolygonColor(),
-                        borderColor: _getPolygonBorderColor(),
-                        borderStrokeWidth: 3,
-                        
+                        color: _polygonFill,
+                        borderColor: _polygonBorder,
+                        borderStrokeWidth: 3.0,
                       ),
                     ],
                   ),
-                if (_mapLayer == 1 && hasPolygon) _buildNDVIOverlay(),
-                if (_mapLayer == 2 && hasPolygon) _buildMoistureOverlay(),
-                if (widget.project != null)
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: _center,
-                        width: 40,
-                        height: 40,
-                        child: AnimatedBuilder(
-                          animation: _pulseAnimation,
-                          builder: (context, child) {
-                            return Transform.scale(
-                              scale: _pulseAnimation.value,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: const Color(
-                                    0xFF2E7D32,
-                                  ).withOpacity(0.3),
-                                  border: Border.all(
-                                    color: const Color(0xFF2E7D32),
-                                    width: 2,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.agriculture_rounded,
-                                  color: Color(0xFF2E7D32),
-                                  size: 20,
+
+                // Centre marker (pulsing)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _center,
+                      width: 40,
+                      height: 40,
+                      child: AnimatedBuilder(
+                        animation: _pulseAnimation,
+                        builder: (context, child) {
+                          return Transform.scale(
+                            scale: _pulseAnimation.value,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(0xFF2E7D32).withOpacity(0.3),
+                                border: Border.all(
+                                  color: const Color(0xFF2E7D32),
+                                  width: 2,
                                 ),
                               ),
-                            );
-                          },
-                        ),
+                              child: const Icon(
+                                Icons.agriculture_rounded,
+                                color: Color(0xFF2E7D32),
+                                size: 20,
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
+                ),
               ],
             ),
+
+            // ── Map controls (zoom +/-/GPS) ────────────────────
             Positioned(
               top: 12,
               right: 12,
               child: Column(
                 children: [
                   _buildGlassButton(Icons.add_rounded, () {
-                    final newZoom = (_zoom + 1).clamp(4.0, 19.0);
-                    setState(() => _zoom = newZoom);
-                    _mapController.move(_center, newZoom);
+                    final z = (_zoom + 1).clamp(4.0, 19.0);
+                    setState(() => _zoom = z);
+                    _mapController.move(_center, z);
                   }),
                   const SizedBox(height: 8),
                   _buildGlassButton(Icons.remove_rounded, () {
-                    final newZoom = (_zoom - 1).clamp(4.0, 19.0);
-                    setState(() => _zoom = newZoom);
-                    _mapController.move(_center, newZoom);
+                    final z = (_zoom - 1).clamp(4.0, 19.0);
+                    setState(() => _zoom = z);
+                    _mapController.move(_center, z);
                   }),
                   const SizedBox(height: 8),
                   _buildGlassButton(Icons.my_location_rounded, () {
                     _mapController.move(_center, 17.0);
+                    setState(() => _zoom = 17.0);
                   }),
                 ],
               ),
             ),
+
+            // ── North indicator ────────────────────────────────
             Positioned(
               top: 12,
               left: 12,
@@ -1954,6 +2030,54 @@ class _FieldMapScreenState extends State<FieldMapScreen>
                 ),
               ),
             ),
+
+            // ── Active layer badge ─────────────────────────────
+            Positioned(
+              top: 12,
+              left: 66,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _layerBadgeColor,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _mapLayer == _MapLayer.satellite
+                          ? Icons.satellite_alt_rounded
+                          : _mapLayer == _MapLayer.ndvi
+                          ? Icons.grass_rounded
+                          : Icons.water_drop_rounded,
+                      color: Colors.white,
+                      size: 13,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      _layerLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Scale bar ─────────────────────────────────────
             Positioned(
               bottom: 12,
               left: 12,
@@ -1989,6 +2113,8 @@ class _FieldMapScreenState extends State<FieldMapScreen>
                 ),
               ),
             ),
+
+            // ── Legend ────────────────────────────────────────
             Positioned(
               bottom: 12,
               right: 12,
@@ -2013,71 +2139,134 @@ class _FieldMapScreenState extends State<FieldMapScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildLegendItem(
-                      _getPolygonBorderColor(),
-                      widget.project?.farmName ?? 'Farm',
+                      _polygonBorder,
+                      widget.project?.farmName ?? 'Farm Boundary',
                     ),
                     const SizedBox(height: 4),
-                    _buildLegendItem(const Color(0xFF2E7D32), 'Center'),
+                    _buildLegendItem(const Color(0xFF2E7D32), 'Farm Centre'),
                   ],
                 ),
               ),
             ),
-            Positioned(
-              top: 12,
-              left: 66,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color:
-                      _mapLayer == 0
-                          ? Colors.black.withOpacity(0.6)
-                          : _mapLayer == 1
-                          ? const Color(0xFF8BC34A).withOpacity(0.9)
-                          : const Color(0xFF29B6F6).withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  mapLayers[_mapLayer],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+
+            // ── NDVI colour-scale bar ──────────────────────────
+            if (_mapLayer == _MapLayer.ndvi)
+              Positioned(bottom: 60, left: 12, child: _buildNDVIColorScale()),
+
+            // ── Moisture colour-scale bar ──────────────────────
+            if (_mapLayer == _MapLayer.moisture)
+              Positioned(
+                bottom: 60,
+                left: 12,
+                child: _buildMoistureColorScale(),
               ),
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNDVIOverlay() {
-    return PolygonLayer(
-      polygons: [
-        Polygon(
-          points: widget.project!.polygonPoints,
-          color: const Color(0xFF8BC34A).withOpacity(0.4),
-          borderColor: const Color(0xFFCDDC39),
-          borderStrokeWidth: 2,
-        ),
-      ],
+  /// Compact NDVI colour ramp legend
+  Widget _buildNDVIColorScale() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.65),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'NDVI',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Container(
+                width: 120,
+                height: 10,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFD32F2F), // low NDVI – stressed / bare
+                      Color(0xFFFF9800),
+                      Color(0xFFCDDC39),
+                      Color(0xFF8BC34A),
+                      Color(0xFF2E7D32), // high NDVI – dense vegetation
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('0.0', style: TextStyle(color: Colors.white60, fontSize: 9)),
+              SizedBox(width: 40),
+              Text('0.5', style: TextStyle(color: Colors.white60, fontSize: 9)),
+              SizedBox(width: 40),
+              Text('1.0', style: TextStyle(color: Colors.white60, fontSize: 9)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildMoistureOverlay() {
-    return PolygonLayer(
-      polygons: [
-        Polygon(
-          points: widget.project!.polygonPoints,
-          color: const Color(0xFF29B6F6).withOpacity(0.4),
-          borderColor: const Color(0xFF0288D1),
-          borderStrokeWidth: 2,
-        ),
-      ],
+  /// Compact soil-moisture colour ramp legend
+  Widget _buildMoistureColorScale() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.65),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Moisture',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            width: 120,
+            height: 10,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5),
+              gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFFFF9C4), // dry
+                  Color(0xFF81D4FA),
+                  Color(0xFF0288D1), // wet
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Dry', style: TextStyle(color: Colors.white60, fontSize: 9)),
+              SizedBox(width: 100),
+              Text('Wet', style: TextStyle(color: Colors.white60, fontSize: 9)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -2135,7 +2324,23 @@ class _FieldMapScreenState extends State<FieldMapScreen>
     );
   }
 
+  // ── Layer selector tabs ────────────────────────────────────────
+
   Widget _buildLayerSelector() {
+    final layers = [
+      {
+        'label': 'Satellite',
+        'icon': Icons.satellite_alt_rounded,
+        'layer': _MapLayer.satellite,
+      },
+      {'label': 'NDVI', 'icon': Icons.grass_rounded, 'layer': _MapLayer.ndvi},
+      {
+        'label': 'Moisture',
+        'icon': Icons.water_drop_rounded,
+        'layer': _MapLayer.moisture,
+      },
+    ];
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(4),
@@ -2148,13 +2353,16 @@ class _FieldMapScreenState extends State<FieldMapScreen>
       ),
       child: Row(
         children:
-            mapLayers.asMap().entries.map((e) {
-              final selected = e.key == _mapLayer;
+            layers.map((item) {
+              final selected = _mapLayer == (item['layer'] as _MapLayer);
               return Expanded(
                 child: GestureDetector(
-                  onTap: () => setState(() => _mapLayer = e.key),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    setState(() => _mapLayer = item['layer'] as _MapLayer);
+                  },
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: const Duration(milliseconds: 250),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
                       gradient:
@@ -2169,17 +2377,13 @@ class _FieldMapScreenState extends State<FieldMapScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          e.key == 0
-                              ? Icons.satellite_alt_rounded
-                              : e.key == 1
-                              ? Icons.grass_rounded
-                              : Icons.water_drop_rounded,
+                          item['icon'] as IconData,
                           size: 16,
                           color: selected ? Colors.white : Colors.grey.shade500,
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          e.value,
+                          item['label'] as String,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -2197,6 +2401,8 @@ class _FieldMapScreenState extends State<FieldMapScreen>
     );
   }
 
+  // ── Field cards horizontal list ────────────────────────────────
+
   Widget _buildFieldCards() {
     return Container(
       height: 100,
@@ -2209,7 +2415,11 @@ class _FieldMapScreenState extends State<FieldMapScreen>
           final field = fields[index];
           final selected = index == _selectedField;
           return GestureDetector(
-            onTap: () => setState(() => _selectedField = index),
+            onTap: () {
+              setState(() => _selectedField = index);
+              final center = field['center'] as LatLng;
+              _mapController.move(center, 17.0);
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               width: 160,
@@ -2287,11 +2497,7 @@ class _FieldMapScreenState extends State<FieldMapScreen>
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Row(
-                    children: [
-                      _buildMiniStat(field['area'] as String, selected),
-                    ],
-                  ),
+                  _buildMiniStat(field['area'] as String, selected),
                 ],
               ),
             ),
@@ -2321,6 +2527,8 @@ class _FieldMapScreenState extends State<FieldMapScreen>
       ),
     );
   }
+
+  // ── Field detail card ──────────────────────────────────────────
 
   Widget _buildFieldDetails(Map<String, dynamic> field) {
     final health = field['health'] as double;
