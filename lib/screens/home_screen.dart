@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/components/drawer.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
+import 'package:krishi_sakhi/screens/Project_Details/bottom_nav_proj.dart';
 import 'package:krishi_sakhi/screens/form_screen.dart';
-import 'package:krishi_sakhi/screens/project_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

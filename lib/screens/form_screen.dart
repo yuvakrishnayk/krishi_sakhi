@@ -5,11 +5,11 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:krishi_sakhi/screens/Project_Details/bottom_nav_proj.dart';
 import 'package:latlong2/latlong.dart';
 import '../l10n/app_localizations.dart';
 import '../models/farm_project.dart';
 import 'map_screen.dart';
-import 'project_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Crop data model for suggestions
