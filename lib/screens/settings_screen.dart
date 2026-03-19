@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:krishi_sakhi/components/drawer.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
 import 'package:krishi_sakhi/main.dart';
+import 'package:krishi_sakhi/screens/about_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -123,6 +124,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: loc.contactSupport,
               subtitle: loc.supportSubtitle,
               onTap: () => _showContactSupportDialog(context),
+            ),
+
+            // NEW: About Section
+            _buildSettingCard(
+              context,
+              icon: Icons.info_outline_rounded,
+              title: "About", // Hardcoded assuming it's not in l10n yet
+              subtitle: "Learn about the creators and the app",
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AboutScreen()),
+                );
+              },
             ),
 
             // FAQ Section
@@ -677,3 +692,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
+
+// -------------------------------------------------------------
+// NEW ABOUT SCREEN WIDGET
+// -------------------------------------------------------------
+
