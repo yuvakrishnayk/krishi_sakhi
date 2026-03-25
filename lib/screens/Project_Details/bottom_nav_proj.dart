@@ -30,7 +30,7 @@ class _ProjectScreenState extends State<ProjectScreen>
   void initState() {
     super.initState();
     _screens = [
-      DashboardScreen(project: widget.project),
+      DashboardScreen(),
       FieldMapScreen(project: widget.project),
       AnalyticsScreen(project: widget.project),
       ProfileScreen(),
