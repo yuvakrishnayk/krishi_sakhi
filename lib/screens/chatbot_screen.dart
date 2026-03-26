@@ -248,6 +248,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   final _stt = stt.SpeechToText();
   final _tts = FlutterTts();
   bool _sttAvailable = false;
+  bool _ttsAvailable = false;
   bool _isListening = false;
   bool _isSpeaking = false;
 
@@ -312,23 +313,35 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   }
 
   Future<void> _initTts() async {
-    await _tts.setSharedInstance(true);
-    await _tts.setIosAudioCategory(IosTextToSpeechAudioCategory.ambient, [
-      IosTextToSpeechAudioCategoryOptions.allowBluetooth,
-      IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
-      IosTextToSpeechAudioCategoryOptions.mixWithOthers,
-    ]);
-    _tts.setStartHandler(() => setState(() => _isSpeaking = true));
-    _tts.setCompletionHandler(() => setState(() => _isSpeaking = false));
-    _tts.setErrorHandler((_) => setState(() => _isSpeaking = false));
-    await _tts.setSpeechRate(0.45);
-    await _tts.setVolume(1.0);
-    await _tts.setPitch(1.0);
-    await _applyTtsLanguage();
+    try {
+      await _tts.setSharedInstance(true);
+      await _tts.setIosAudioCategory(IosTextToSpeechAudioCategory.ambient, [
+        IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+        IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+        IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+      ]);
+      _tts.setStartHandler(() => setState(() => _isSpeaking = true));
+      _tts.setCompletionHandler(() => setState(() => _isSpeaking = false));
+      _tts.setErrorHandler((_) => setState(() => _isSpeaking = false));
+      await _tts.setSpeechRate(0.45);
+      await _tts.setVolume(1.0);
+      await _tts.setPitch(1.0);
+      _ttsAvailable = true;
+      await _applyTtsLanguage();
+    } on MissingPluginException {
+      _ttsAvailable = false;
+    } catch (_) {
+      _ttsAvailable = false;
+    }
   }
 
   Future<void> _applyTtsLanguage() async {
-    await _tts.setLanguage(_selectedLang.ttsLocale);
+    if (!_ttsAvailable) return;
+    try {
+      await _tts.setLanguage(_selectedLang.ttsLocale);
+    } on MissingPluginException {
+      _ttsAvailable = false;
+    }
   }
 
   void _startListening() async {
@@ -365,6 +378,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   }
 
   Future<void> _speakMessage(String text) async {
+    if (!_ttsAvailable) return;
     if (_isSpeaking) {
       await _tts.stop();
       setState(() => _isSpeaking = false);
@@ -670,7 +684,11 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                           setState(() => _selectedLang = lang);
                           await _applyTtsLanguage();
                           Navigator.pop(context);
-                          _showSnack('Language changed to ${lang.name}');
+                          _showSnack(
+                            _ttsAvailable
+                                ? 'Language changed to ${lang.name}'
+                                : 'Language changed to ${lang.name}. Voice output is unavailable on this device.',
+                          );
                         },
                       );
                     },
