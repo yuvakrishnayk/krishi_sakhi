@@ -49,5 +49,9 @@
 	<string>This app needs your location to complete your profile with address details.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs your location to complete your profile with address details.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs access to your microphone to recognize and process your voice commands for farming assistance.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app needs speech recognition permission to understand your farming questions and provide assistance in your preferred language.</string>
 </dict>
 </plist>

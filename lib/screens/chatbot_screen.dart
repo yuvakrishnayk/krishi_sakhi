@@ -8,6 +8,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
 // ─────────────────────────────────────────
@@ -270,6 +271,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   @override
   void initState() {
     super.initState();
+    _requestMicrophonePermission();
     _initSpeech();
     _initTts();
     _addGreeting();
@@ -294,6 +296,20 @@ class _ChatbotScreenState extends State<ChatbotScreen>
         time: DateFormat('hh:mm a').format(DateTime.now()),
       ),
     );
+  }
+
+  // ─── PERMISSIONS ──────────────────────
+  Future<void> _requestMicrophonePermission() async {
+    if (Platform.isAndroid || Platform.isIOS) {
+      final status = await Permission.microphone.request();
+      if (status.isDenied) {
+        _showSnack(
+          'Microphone permission denied. Voice features may not work.',
+        );
+      } else if (status.isPermanentlyDenied) {
+        openAppSettings();
+      }
+    }
   }
 
   // ─── SPEECH ───────────────────────────
@@ -350,6 +366,17 @@ class _ChatbotScreenState extends State<ChatbotScreen>
       _showSnack('Microphone not available on this device');
       return;
     }
+
+    // Check microphone permission before listening
+    final micStatus = await Permission.microphone.status;
+    if (micStatus.isDenied) {
+      final result = await Permission.microphone.request();
+      if (result.isDenied || result.isPermanentlyDenied) {
+        _showSnack('Microphone permission is required for voice input');
+        return;
+      }
+    }
+
     HapticFeedback.mediumImpact();
     setState(() {
       _isListening = true;

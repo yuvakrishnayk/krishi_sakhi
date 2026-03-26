@@ -234,83 +234,81 @@ class CustomDrawer extends StatelessWidget {
 
   Widget _buildUserDetails(BuildContext context, String name) {
     final l10n = AppLocalizations.of(context)!;
-    return Flexible(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Name
-          Flexible(
-            child: Text(
-              name,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16, // Reduced from 18
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.3,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Name
+        Flexible(
+          child: Text(
+            name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16, // Reduced from 18
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.3,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(height: 6), // Reduced spacing
+        // Projects with number
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.agriculture,
+                color: Colors.white.withOpacity(0.9),
+                size: 14, // Reduced from 16
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(height: 6), // Reduced spacing
-          // Projects with number
-          Flexible(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.agriculture,
-                  color: Colors.white.withOpacity(0.9),
-                  size: 14, // Reduced from 16
-                ),
-                const SizedBox(width: 4), // Reduced spacing
-                Flexible(
-                  child: Text(
-                    l10n.projectsCount('24'),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 12, // Reduced from 14
-                      fontWeight: FontWeight.w500,
-                    ),
+              const SizedBox(width: 4), // Reduced spacing
+              Flexible(
+                child: Text(
+                  l10n.projectsCount('24'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 12, // Reduced from 14
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(height: 2),
+        ),
+        const SizedBox(height: 2),
 
-          // Account created date
-          Flexible(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.calendar_today,
-                  color: Colors.white.withOpacity(0.9),
-                  size: 14, // Reduced from 16
-                ),
-                const SizedBox(width: 4), // Reduced spacing
-                Flexible(
-                  child: Text(
-                    l10n.sinceDate,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 11, // Reduced from 12
-                      fontWeight: FontWeight.w400,
-                    ),
+        // Account created date
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.calendar_today,
+                color: Colors.white.withOpacity(0.9),
+                size: 14, // Reduced from 16
+              ),
+              const SizedBox(width: 4), // Reduced spacing
+              Flexible(
+                child: Text(
+                  l10n.sinceDate,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 11, // Reduced from 12
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
