@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -1217,20 +1218,69 @@ class _MessageBubbleState extends State<_MessageBubble>
                               const SizedBox(height: 8),
                             ],
                             if (widget.msg.text.isNotEmpty)
-                              Text(
-                                widget.msg.text,
-                                style: TextStyle(
-                                  color:
-                                      isUser
-                                          ? Colors.white
-                                          : widget.msg.isError
-                                          ? Colors.red[800]
-                                          : const Color(0xFF1A1A1A),
-                                  fontSize: 14.5,
-                                  height: 1.55,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
+                              isUser
+                                  ? Text(
+                                    widget.msg.text,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14.5,
+                                      height: 1.55,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  )
+                                  : MarkdownBody(
+                                    data: widget.msg.text,
+                                    selectable: true,
+                                    styleSheet: MarkdownStyleSheet.fromTheme(
+                                      Theme.of(context),
+                                    ).copyWith(
+                                      p: TextStyle(
+                                        color:
+                                            widget.msg.isError
+                                                ? Colors.red[800]
+                                                : const Color(0xFF1A1A1A),
+                                        fontSize: 14.5,
+                                        height: 1.55,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                      h1: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.4,
+                                      ),
+                                      h2: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.4,
+                                      ),
+                                      h3: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.4,
+                                      ),
+                                      strong: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      em: const TextStyle(
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                      listBullet: TextStyle(
+                                        color:
+                                            widget.msg.isError
+                                                ? Colors.red[800]
+                                                : const Color(0xFF1A1A1A),
+                                        fontSize: 14.5,
+                                        height: 1.55,
+                                      ),
+                                      a: TextStyle(
+                                        color:
+                                            widget.msg.isError
+                                                ? Colors.red[700]
+                                                : const Color(0xFF2E7D32),
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
                           ],
                         ),
                       ),
