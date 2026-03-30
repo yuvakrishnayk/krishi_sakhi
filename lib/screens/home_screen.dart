@@ -340,12 +340,10 @@ class _HomeScreenState extends State<HomeScreen> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.8,
-                    ),
+                  padding: EdgeInsets.symmetric(vertical: 6),
+                  child: _WeatherLoadingScene(
+                    headline: 'Fetching live weather...',
+                    compact: true,
                   ),
                 );
               }
@@ -1053,9 +1051,11 @@ class _WeatherFullscreenPageState extends State<_WeatherFullscreenPage> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 3,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
+                      child: _WeatherLoadingScene(
+                        headline: 'Preparing detailed weather insights...',
+                      ),
                     ),
                   );
                 }
@@ -1262,6 +1262,235 @@ class _WeatherFullscreenPageState extends State<_WeatherFullscreenPage> {
       return 'Wind speed is high. Avoid pesticide spray now and secure young plants with support if needed.';
     }
     return 'Weather is stable for regular field activities. Keep monitoring soil moisture and continue scheduled crop care.';
+  }
+}
+
+class _WeatherLoadingScene extends StatefulWidget {
+  const _WeatherLoadingScene({required this.headline, this.compact = false});
+
+  final String headline;
+  final bool compact;
+
+  @override
+  State<_WeatherLoadingScene> createState() => _WeatherLoadingSceneState();
+}
+
+class _WeatherLoadingSceneState extends State<_WeatherLoadingScene>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sceneHeight = widget.compact ? 96.0 : 128.0;
+    final titleSize = widget.compact ? 13.0 : 15.0;
+    final subtitleSize = widget.compact ? 11.0 : 12.0;
+    final horizontalPadding = widget.compact ? 10.0 : 16.0;
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = _controller.value;
+        final cloudShiftA = math.sin(t * math.pi * 2) * 9;
+        final cloudShiftB = math.sin((t * math.pi * 2) + 1.3) * 11;
+        final rainPulse = (math.sin((t * math.pi * 2) + 0.8) + 1) / 2;
+        final sunRotation = t * math.pi * 2;
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: sceneHeight,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    right: widget.compact ? 18 : 24,
+                    top: widget.compact ? 4 : 2,
+                    child: Transform.rotate(
+                      angle: sunRotation,
+                      child: Icon(
+                        Icons.wb_sunny_rounded,
+                        size: widget.compact ? 30 : 40,
+                        color: const Color(0xFFFFF176),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 10 + cloudShiftA,
+                    top: widget.compact ? 24 : 28,
+                    child: _CloudBlob(
+                      width: widget.compact ? 84 : 102,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                  Positioned(
+                    right: 10 + cloudShiftB,
+                    top: widget.compact ? 36 : 46,
+                    child: _CloudBlob(
+                      width: widget.compact ? 64 : 78,
+                      color: Colors.white.withOpacity(0.72),
+                    ),
+                  ),
+                  Positioned(
+                    left: widget.compact ? 24 : 30,
+                    bottom: widget.compact ? 2 : 4,
+                    child: Row(
+                      children: [
+                        _RainDrop(opacity: 0.3 + (rainPulse * 0.6), height: 14),
+                        const SizedBox(width: 6),
+                        _RainDrop(
+                          opacity: 0.3 + ((1 - rainPulse) * 0.6),
+                          height: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        _RainDrop(opacity: 0.3 + (rainPulse * 0.5), height: 12),
+                        const SizedBox(width: 6),
+                        _RainDrop(
+                          opacity: 0.3 + ((1 - rainPulse) * 0.55),
+                          height: 16,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Column(
+                children: [
+                  Text(
+                    widget.headline,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: titleSize,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Checking location, clouds, and wind patterns...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.84),
+                      fontWeight: FontWeight.w500,
+                      fontSize: subtitleSize,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(100),
+                    child: LinearProgressIndicator(
+                      minHeight: widget.compact ? 6 : 7,
+                      value: null,
+                      backgroundColor: Colors.white.withOpacity(0.18),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFFA5D6A7),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _CloudBlob extends StatelessWidget {
+  const _CloudBlob({required this.width, required this.color});
+
+  final double width;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final height = width * 0.48;
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Stack(
+        children: [
+          Positioned(
+            left: width * 0.08,
+            top: height * 0.24,
+            child: Container(
+              width: width * 0.38,
+              height: height * 0.58,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+          ),
+          Positioned(
+            left: width * 0.28,
+            top: 0,
+            child: Container(
+              width: width * 0.42,
+              height: height * 0.74,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+          ),
+          Positioned(
+            right: width * 0.08,
+            top: height * 0.2,
+            child: Container(
+              width: width * 0.34,
+              height: height * 0.54,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              height: height * 0.52,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(height),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RainDrop extends StatelessWidget {
+  const _RainDrop({required this.opacity, required this.height});
+
+  final double opacity;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 4,
+      height: height,
+      decoration: BoxDecoration(
+        color: const Color(0xFF80DEEA).withOpacity(opacity),
+        borderRadius: BorderRadius.circular(99),
+      ),
+    );
   }
 }
 
