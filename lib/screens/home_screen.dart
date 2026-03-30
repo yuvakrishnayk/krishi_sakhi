@@ -1057,13 +1057,19 @@ class _WeatherFullscreenPageState extends State<_WeatherFullscreenPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Weather Insights',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.2,
-          ),
+        title: const Row(
+          children: [
+            Icon(Icons.agriculture_rounded, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Farm Weather Hub',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
         ),
       ),
       body: Stack(
@@ -1140,48 +1146,8 @@ class _WeatherFullscreenPageState extends State<_WeatherFullscreenPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        weather.locationName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 30,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        weather.conditionText,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      _buildHeroPanel(weather),
                       const SizedBox(height: 18),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            weather.isDay
-                                ? Icons.wb_sunny_rounded
-                                : Icons.nightlight_round,
-                            color: Colors.white,
-                            size: 64,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            '${weather.tempC.round()}°C',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 64,
-                              fontWeight: FontWeight.w700,
-                              height: 0.95,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
                       Wrap(
                         spacing: 12,
                         runSpacing: 12,
@@ -1203,6 +1169,10 @@ class _WeatherFullscreenPageState extends State<_WeatherFullscreenPage> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 18),
+                      _buildAgriImpactBoard(weather),
+                      const SizedBox(height: 16),
+                      _buildActionPlan(weather),
                       const SizedBox(height: 16),
                       _DetailedWeatherPanel(weather: weather),
                       const SizedBox(height: 24),
@@ -1223,13 +1193,13 @@ class _WeatherFullscreenPageState extends State<_WeatherFullscreenPage> {
                             const Row(
                               children: [
                                 Icon(
-                                  Icons.spa_rounded,
+                                  Icons.eco_rounded,
                                   color: Colors.white,
                                   size: 22,
                                 ),
                                 SizedBox(width: 8),
                                 Text(
-                                  'Farmer Advisory',
+                                  'Agriculture Advisory',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 18,
@@ -1250,7 +1220,7 @@ class _WeatherFullscreenPageState extends State<_WeatherFullscreenPage> {
                             ),
                             const SizedBox(height: 12),
                             _AdvisoryBullet(
-                              icon: Icons.grass_rounded,
+                              icon: Icons.biotech_rounded,
                               text: _diseaseRiskAdvice(weather),
                             ),
                             const SizedBox(height: 8),
@@ -1290,6 +1260,349 @@ class _WeatherFullscreenPageState extends State<_WeatherFullscreenPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildHeroPanel(_WeatherData weather) {
+    final score = _fieldReadinessScore(weather);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0A2C66), Color(0xFF125DA2), Color(0xFF1E88D8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.white.withOpacity(0.22), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0D47A1).withOpacity(0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      weather.locationName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      weather.conditionText,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  weather.isDay ? 'Day Mode' : 'Night Mode',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Icon(
+                weather.isDay ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+                color: Colors.white,
+                size: 58,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '${weather.tempC.round()}°C',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 56,
+                  fontWeight: FontWeight.w700,
+                  height: 0.95,
+                ),
+              ),
+              const Spacer(),
+              _ReadinessRing(score: score),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.schedule_rounded,
+                  color: Colors.white70,
+                  size: 18,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Last update: ${weather.lastUpdated}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Text(
+                  _sprayWindow(weather),
+                  style: const TextStyle(
+                    color: Color(0xFFA5D6A7),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAgriImpactBoard(_WeatherData weather) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.14),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.analytics_rounded, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Agriculture Impact Board',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _ImpactTile(
+                icon: Icons.opacity_rounded,
+                label: 'Irrigation',
+                value: _irrigationUrgency(weather),
+              ),
+              _ImpactTile(
+                icon: Icons.biotech_rounded,
+                label: 'Disease Pressure',
+                value: _diseasePressure(weather),
+              ),
+              _ImpactTile(
+                icon: Icons.sanitizer_rounded,
+                label: 'Spray Window',
+                value: _sprayWindow(weather),
+              ),
+              _ImpactTile(
+                icon: Icons.pets_rounded,
+                label: 'Livestock Comfort',
+                value: _livestockComfort(weather),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionPlan(_WeatherData weather) {
+    final actions = _priorityActions(weather);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0C3A7A).withOpacity(0.45),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Priority Field Action Plan',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (final action in actions) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 6),
+                  width: 7,
+                  height: 7,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFA5D6A7),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    action,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      height: 1.45,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+
+  int _fieldReadinessScore(_WeatherData weather) {
+    var score = 100;
+
+    if (weather.windKph > 25) score -= 20;
+    if (weather.humidity > 85) score -= 15;
+    if (weather.tempC > 35) score -= 18;
+    if (weather.precipitationMm > 5) score -= 20;
+    if (weather.uvIndex > 8) score -= 10;
+
+    return score.clamp(25, 100);
+  }
+
+  String _sprayWindow(_WeatherData weather) {
+    if (weather.windKph > 18 || weather.precipitationMm > 1.5) {
+      return 'Avoid Spray';
+    }
+    if (weather.uvIndex >= 7) {
+      return 'Spray Early AM';
+    }
+    return 'Good Spray Window';
+  }
+
+  String _irrigationUrgency(_WeatherData weather) {
+    if (weather.precipitationMm >= 4) return 'Low today';
+    if (weather.tempC >= 34 && weather.humidity < 55) return 'High';
+    if (weather.tempC >= 31) return 'Moderate';
+    return 'Normal';
+  }
+
+  String _diseasePressure(_WeatherData weather) {
+    if (weather.humidity >= 85 && weather.cloudCover >= 60) return 'High';
+    if (weather.humidity >= 70) return 'Moderate';
+    return 'Low';
+  }
+
+  String _livestockComfort(_WeatherData weather) {
+    if (weather.tempC >= 35) return 'Heat stress risk';
+    if (weather.tempC <= 18 && !weather.isDay) return 'Cool night care';
+    return 'Comfortable';
+  }
+
+  List<String> _priorityActions(_WeatherData weather) {
+    final actions = <String>[];
+
+    if (weather.precipitationMm >= 3) {
+      actions.add(
+        'Reduce irrigation for the next cycle and inspect low-lying zones for water stagnation.',
+      );
+    } else if (weather.tempC >= 33) {
+      actions.add(
+        'Plan split irrigation in early morning and evening to reduce crop heat stress.',
+      );
+    }
+
+    if (weather.humidity >= 80) {
+      actions.add(
+        'Increase canopy ventilation and scout for early fungal symptoms in dense crop sections.',
+      );
+    }
+
+    if (weather.windKph > 20) {
+      actions.add(
+        'Postpone pesticide spraying and secure young plants or trellis-supported crops.',
+      );
+    }
+
+    if (weather.uvIndex >= 8) {
+      actions.add(
+        'Shift labor-intensive tasks to before 11 AM or after 4 PM and ensure hydration breaks.',
+      );
+    }
+
+    if (actions.isEmpty) {
+      actions.add(
+        'Field conditions are favorable. Continue routine irrigation, scouting, and nutrient scheduling.',
+      );
+      actions.add(
+        'Use this stable window for weeding, light nutrient application, and preventive crop care.',
+      );
+    }
+
+    return actions;
   }
 
   String _buildAdvisory(_WeatherData weather) {
@@ -1748,7 +2061,14 @@ class _FullscreenMetricChip extends StatelessWidget {
       constraints: const BoxConstraints(minWidth: 160),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.14),
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.18),
+            Colors.white.withOpacity(0.09),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.white.withOpacity(0.22), width: 1),
       ),
@@ -1832,6 +2152,127 @@ class _WeatherWaveBackground extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ReadinessRing extends StatelessWidget {
+  const _ReadinessRing({required this.score});
+
+  final int score;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = score / 100;
+
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 72,
+            height: 72,
+            child: CircularProgressIndicator(
+              value: progress,
+              strokeWidth: 6,
+              backgroundColor: Colors.white.withOpacity(0.2),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFFA5D6A7),
+              ),
+            ),
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '$score',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                ),
+              ),
+              const Text(
+                'Ready',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ImpactTile extends StatelessWidget {
+  const _ImpactTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 155),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.16), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.14),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: Colors.white, size: 16),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
