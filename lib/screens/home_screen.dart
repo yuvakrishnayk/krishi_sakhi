@@ -971,6 +971,14 @@ class _WeatherData {
     required this.windKph,
     required this.feelsLikeC,
     required this.isDay,
+    required this.uvIndex,
+    required this.precipitationMm,
+    required this.pressureMb,
+    required this.visibilityKm,
+    required this.gustKph,
+    required this.windDirection,
+    required this.cloudCover,
+    required this.lastUpdated,
   });
 
   final String locationName;
@@ -980,6 +988,14 @@ class _WeatherData {
   final double windKph;
   final double feelsLikeC;
   final bool isDay;
+  final double uvIndex;
+  final double precipitationMm;
+  final double pressureMb;
+  final double visibilityKm;
+  final double gustKph;
+  final String windDirection;
+  final int cloudCover;
+  final String lastUpdated;
 
   factory _WeatherData.fromJson(Map<String, dynamic> json) {
     final location = json['location'] as Map<String, dynamic>?;
@@ -996,6 +1012,14 @@ class _WeatherData {
       windKph: (current?['wind_kph'] as num?)?.toDouble() ?? 0,
       feelsLikeC: (current?['feelslike_c'] as num?)?.toDouble() ?? 0,
       isDay: (current?['is_day'] as num?) == 1,
+      uvIndex: (current?['uv'] as num?)?.toDouble() ?? 0,
+      precipitationMm: (current?['precip_mm'] as num?)?.toDouble() ?? 0,
+      pressureMb: (current?['pressure_mb'] as num?)?.toDouble() ?? 0,
+      visibilityKm: (current?['vis_km'] as num?)?.toDouble() ?? 0,
+      gustKph: (current?['gust_kph'] as num?)?.toDouble() ?? 0,
+      windDirection: (current?['wind_dir'] as String?) ?? 'N/A',
+      cloudCover: (current?['cloud'] as num?)?.toInt() ?? 0,
+      lastUpdated: (current?['last_updated'] as String?) ?? 'N/A',
     );
   }
 }
@@ -1179,6 +1203,8 @@ class _WeatherFullscreenPageState extends State<_WeatherFullscreenPage> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      _DetailedWeatherPanel(weather: weather),
                       const SizedBox(height: 24),
                       Container(
                         width: double.infinity,
@@ -1222,6 +1248,21 @@ class _WeatherFullscreenPageState extends State<_WeatherFullscreenPage> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
+                            const SizedBox(height: 12),
+                            _AdvisoryBullet(
+                              icon: Icons.grass_rounded,
+                              text: _diseaseRiskAdvice(weather),
+                            ),
+                            const SizedBox(height: 8),
+                            _AdvisoryBullet(
+                              icon: Icons.wb_sunny_outlined,
+                              text: _uvProtectionAdvice(weather),
+                            ),
+                            const SizedBox(height: 8),
+                            _AdvisoryBullet(
+                              icon: Icons.water_drop_outlined,
+                              text: _irrigationAdvice(weather),
+                            ),
                           ],
                         ),
                       ),
@@ -1262,6 +1303,202 @@ class _WeatherFullscreenPageState extends State<_WeatherFullscreenPage> {
       return 'Wind speed is high. Avoid pesticide spray now and secure young plants with support if needed.';
     }
     return 'Weather is stable for regular field activities. Keep monitoring soil moisture and continue scheduled crop care.';
+  }
+
+  String _diseaseRiskAdvice(_WeatherData weather) {
+    if (weather.humidity >= 85 && weather.cloudCover >= 60) {
+      return 'Disease risk: High. Inspect lower leaves for fungal spots and avoid evening overhead watering.';
+    }
+    if (weather.humidity >= 70) {
+      return 'Disease risk: Moderate. Improve field ventilation and keep foliage dry during irrigation.';
+    }
+    return 'Disease risk: Low. Continue routine crop scouting and sanitation practices.';
+  }
+
+  String _uvProtectionAdvice(_WeatherData weather) {
+    if (weather.uvIndex >= 8) {
+      return 'UV level is very high. Schedule labor-intensive tasks before 11 AM or after 4 PM.';
+    }
+    if (weather.uvIndex >= 6) {
+      return 'UV level is high. Ensure workers use hats and keep drinking water available in the field.';
+    }
+    return 'UV level is manageable for regular daytime operations.';
+  }
+
+  String _irrigationAdvice(_WeatherData weather) {
+    if (weather.precipitationMm >= 3) {
+      return 'Recent rainfall detected. Reduce today\'s irrigation cycle to avoid waterlogging.';
+    }
+    if (weather.tempC >= 34 && weather.humidity <= 55) {
+      return 'Dry heat conditions. Consider split irrigation in early morning and late evening.';
+    }
+    return 'Maintain normal irrigation schedule while checking soil moisture before each cycle.';
+  }
+}
+
+class _DetailedWeatherPanel extends StatelessWidget {
+  const _DetailedWeatherPanel({required this.weather});
+
+  final _WeatherData weather;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.18), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Weather Insight Details',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _DetailTile(
+                icon: Icons.shield_outlined,
+                label: 'UV Index',
+                value: weather.uvIndex.toStringAsFixed(1),
+              ),
+              _DetailTile(
+                icon: Icons.grain_rounded,
+                label: 'Rainfall',
+                value: '${weather.precipitationMm.toStringAsFixed(1)} mm',
+              ),
+              _DetailTile(
+                icon: Icons.speed_rounded,
+                label: 'Pressure',
+                value: '${weather.pressureMb.toStringAsFixed(0)} mb',
+              ),
+              _DetailTile(
+                icon: Icons.remove_red_eye_outlined,
+                label: 'Visibility',
+                value: '${weather.visibilityKm.toStringAsFixed(1)} km',
+              ),
+              _DetailTile(
+                icon: Icons.air,
+                label: 'Wind Gust',
+                value: '${weather.gustKph.toStringAsFixed(0)} km/h',
+              ),
+              _DetailTile(
+                icon: Icons.explore_outlined,
+                label: 'Wind Dir',
+                value: weather.windDirection,
+              ),
+              _DetailTile(
+                icon: Icons.filter_drama_outlined,
+                label: 'Cloud Cover',
+                value: '${weather.cloudCover}%',
+              ),
+              _DetailTile(
+                icon: Icons.update_rounded,
+                label: 'Updated',
+                value: weather.lastUpdated,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailTile extends StatelessWidget {
+  const _DetailTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.16), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdvisoryBullet extends StatelessWidget {
+  const _AdvisoryBullet({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: Colors.white.withOpacity(0.9), size: 16),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.4,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
