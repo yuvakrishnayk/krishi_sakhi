@@ -488,12 +488,17 @@ class _ForumScreenState extends State<ForumScreen> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: kSurface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 24,
-              offset: const Offset(0, -8),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 32,
+              offset: const Offset(0, -12),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, -4),
             ),
           ],
         ),
@@ -569,19 +574,29 @@ class _NavItem extends StatelessWidget {
         onTap();
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 320),
         curve: Curves.easeOutCubic,
         padding: EdgeInsets.symmetric(
           horizontal: isActive ? 18 : 14,
           vertical: 10,
         ),
         decoration: BoxDecoration(
-          color: isActive ? kPrimary.withOpacity(0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          color: isActive ? kPrimary.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
           border:
               isActive
-                  ? Border.all(color: kPrimary.withOpacity(0.2), width: 1)
+                  ? Border.all(color: kPrimary.withOpacity(0.3), width: 1.5)
                   : null,
+          boxShadow:
+              isActive
+                  ? [
+                    BoxShadow(
+                      color: kPrimary.withOpacity(0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                  : [],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -759,9 +774,14 @@ class _FeedPageState extends State<_FeedPage> {
           gradient: kPrimaryGradient,
           boxShadow: [
             BoxShadow(
-              color: kPrimary.withOpacity(0.4),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+              color: kPrimary.withOpacity(0.5),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+            BoxShadow(
+              color: kPrimary.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -788,12 +808,16 @@ class _FeedPageState extends State<_FeedPage> {
               height: 52,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.08),
-                    blurRadius: 20,
-                    offset: const Offset(0, 4),
+                    blurRadius: 24,
+                    offset: const Offset(0, 6),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 4,
                   ),
                 ],
               ),
@@ -878,10 +902,18 @@ class _FeedPageState extends State<_FeedPage> {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          Icons.search_off_rounded,
-          size: 56,
-          color: kPrimary.withOpacity(0.6),
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: kPrimary.withOpacity(0.1),
+          ),
+          child: Icon(
+            Icons.search_off_rounded,
+            size: 48,
+            color: kPrimary.withOpacity(0.7),
+          ),
         ),
         const SizedBox(height: 20),
         const Text(
@@ -893,7 +925,10 @@ class _FeedPageState extends State<_FeedPage> {
           ),
         ),
         const SizedBox(height: 8),
-        Text('Try different keywords', style: TextStyle(color: kTextSecondary)),
+        Text(
+          'Try different keywords',
+          style: TextStyle(color: kTextSecondary, fontSize: 14),
+        ),
       ],
     ),
   );
@@ -925,13 +960,26 @@ class _Chip extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          duration: const Duration(milliseconds: 220),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
           decoration: BoxDecoration(
             gradient: selected ? kPrimaryGradient : null,
             color: selected ? null : kSurface,
-            borderRadius: BorderRadius.circular(24),
-            border: selected ? null : Border.all(color: kDivider),
+            borderRadius: BorderRadius.circular(28),
+            border:
+                selected
+                    ? null
+                    : Border.all(color: kDivider.withOpacity(0.4), width: 1),
+            boxShadow:
+                selected
+                    ? [
+                      BoxShadow(
+                        color: kPrimary.withOpacity(0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                    : [],
           ),
           child: Text(
             label,
@@ -970,12 +1018,17 @@ class _PostCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: kSurface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
             ),
           ],
         ),
@@ -1147,15 +1200,19 @@ class _ActionBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 20,
-              color: color ?? kTextSecondary.withOpacity(0.7),
+            AnimatedScale(
+              scale: 1.0,
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                icon,
+                size: 20,
+                color: color ?? kTextSecondary.withOpacity(0.7),
+              ),
             ),
             if (label.isNotEmpty) ...[
               const SizedBox(width: 6),
@@ -1258,12 +1315,16 @@ class _ForumDetailScreenState extends State<_ForumDetailScreen> {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: kSurface,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.02),
+                          blurRadius: 4,
                         ),
                       ],
                     ),
@@ -1333,9 +1394,10 @@ class _ForumDetailScreenState extends State<_ForumDetailScreen> {
                         Text(
                           widget.post.title,
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 22,
                             fontWeight: FontWeight.w800,
                             color: kTextPrimary,
+                            letterSpacing: -0.5,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -1344,7 +1406,8 @@ class _ForumDetailScreenState extends State<_ForumDetailScreen> {
                           style: TextStyle(
                             color: kTextSecondary,
                             fontSize: 15,
-                            height: 1.6,
+                            height: 1.7,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
                         if (widget.post.imageUrl.isNotEmpty) ...[
@@ -1504,12 +1567,19 @@ class _ForumDetailScreenState extends State<_ForumDetailScreen> {
                     onTap: _addComment,
                     child: Container(
                       padding: const EdgeInsets.all(10),
-                      decoration: const BoxDecoration(
-                        color: kPrimary,
+                      decoration: BoxDecoration(
+                        gradient: kPrimaryGradient,
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: kPrimary.withOpacity(0.4),
+                            blurRadius: 12,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
                       child: const Icon(
-                        Icons.send,
+                        Icons.send_rounded,
                         color: Colors.white,
                         size: 20,
                       ),
@@ -1664,6 +1734,7 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
                       const SnackBar(
                         content: Text('Post published successfully! 🌾'),
                         backgroundColor: kPrimary,
+                        duration: Duration(seconds: 2),
                       ),
                     );
                   },
@@ -1671,16 +1742,18 @@ class _CreatePostSheetState extends State<_CreatePostSheet> {
                     backgroundColor: kPrimary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 12,
+                      horizontal: 32,
+                      vertical: 13,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                     ),
+                    elevation: 4,
+                    shadowColor: kPrimary.withOpacity(0.4),
                   ),
                   child: const Text(
                     'Publish',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                   ),
                 ),
               ],
@@ -1984,15 +2057,26 @@ class _ChatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: chat.unreadCount > 0 ? kPrimary.withOpacity(0.04) : kSurface,
-        borderRadius: BorderRadius.circular(16),
+        color: chat.unreadCount > 0 ? kPrimary.withOpacity(0.06) : kSurface,
+        borderRadius: BorderRadius.circular(18),
+        border:
+            chat.unreadCount > 0
+                ? Border.all(color: kPrimary.withOpacity(0.1), width: 1)
+                : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           onTap:
               () => Navigator.push(
                 context,
@@ -2222,12 +2306,17 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
                   ),
                 ),
                 if (widget.chat.isOnline)
                   const Text(
                     'Online',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
               ],
             ),
@@ -2344,7 +2433,18 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
                         color: kBg,
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(26),
+                        border: Border.all(
+                          color: kDivider.withOpacity(0.3),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.02),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: TextField(
                         controller: _msgCtrl,
@@ -2362,12 +2462,19 @@ class _ChatDetailScreenState extends State<_ChatDetailScreen> {
                     onTap: _send,
                     child: Container(
                       padding: const EdgeInsets.all(10),
-                      decoration: const BoxDecoration(
-                        color: kPrimary,
+                      decoration: BoxDecoration(
+                        gradient: kPrimaryGradient,
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: kPrimary.withOpacity(0.4),
+                            blurRadius: 12,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
                       child: const Icon(
-                        Icons.send,
+                        Icons.send_rounded,
                         color: Colors.white,
                         size: 20,
                       ),
@@ -2561,12 +2668,12 @@ class _CommunityPageState extends State<_CommunityPage>
                   controller: _tabCtrl,
                   indicator: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        color: Colors.black.withOpacity(0.12),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
@@ -2660,23 +2767,24 @@ class _CommunityCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: kSurface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         border:
             item.isJoined
-                ? Border.all(color: kPrimary.withOpacity(0.15), width: 1)
+                ? Border.all(color: kPrimary.withOpacity(0.15), width: 1.5)
                 : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -4303,10 +4411,18 @@ class _CallsPageState extends State<_CallsPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.call_outlined,
-              size: 64,
-              color: kPrimary.withOpacity(0.3),
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: kPrimary.withOpacity(0.1),
+              ),
+              child: Icon(
+                Icons.call_outlined,
+                size: 48,
+                color: kPrimary.withOpacity(0.7),
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -4320,7 +4436,7 @@ class _CallsPageState extends State<_CallsPage>
             const SizedBox(height: 8),
             Text(
               'Your call history will appear here',
-              style: TextStyle(color: kTextSecondary),
+              style: TextStyle(color: kTextSecondary, fontSize: 14),
             ),
           ],
         ),
@@ -4905,9 +5021,9 @@ class _ActiveCallScreenState extends State<_ActiveCallScreen>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: kLikeRed.withOpacity(0.5),
-                              blurRadius: 20,
-                              spreadRadius: 4,
+                              color: kLikeRed.withOpacity(0.6),
+                              blurRadius: 24,
+                              spreadRadius: 6,
                             ),
                           ],
                         ),
