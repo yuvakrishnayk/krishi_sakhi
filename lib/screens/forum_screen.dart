@@ -364,7 +364,7 @@ class _ForumScreenState extends State<ForumScreen> {
     _FeedPage(),
     _ChatPage(),
     _CommunityPage(),
-    _ProfilePage(),
+    _CallsPage(),
   ];
 
   @override
@@ -420,9 +420,9 @@ class _ForumScreenState extends State<ForumScreen> {
                   onTap: () => setState(() => _currentIndex = 2),
                 ),
                 _NavItem(
-                  icon: Icons.person_outline_rounded,
-                  activeIcon: Icons.person_rounded,
-                  label: 'Profile',
+                  icon: Icons.call_outlined,
+                  activeIcon: Icons.call_rounded,
+                  label: 'Calls',
                   isActive: _currentIndex == 3,
                   onTap: () => setState(() => _currentIndex = 3),
                 ),
@@ -2633,441 +2633,279 @@ class _CommunityCard extends StatelessWidget {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════════
-// TAB 4 — PROFILE
+// TAB 4 — CALLS
 // ═════════════════════════════════════════════════════════════════════════════════
-class _ProfilePage extends StatelessWidget {
-  const _ProfilePage();
 
-  String _getInitials(String name) {
-    final parts = name.split(' ');
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return parts[0].substring(0, 2).toUpperCase();
+class CallHistory {
+  final String id;
+  final String name;
+  final String time;
+  final bool isMissed;
+  final bool isOutgoing;
+  final Duration duration;
+  final Color avatarColor;
+
+  CallHistory({
+    required this.id,
+    required this.name,
+    required this.time,
+    this.isMissed = false,
+    this.isOutgoing = false,
+    required this.duration,
+    required this.avatarColor,
+  });
+}
+
+final List<CallHistory> dummyCallHistory = [
+  CallHistory(
+    id: '1',
+    name: 'Dr. Rajesh Kumar',
+    time: '2:15 PM',
+    isOutgoing: true,
+    duration: const Duration(minutes: 12, seconds: 45),
+    avatarColor: Color(0xFF1565C0),
+  ),
+  CallHistory(
+    id: '2',
+    name: 'Priya Patel',
+    time: '11:30 AM',
+    duration: const Duration(minutes: 8, seconds: 20),
+    avatarColor: Color(0xFF7B1FA2),
+  ),
+  CallHistory(
+    id: '3',
+    name: 'Krishi Support',
+    time: 'Yesterday',
+    isMissed: true,
+    duration: Duration.zero,
+    avatarColor: kPrimary,
+  ),
+  CallHistory(
+    id: '4',
+    name: 'Ramesh Yadav',
+    time: 'Yesterday',
+    isOutgoing: true,
+    duration: const Duration(minutes: 5, seconds: 10),
+    avatarColor: Color(0xFFD84315),
+  ),
+  CallHistory(
+    id: '5',
+    name: 'Anita Sharma',
+    time: '3 days ago',
+    duration: const Duration(minutes: 15, seconds: 30),
+    avatarColor: Color(0xFF00838F),
+  ),
+  CallHistory(
+    id: '6',
+    name: 'Sunil Verma',
+    time: '5 days ago',
+    isOutgoing: true,
+    duration: const Duration(minutes: 3, seconds: 5),
+    avatarColor: Color(0xFF5D4037),
+  ),
+];
+
+class _CallsPage extends StatefulWidget {
+  const _CallsPage();
+
+  @override
+  State<_CallsPage> createState() => _CallsPageState();
+}
+
+class _CallsPageState extends State<_CallsPage> {
+  final _searchCtrl = TextEditingController();
+  List<CallHistory> _calls = List.from(dummyCallHistory);
+  bool _searching = false;
+
+  void _filter(String q) {
+    setState(() {
+      _searching = q.isNotEmpty;
+      _calls =
+          q.isEmpty
+              ? List.from(dummyCallHistory)
+              : dummyCallHistory
+                  .where((c) => c.name.toLowerCase().contains(q.toLowerCase()))
+                  .toList();
+    });
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, _) {
-        final user = authProvider.user;
-        return _ProfileContent(user: user, getInitials: _getInitials);
-      },
-    );
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
   }
-}
-
-class _ProfileContent extends StatelessWidget {
-  final dynamic user;
-  final String Function(String) getInitials;
-
-  const _ProfileContent({required this.user, required this.getInitials});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
-      body: CustomScrollView(
-        slivers: [
-          // Profile header
-          SliverAppBar(
-            expandedHeight: 320,
-            pinned: true,
-            backgroundColor: kPrimary,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(gradient: kPrimaryGradient),
-                child: SafeArea(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 24),
-                      // Avatar with glow effect
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.white.withOpacity(0.3),
-                              blurRadius: 24,
-                              spreadRadius: 4,
-                            ),
-                          ],
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 3),
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.white.withOpacity(0.3),
-                                Colors.white.withOpacity(0.1),
-                              ],
-                            ),
-                          ),
-                          child: CircleAvatar(
-                            radius: 52,
-                            backgroundColor: kPrimaryDark,
-                            backgroundImage:
-                                user?.imageUrl != null &&
-                                        user!.imageUrl!.isNotEmpty
-                                    ? NetworkImage(user.imageUrl!)
-                                    : null,
-                            child:
-                                user?.imageUrl == null ||
-                                        user!.imageUrl!.isEmpty
-                                    ? Text(
-                                      getInitials(user?.name ?? 'KS'),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 32,
-                                        letterSpacing: 1,
-                                      ),
-                                    )
-                                    : null,
-                          ),
-                        ),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: const BoxDecoration(gradient: kPrimaryGradient),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: false,
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.call_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Calls',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        letterSpacing: -0.5,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        user?.name ?? 'Krishi Sakhi User',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 24,
-                          letterSpacing: -0.5,
-                        ),
+                    ),
+                    Text(
+                      'Your call history',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
                       ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.eco_rounded,
-                              color: Colors.white70,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '@${user?.username ?? 'krishisakhi'} • Organic Farmer',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      // Stats
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 24),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 16,
-                          horizontal: 20,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.15),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _ProfileStat(count: '24', label: 'Posts'),
-                            Container(
-                              width: 1,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.white.withOpacity(0),
-                                    Colors.white.withOpacity(0.3),
-                                    Colors.white.withOpacity(0),
-                                  ],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                ),
-                              ),
-                            ),
-                            _ProfileStat(count: '1.2k', label: 'Followers'),
-                            Container(
-                              width: 1,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.white.withOpacity(0),
-                                    Colors.white.withOpacity(0.3),
-                                    Colors.white.withOpacity(0),
-                                  ],
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                ),
-                              ),
-                            ),
-                            _ProfileStat(count: '348', label: 'Following'),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.add_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                  onPressed: () {},
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: Column(
+        children: [
+          // Search
+          Container(
+            decoration: const BoxDecoration(
+              gradient: kPrimaryGradient,
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+            child: Container(
+              height: 52,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: _filter,
+                style: const TextStyle(
+                  color: kTextPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'Search contacts...',
+                  hintStyle: TextStyle(
+                    color: kTextSecondary.withOpacity(0.6),
+                    fontWeight: FontWeight.w400,
+                  ),
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Icon(
+                      Icons.search,
+                      color: kTextSecondary.withOpacity(0.5),
+                      size: 20,
+                    ),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 4,
                   ),
                 ),
               ),
             ),
           ),
-
-          // Actions & Settings
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                const SizedBox(height: 16),
-                // Edit profile button
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: kPrimary.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () {},
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.edit_rounded,
-                                      size: 18,
-                                      color: kPrimary,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Text(
-                                      'Edit Profile',
-                                      style: TextStyle(
-                                        color: kPrimary,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: kPrimaryGradient,
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color: kPrimary.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () {},
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 14),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.share_rounded,
-                                      size: 18,
-                                      color: Colors.white,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Share Profile',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // About card
-                _ProfileSection(
-                  title: 'About',
-                  icon: Icons.info_outline_rounded,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Passionate organic farmer from Maharashtra. Growing rice, vegetables, and fruits using sustainable methods for over 15 years.',
-                        style: TextStyle(
-                          color: kTextSecondary,
-                          fontSize: 14,
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _InfoRow(
-                        icon: Icons.location_on,
-                        text: 'Pune, Maharashtra',
-                      ),
-                      _InfoRow(
-                        icon: Icons.calendar_today,
-                        text: 'Joined January 2024',
-                      ),
-                      _InfoRow(
-                        icon: Icons.agriculture_rounded,
-                        text: '5 acres farmland',
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Menu items
-                _ProfileSection(
-                  title: 'Settings',
-                  icon: Icons.settings_rounded,
-                  child: Column(
-                    children: [
-                      _MenuItem(
-                        icon: Icons.bookmark_outline_rounded,
-                        label: 'Saved Posts',
-                        trailing: '12',
-                        onTap: () {},
-                      ),
-                      _MenuItem(
-                        icon: Icons.history_rounded,
-                        label: 'Activity History',
-                        onTap: () {},
-                      ),
-                      _MenuItem(
-                        icon: Icons.notifications_outlined,
-                        label: 'Notifications',
-                        trailing: 'On',
-                        onTap: () {},
-                      ),
-                      _MenuItem(
-                        icon: Icons.language_rounded,
-                        label: 'Language',
-                        trailing: 'English',
-                        onTap: () {},
-                      ),
-                      _MenuItem(
-                        icon: Icons.dark_mode_outlined,
-                        label: 'Dark Mode',
-                        trailing: 'Off',
-                        onTap: () {},
-                      ),
-                      _MenuItem(
-                        icon: Icons.help_outline_rounded,
-                        label: 'Help & Support',
-                        onTap: () {},
-                      ),
-                      _MenuItem(
-                        icon: Icons.info_outline_rounded,
-                        label: 'About App',
-                        trailing: 'v2.1.0',
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Logout
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: kLikeRed.withOpacity(0.3)),
+          // Call list
+          Expanded(
+            child:
+                _calls.isEmpty && _searching
+                    ? _emptySearch()
+                    : ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: _calls.length,
+                      itemBuilder: (ctx, i) => _CallTile(call: _calls[i]),
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () {},
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: kLikeRed.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.logout_rounded,
-                                  color: kLikeRed,
-                                  size: 18,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Log Out',
-                                style: TextStyle(
-                                  color: kLikeRed,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptySearch() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: kPrimary.withOpacity(0.08),
+              shape: BoxShape.circle,
             ),
+            child: Icon(
+              Icons.search_off_rounded,
+              size: 56,
+              color: kPrimary.withOpacity(0.6),
+            ),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'No calls found',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: kTextPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try searching for a contact',
+            style: TextStyle(color: kTextSecondary, fontSize: 14),
           ),
         ],
       ),
@@ -3075,204 +2913,131 @@ class _ProfileContent extends StatelessWidget {
   }
 }
 
-class _ProfileStat extends StatelessWidget {
-  final String count;
-  final String label;
-  const _ProfileStat({required this.count, required this.label});
+class _CallTile extends StatelessWidget {
+  final CallHistory call;
+  const _CallTile({required this.call});
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          count,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            fontSize: 22,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.85),
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.3,
-          ),
-        ),
-      ],
-    );
+  String _formatDuration(Duration duration) {
+    if (duration.inSeconds == 0) return '';
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    if (minutes == 0) return '${seconds}s';
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
   }
-}
-
-class _ProfileSection extends StatelessWidget {
-  final String title;
-  final Widget child;
-  final IconData? icon;
-  const _ProfileSection({required this.title, required this.child, this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: kSurface,
-        borderRadius: BorderRadius.circular(20),
+        color: call.isMissed ? kWarning.withOpacity(0.05) : kSurface,
+        borderRadius: BorderRadius.circular(16),
+        border:
+            call.isMissed
+                ? Border.all(color: kWarning.withOpacity(0.2), width: 1)
+                : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            spreadRadius: 0,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
             color: Colors.black.withOpacity(0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              if (icon != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: kPrimary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, size: 18, color: kPrimary),
-                ),
-                const SizedBox(width: 12),
-              ],
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 17,
-                  color: kTextPrimary,
-                  letterSpacing: -0.3,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _InfoRow({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: kPrimary.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 14, color: kPrimary),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            text,
-            style: const TextStyle(
-              color: kTextSecondary,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MenuItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String trailing;
-  final VoidCallback onTap;
-  const _MenuItem({
-    required this.icon,
-    required this.label,
-    this.trailing = '',
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: kPrimary.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 20, color: kPrimary),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: kTextPrimary,
-                  ),
-                ),
-              ),
-              if (trailing.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: kBg,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {},
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: call.avatarColor,
                   child: Text(
-                    trailing,
+                    call.name[0],
                     style: const TextStyle(
-                      color: kTextSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
                   ),
                 ),
-              const SizedBox(width: 6),
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 22,
-                color: kTextSecondary.withOpacity(0.5),
-              ),
-            ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          if (call.isMissed)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Icon(
+                                Icons.call_missed_rounded,
+                                size: 14,
+                                color: kWarning,
+                              ),
+                            ),
+                          Expanded(
+                            child: Text(
+                              call.name,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: kTextPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            call.isOutgoing
+                                ? Icons.call_made_rounded
+                                : Icons.call_received_rounded,
+                            size: 12,
+                            color: kTextSecondary.withOpacity(0.6),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${call.isOutgoing ? 'Outgoing' : 'Incoming'} • ${call.time}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: kTextSecondary.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (call.duration.inSeconds > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Text(
+                      _formatDuration(call.duration),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: kTextSecondary,
+                      ),
+                    ),
+                  ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.call_rounded,
+                    color: kPrimary,
+                    size: 20,
+                  ),
+                  onPressed: () {},
+                ),
+              ],
+            ),
           ),
         ),
       ),
