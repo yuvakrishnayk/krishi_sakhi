@@ -677,6 +677,7 @@ class _ScanAnalysisBottomSheetState extends State<_ScanAnalysisBottomSheet> {
   final FlutterTts _tts = FlutterTts();
   final stt.SpeechToText _stt = stt.SpeechToText();
   final TextEditingController _followUpController = TextEditingController();
+  final ScrollController _followUpScrollController = ScrollController();
 
   bool _isAnalyzing = true;
   bool _isSpeaking = false;
@@ -691,6 +692,7 @@ class _ScanAnalysisBottomSheetState extends State<_ScanAnalysisBottomSheet> {
   Uint8List? _previewBytes;
   String _previewMimeType = 'image/jpeg';
   String _listeningDraft = '';
+  final List<_FollowUpEntry> _followUpEntries = <_FollowUpEntry>[];
 
   @override
   void initState() {
@@ -702,6 +704,7 @@ class _ScanAnalysisBottomSheetState extends State<_ScanAnalysisBottomSheet> {
   @override
   void dispose() {
     _followUpController.dispose();
+    _followUpScrollController.dispose();
     if (_ttsReady) {
       unawaited(_tts.stop());
     }
@@ -1018,10 +1021,14 @@ Output exactly these sections and nothing else:
 
       setState(() {
         _analysisText = nextAnswer;
+        _followUpEntries.add(
+          _FollowUpEntry(question: question, answer: nextAnswer),
+        );
         _isAnalyzing = false;
       });
 
       _followUpController.clear();
+      _scrollFollowUpAnswersToBottom();
       await _speakCurrentAnalysis();
     } catch (error) {
       if (!mounted) {
@@ -1032,6 +1039,19 @@ Output exactly these sections and nothing else:
         _isAnalyzing = false;
       });
     }
+  }
+
+  void _scrollFollowUpAnswersToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_followUpScrollController.hasClients) {
+        return;
+      }
+      _followUpScrollController.animateTo(
+        _followUpScrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   Future<void> _startVoiceInput() async {
@@ -1405,10 +1425,94 @@ Output exactly these sections and nothing else:
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          const Text(
+            'Answers (scroll)',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 210,
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFD2DCF3)),
+            ),
+            child:
+                _followUpEntries.isEmpty
+                    ? Center(
+                      child: Text(
+                        'Ask a question to see answers here.',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    )
+                    : ListView.separated(
+                      controller: _followUpScrollController,
+                      itemCount: _followUpEntries.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final entry = _followUpEntries[index];
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFF),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFE1E7F8)),
+                          ),
+                          padding: const EdgeInsets.all(10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Q: ${entry.question}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                  color: Color(0xFF2E3A5F),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              MarkdownBody(
+                                data: entry.answer,
+                                selectable: true,
+                                styleSheet: MarkdownStyleSheet(
+                                  p: const TextStyle(
+                                    fontSize: 13,
+                                    height: 1.35,
+                                    color: Color(0xFF1A284A),
+                                  ),
+                                  h2: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF1B5E20),
+                                  ),
+                                  listBullet: const TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF1A284A),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+          ),
         ],
       ),
     );
   }
+}
+
+class _FollowUpEntry {
+  final String question;
+  final String answer;
+
+  const _FollowUpEntry({required this.question, required this.answer});
 }
 
 class _PreparedMedia {
