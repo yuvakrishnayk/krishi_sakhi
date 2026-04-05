@@ -8,9 +8,11 @@ class HomeFeedLocalStorage {
 
   static const String _newsKey = 'home_news_items_v1';
   static const String _projectsKey = 'home_project_items_v1';
+  static const String _aiResponsesKey = 'home_ai_responses_v1';
 
   static List<FarmNewsItem>? _memoryNews;
   static List<FarmProjectItem>? _memoryProjects;
+  static List<AiResponseItem>? _memoryAiResponses;
 
   static Future<SharedPreferences?> _safePrefs() async {
     try {
@@ -83,6 +85,24 @@ class HomeFeedLocalStorage {
     }
   }
 
+  static Future<List<AiResponseItem>> getAiResponses() async {
+    final prefs = await _safePrefs();
+    if (prefs == null) {
+      _memoryAiResponses ??= <AiResponseItem>[];
+      return List<AiResponseItem>.from(_memoryAiResponses!);
+    }
+
+    final raw = prefs.getString(_aiResponsesKey);
+    if (raw == null || raw.isEmpty) {
+      return const <AiResponseItem>[];
+    }
+    try {
+      return AiResponseItem.decodeList(raw);
+    } catch (_) {
+      return const <AiResponseItem>[];
+    }
+  }
+
   static Future<void> saveNews(List<FarmNewsItem> items) async {
     _memoryNews = List<FarmNewsItem>.from(items);
 
@@ -103,6 +123,42 @@ class HomeFeedLocalStorage {
     }
 
     await prefs.setString(_projectsKey, FarmProjectItem.encodeList(items));
+  }
+
+  static Future<void> saveAiResponses(List<AiResponseItem> items) async {
+    _memoryAiResponses = List<AiResponseItem>.from(items);
+
+    final prefs = await _safePrefs();
+    if (prefs == null) {
+      return;
+    }
+
+    await prefs.setString(_aiResponsesKey, AiResponseItem.encodeList(items));
+  }
+
+  static Future<void> addAiResponse(AiResponseItem item) async {
+    final existing = await getAiResponses();
+    final updated = <AiResponseItem>[item, ...existing];
+    // Prevent unbounded growth in SharedPreferences.
+    final bounded = updated.length > 200 ? updated.sublist(0, 200) : updated;
+    await saveAiResponses(bounded);
+  }
+
+  static Future<void> clearAiResponses() async {
+    _memoryAiResponses = <AiResponseItem>[];
+
+    final prefs = await _safePrefs();
+    if (prefs == null) {
+      return;
+    }
+
+    await prefs.remove(_aiResponsesKey);
+  }
+
+  static Future<void> removeAiResponseById(String id) async {
+    final existing = await getAiResponses();
+    final updated = existing.where((item) => item.id != id).toList();
+    await saveAiResponses(updated);
   }
 
   static final List<FarmNewsItem> _defaultNews = [

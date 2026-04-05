@@ -176,3 +176,58 @@ class FarmProjectItem {
     );
   }
 }
+
+class AiResponseItem {
+  const AiResponseItem({
+    required this.id,
+    required this.source,
+    required this.prompt,
+    required this.response,
+    required this.createdAt,
+    this.context = '',
+  });
+
+  final String id;
+  final String source;
+  final String prompt;
+  final String response;
+  final DateTime createdAt;
+  final String context;
+
+  factory AiResponseItem.fromMap(Map<String, dynamic> map) {
+    return AiResponseItem(
+      id: map['id'] as String? ?? '',
+      source: map['source'] as String? ?? 'AI',
+      prompt: map['prompt'] as String? ?? '',
+      response: map['response'] as String? ?? '',
+      createdAt:
+          DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+          DateTime.now(),
+      context: map['context'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'source': source,
+      'prompt': prompt,
+      'response': response,
+      'createdAt': createdAt.toIso8601String(),
+      'context': context,
+    };
+  }
+
+  static List<AiResponseItem> decodeList(String rawJson) {
+    final list = jsonDecode(rawJson) as List<dynamic>;
+    return list
+        .map((item) => AiResponseItem.fromMap(item as Map<String, dynamic>))
+        .toList(growable: false);
+  }
+
+  static String encodeList(List<AiResponseItem> items) {
+    return jsonEncode(
+      items.map((item) => item.toMap()).toList(growable: false),
+    );
+  }
+}

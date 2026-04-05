@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:krishi_sakhi/auth/models/user.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
+import 'package:krishi_sakhi/screens/ai_responses_list_screen.dart';
 import 'package:krishi_sakhi/screens/chatbot_screen.dart';
 import 'package:krishi_sakhi/screens/courses_screen.dart';
 import 'package:krishi_sakhi/screens/forum_screen.dart';
@@ -68,6 +69,19 @@ class CustomDrawer extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => ChatbotScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _DrawerItemData(
+                        Icons.history_rounded,
+                        'AI Response History',
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => const AiResponsesListScreen(),
                             ),
                           );
                         },

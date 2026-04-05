@@ -10,11 +10,13 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:krishi_sakhi/models/farm_project.dart';
+import 'package:krishi_sakhi/models/home_feed_models.dart';
 import 'package:krishi_sakhi/screens/Project_Details/analytics_screen.dart';
 import 'package:krishi_sakhi/screens/Project_Details/fields_map.dart';
 import 'package:krishi_sakhi/screens/Project_Details/home.dart'
     show DashboardScreen;
 import 'package:krishi_sakhi/screens/Project_Details/profile.dart';
+import 'package:krishi_sakhi/services/home_feed_local_storage.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:video_thumbnail/video_thumbnail.dart';
 
@@ -435,6 +437,10 @@ class _ProjectScreenState extends State<ProjectScreen>
               llmBaseUrl: _llmBaseUrl,
               llmModel: _llmModel,
               llmApiKey: _llmApiKey,
+              scanContext:
+                  widget.project?.farmName ??
+                  widget.project?.locationName ??
+                  'Project scan',
             ),
           );
         },
@@ -636,6 +642,7 @@ class _ScanAnalysisBottomSheet extends StatefulWidget {
   final String llmBaseUrl;
   final String llmModel;
   final String llmApiKey;
+  final String scanContext;
 
   const _ScanAnalysisBottomSheet({
     required this.mediaFile,
@@ -643,6 +650,7 @@ class _ScanAnalysisBottomSheet extends StatefulWidget {
     required this.llmBaseUrl,
     required this.llmModel,
     required this.llmApiKey,
+    required this.scanContext,
   });
 
   @override
@@ -791,6 +799,18 @@ class _ScanAnalysisBottomSheetState extends State<_ScanAnalysisBottomSheet> {
         mediaPayload: mediaPayload,
         userPrompt:
             'Analyze only pest and disease evidence in this crop media. Ignore unrelated details. Return only pest/disease result and practical farm action.',
+      );
+
+      await HomeFeedLocalStorage.addAiResponse(
+        AiResponseItem(
+          id: 'scan_${DateTime.now().microsecondsSinceEpoch}',
+          source: 'Crop Scan',
+          prompt:
+              'Analyze only pest and disease evidence in this crop media. Ignore unrelated details. Return only pest/disease result and practical farm action.',
+          response: analysis,
+          createdAt: DateTime.now(),
+          context: widget.scanContext,
+        ),
       );
 
       if (!mounted) {
@@ -1017,6 +1037,17 @@ Output exactly these sections and nothing else:
         ),
         userPrompt:
             'Previous analysis:\n$_analysisText\n\nFarmer follow-up question: $question\n\nAnswer only for pest/disease context, keep it practical, and return strict Markdown using the same section headings.',
+      );
+
+      await HomeFeedLocalStorage.addAiResponse(
+        AiResponseItem(
+          id: 'scan_follow_up_${DateTime.now().microsecondsSinceEpoch}',
+          source: 'Crop Scan Follow-up',
+          prompt: question,
+          response: nextAnswer,
+          createdAt: DateTime.now(),
+          context: widget.scanContext,
+        ),
       );
 
       if (!mounted) {

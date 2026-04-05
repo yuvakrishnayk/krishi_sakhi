@@ -8,6 +8,8 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:krishi_sakhi/models/home_feed_models.dart';
+import 'package:krishi_sakhi/services/home_feed_local_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
@@ -714,6 +716,20 @@ class _ChatbotScreenState extends State<ChatbotScreen>
         final reply =
             data['choices'][0]['message']['content']?.toString().trim() ??
             'Sorry, I could not generate a response.';
+
+        await HomeFeedLocalStorage.addAiResponse(
+          AiResponseItem(
+            id: 'chat_${DateTime.now().microsecondsSinceEpoch}',
+            source: 'Learning Chatbot',
+            prompt:
+                userContent.isNotEmpty
+                    ? userContent
+                    : _localizedImagePrompt(_selectedLang),
+            response: reply,
+            createdAt: DateTime.now(),
+            context: _selectedLang.name,
+          ),
+        );
 
         _history.add({'role': 'assistant', 'content': reply});
 
