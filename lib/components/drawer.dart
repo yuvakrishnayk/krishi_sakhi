@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:krishi_sakhi/auth/models/user.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
 import 'package:krishi_sakhi/screens/chatbot_screen.dart';
 import 'package:krishi_sakhi/screens/courses_screen.dart';
@@ -14,6 +14,8 @@ import 'package:krishi_sakhi/auth/auth_service.dart';
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
 
+  AuthRepository _repo() => AuthRepository(service: AuthService());
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!; // make non-null
@@ -21,11 +23,19 @@ class CustomDrawer extends StatelessWidget {
       elevation: 16,
       child: Column(
         children: [
-          FutureBuilder<String?>(
-            future: _fetchUserName(),
+          FutureBuilder<User?>(
+            future: _fetchUserProfile(),
             builder: (context, snapshot) {
-              final name = snapshot.data ?? l10n.userName;
-              return _buildDrawerHeader(context, name);
+              final user = snapshot.data;
+              final name =
+                  (user?.name.trim().isNotEmpty ?? false)
+                      ? user!.name.trim()
+                      : l10n.userName;
+              return _buildDrawerHeader(
+                context,
+                name,
+                imageUrl: user?.imageUrl,
+              );
             },
           ),
           Expanded(
@@ -125,7 +135,11 @@ class CustomDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerHeader(BuildContext context, String name) {
+  Widget _buildDrawerHeader(
+    BuildContext context,
+    String name, {
+    String? imageUrl,
+  }) {
     return Container(
       constraints: BoxConstraints(minHeight: 200, maxHeight: 240),
       margin: EdgeInsets.zero,
@@ -154,11 +168,15 @@ class CustomDrawer extends StatelessWidget {
           ),
         ],
       ),
-      child: _buildProfileContainer(context, name),
+      child: _buildProfileContainer(context, name, imageUrl: imageUrl),
     );
   }
 
-  Widget _buildProfileContainer(BuildContext context, String name) {
+  Widget _buildProfileContainer(
+    BuildContext context,
+    String name, {
+    String? imageUrl,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
@@ -170,31 +188,39 @@ class CustomDrawer extends StatelessWidget {
         builder: (context, constraints) {
           // Use different layouts based on available space
           if (constraints.maxWidth < 200) {
-            return _buildCompactProfile(context, name);
+            return _buildCompactProfile(context, name, imageUrl: imageUrl);
           } else {
-            return _buildStandardProfile(context, name);
+            return _buildStandardProfile(context, name, imageUrl: imageUrl);
           }
         },
       ),
     );
   }
 
-  Widget _buildCompactProfile(BuildContext context, String name) {
+  Widget _buildCompactProfile(
+    BuildContext context,
+    String name, {
+    String? imageUrl,
+  }) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildProfilePhoto(name),
+        _buildProfilePhoto(name, imageUrl: imageUrl),
         const SizedBox(height: 8),
         Flexible(child: _buildUserDetails(context, name)),
       ],
     );
   }
 
-  Widget _buildStandardProfile(BuildContext context, String name) {
+  Widget _buildStandardProfile(
+    BuildContext context,
+    String name, {
+    String? imageUrl,
+  }) {
     return Row(
       children: [
         // Left side - Photo
-        _buildProfilePhoto(name),
+        _buildProfilePhoto(name, imageUrl: imageUrl),
         const SizedBox(width: 12),
         // Right side - User info
         Expanded(child: _buildUserDetails(context, name)),
@@ -202,9 +228,11 @@ class CustomDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildProfilePhoto(String name) {
+  Widget _buildProfilePhoto(String name, {String? imageUrl}) {
     final firstWord = name.split(' ').first;
     final initial = firstWord.isNotEmpty ? firstWord[0].toUpperCase() : '?';
+    final trimmedUrl = imageUrl?.trim();
+    final hasImageUrl = trimmedUrl != null && trimmedUrl.isNotEmpty;
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -220,16 +248,34 @@ class CustomDrawer extends StatelessWidget {
       child: CircleAvatar(
         backgroundColor: const Color(0xFF4CAF50),
         radius: 30, // Reduced from 35 to save space
-        child: Text(
-          initial,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        backgroundImage: hasImageUrl ? NetworkImage(trimmedUrl) : null,
+        child:
+            hasImageUrl
+                ? null
+                : Text(
+                  initial,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
       ),
     );
+  }
+
+  Future<User?> _fetchUserProfile() async {
+    final repository = _repo();
+    try {
+      final cached = await repository.currentUser;
+      if (cached != null) {
+        return cached;
+      }
+      return await repository.fetchProfile();
+    } catch (e) {
+      debugPrint('Failed to fetch user profile: $e');
+      return null;
+    }
   }
 
   Widget _buildUserDetails(BuildContext context, String name) {
@@ -310,24 +356,6 @@ class CustomDrawer extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  Future<String?> _fetchUserName() async {
-    try {
-      final users = FirebaseFirestore.instance.collection('users');
-      final query =
-          await users.orderBy('created_at', descending: true).limit(1).get();
-      if (query.docs.isNotEmpty) {
-        final doc = query.docs.first;
-        if (doc.data().containsKey('name')) {
-          final name = doc.get('name') as String?;
-          return name;
-        }
-      }
-    } catch (e) {
-      debugPrint('Failed to fetch user name: $e');
-    }
-    return null;
   }
 
   Widget _buildDrawerSection(String title, List<_DrawerItemData> items) {

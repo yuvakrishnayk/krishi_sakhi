@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:krishi_sakhi/auth/auth_repository.dart';
+import 'package:krishi_sakhi/auth/auth_service.dart';
+import 'package:krishi_sakhi/auth/models/user.dart';
 import 'package:krishi_sakhi/components/drawer.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
 import 'package:krishi_sakhi/main.dart';
@@ -16,19 +19,51 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   final List<bool> _faqExpanded = [false, false, false, false, false, false];
+  late final AuthRepository _repo;
 
   String _userName = '';
   bool _isUserNameCustomized = false;
   File? _profileImageFile;
-  final String _profilePicUrl =
-      'https://static.vecteezy.com/system/resources/previews/022/395/514/non_2x/a-beautiful-smiling-young-male-farmer-in-front-of-a-farm-background-ai-generated-photo.jpeg';
+  String? _profilePicUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _repo = AuthRepository(service: AuthService());
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final cachedUser = await _repo.currentUser;
+    if (cachedUser != null && mounted) {
+      setState(() {
+        _applyUserProfile(cachedUser);
+      });
+    }
+
+    final freshUser = await _repo.fetchProfile();
+    if (freshUser != null && mounted) {
+      setState(() {
+        _applyUserProfile(freshUser);
+      });
+    }
+  }
+
+  void _applyUserProfile(User user) {
+    if (!_isUserNameCustomized && user.name.trim().isNotEmpty) {
+      _userName = user.name.trim();
+    }
+    if (_profileImageFile == null && user.imageUrl != null) {
+      _profilePicUrl = user.imageUrl!.trim();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
     // Initialize username if not customized by user
-    if (!_isUserNameCustomized) {
+    if (!_isUserNameCustomized && _userName.trim().isEmpty) {
       _userName = loc.defaultUserName;
     }
     return Scaffold(
@@ -270,10 +305,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: CircleAvatar(
               backgroundColor: Colors.white,
               radius: 35,
-              backgroundImage:
-                  _profileImageFile != null
-                      ? FileImage(_profileImageFile!)
-                      : NetworkImage(_profilePicUrl) as ImageProvider,
+              backgroundImage: _buildProfileImageProvider(),
               child: Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -385,10 +417,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                   child: CircleAvatar(
                     radius: 35,
-                    backgroundImage:
-                        _profileImageFile != null
-                            ? FileImage(_profileImageFile!)
-                            : NetworkImage(_profilePicUrl) as ImageProvider,
+                    backgroundImage: _buildProfileImageProvider(),
                     child: Container(
                       alignment: Alignment.bottomRight,
                       child: const Icon(Icons.camera_alt, color: Colors.white),
@@ -422,6 +451,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
     );
+  }
+
+  ImageProvider? _buildProfileImageProvider() {
+    if (_profileImageFile != null) {
+      return FileImage(_profileImageFile!);
+    }
+    if (_profilePicUrl != null && _profilePicUrl!.isNotEmpty) {
+      return NetworkImage(_profilePicUrl!);
+    }
+    return null;
   }
 
   void _showContactSupportDialog(BuildContext context) {
@@ -696,4 +735,3 @@ class _SettingsScreenState extends State<SettingsScreen> {
 // -------------------------------------------------------------
 // NEW ABOUT SCREEN WIDGET
 // -------------------------------------------------------------
-
