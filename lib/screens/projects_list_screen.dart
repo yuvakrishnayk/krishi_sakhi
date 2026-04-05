@@ -31,6 +31,58 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
     await _projectsFuture;
   }
 
+  Future<void> _deleteProject(FarmProjectItem project) async {
+    final shouldDelete =
+        await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Delete project?'),
+              content: Text(
+                'Are you sure you want to delete "${project.name}"? This cannot be undone.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.red.shade700,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('Delete'),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    final currentProjects = await HomeFeedLocalStorage.getProjects();
+    final updatedProjects =
+        currentProjects.where((item) => item.id != project.id).toList();
+    await HomeFeedLocalStorage.saveProjects(updatedProjects);
+
+    if (!mounted) {
+      return;
+    }
+
+    await _refresh();
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('${project.name} deleted')));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -217,6 +269,34 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
                                         fontSize: 12,
                                       ),
                                     ),
+                                  ),
+                                  PopupMenuButton<String>(
+                                    tooltip: 'Project options',
+                                    icon: Icon(
+                                      Icons.more_vert_rounded,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                    onSelected: (value) async {
+                                      if (value == 'delete') {
+                                        await _deleteProject(project);
+                                      }
+                                    },
+                                    itemBuilder:
+                                        (context) => const [
+                                          PopupMenuItem<String>(
+                                            value: 'delete',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.delete_outline_rounded,
+                                                  color: Colors.red,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text('Delete project'),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
                                   ),
                                 ],
                               ),
