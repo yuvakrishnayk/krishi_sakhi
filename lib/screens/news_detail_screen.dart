@@ -14,10 +14,19 @@ class NewsDetailScreen extends StatelessWidget {
   final NewsCategoryStyle categoryInfo;
   final Future<void> Function(String url) onOpenSource;
 
+  static const List<String> _fallbackImagePool = [
+    'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1400&q=80',
+    'https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1400&q=80',
+    'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=1400&q=80',
+    'https://images.unsplash.com/photo-1594771804886-a933bb2d609b?auto=format&fit=crop&w=1400&q=80',
+    'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=1400&q=80',
+  ];
+
   @override
   Widget build(BuildContext context) {
     final hasImage = item.imageUrl.trim().isNotEmpty;
     final hasSourceLink = item.sourceUrl.trim().isNotEmpty;
+    final fallbackImageUrl = _pickFallbackImage(item.title);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6FAF4),
@@ -35,25 +44,10 @@ class NewsDetailScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               child: AspectRatio(
                 aspectRatio: 16 / 10,
-                child:
-                    hasImage
-                        ? Image.network(
-                          item.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildFallbackImage();
-                          },
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              color: categoryInfo.color.withValues(alpha: 0.08),
-                              child: const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            );
-                          },
-                        )
-                        : _buildFallbackImage(),
+                child: _buildHeroImage(
+                  primaryImageUrl: hasImage ? item.imageUrl : null,
+                  fallbackImageUrl: fallbackImageUrl,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -116,22 +110,21 @@ class NewsDetailScreen extends StatelessWidget {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children:
-                    item.tags
-                        .map(
-                          (tag) => Chip(
-                            label: Text(tag),
-                            backgroundColor: Colors.white,
-                            side: BorderSide(
-                              color: categoryInfo.color.withValues(alpha: 0.18),
-                            ),
-                            labelStyle: TextStyle(
-                              color: categoryInfo.color,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        )
-                        .toList(growable: false),
+                children: item.tags
+                    .map(
+                      (tag) => Chip(
+                        label: Text(tag),
+                        backgroundColor: Colors.white,
+                        side: BorderSide(
+                          color: categoryInfo.color.withValues(alpha: 0.18),
+                        ),
+                        labelStyle: TextStyle(
+                          color: categoryInfo.color,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
               ),
             ],
             const SizedBox(height: 22),
@@ -162,7 +155,9 @@ class NewsDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    item.sourceName.isNotEmpty ? item.sourceName : 'Unknown source',
+                    item.sourceName.isNotEmpty
+                        ? item.sourceName
+                        : 'Unknown source',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -226,6 +221,53 @@ class NewsDetailScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildHeroImage({
+    required String? primaryImageUrl,
+    required String fallbackImageUrl,
+  }) {
+    if (primaryImageUrl != null && primaryImageUrl.trim().isNotEmpty) {
+      return Image.network(
+        primaryImageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildNetworkFallbackImage(fallbackImageUrl);
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return _buildImageLoadingPlaceholder();
+        },
+      );
+    }
+
+    return _buildNetworkFallbackImage(fallbackImageUrl);
+  }
+
+  Widget _buildNetworkFallbackImage(String fallbackImageUrl) {
+    return Image.network(
+      fallbackImageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        return _buildFallbackImage();
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return _buildImageLoadingPlaceholder();
+      },
+    );
+  }
+
+  Widget _buildImageLoadingPlaceholder() {
+    return Container(
+      color: categoryInfo.color.withValues(alpha: 0.08),
+      child: const Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  String _pickFallbackImage(String seed) {
+    final hash = seed.trim().toLowerCase().hashCode.abs();
+    return _fallbackImagePool[hash % _fallbackImagePool.length];
   }
 
   Widget _buildFallbackImage() {
