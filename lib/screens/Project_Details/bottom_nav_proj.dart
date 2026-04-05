@@ -134,16 +134,17 @@ class _ProjectScreenState extends State<ProjectScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const SizedBox(height: 80),
               _buildQuickActionItem(
                 Icons.camera_alt_rounded,
                 'Scan Crop',
                 _onScanCropTapped,
               ),
-              const SizedBox(height: 16),
-              _buildQuickActionItem(Icons.mic_rounded, 'Voice Query', () {}),
-              const SizedBox(height: 16),
-              _buildQuickActionItem(Icons.add_task_rounded, 'Add Task', () {}),
-              const SizedBox(height: 32),
+              const SizedBox(height: 30),
+              // _buildQuickActionItem(Icons.mic_rounded, 'Voice Query', () {}),
+              // const SizedBox(height: 16),
+              // _buildQuickActionItem(Icons.add_task_rounded, 'Add Task', () {}),
+              // const SizedBox(height: 32),
               GestureDetector(
                 onTap: () => setState(() => _showQuickActions = false),
                 child: Container(
