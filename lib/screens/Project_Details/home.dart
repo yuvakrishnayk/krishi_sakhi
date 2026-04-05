@@ -46,6 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Map<String, dynamic> _planData = {};
   List<_WeatherAlert> _weatherAlerts = [];
   int _selectedMonthIndex = 0;
+  int _selectedDailyIndex = 0;
   bool _showRaw = false;
 
   @override
@@ -106,6 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             : {};
     _weatherAlerts = _collectWeatherAlerts(_planData);
     _selectedMonthIndex = 0;
+    _selectedDailyIndex = 0;
   }
 
   List<_WeatherAlert> _collectWeatherAlerts(Map<String, dynamic> planData) {
@@ -759,6 +761,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildDailyRoadmap() {
     final days = _flattenedDays;
     if (days.isEmpty) return _emptyState('No daily roadmap available.');
+    final selectedIndex = _selectedDailyIndex.clamp(0, days.length - 1);
+    final selectedDay = _asMap(days[selectedIndex]);
 
     return SingleChildScrollView(
       child: Column(
@@ -782,12 +786,49 @@ class _DashboardScreenState extends State<DashboardScreen>
               ],
             ),
           ),
-          ...days.map(
-            (day) => Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: _buildDayCard(day),
+          SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: days.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) {
+                final day = _asMap(days[i]);
+                final weather = _asMap(day['weather']);
+                final date = weather['date']?.toString().trim() ?? '';
+                final label =
+                    date.isNotEmpty ? date : 'Day ${day['dayNumber'] ?? i + 1}';
+                final isSelected = i == selectedIndex;
+
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedDailyIndex = i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected ? _K.forest : _K.card,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected ? _K.forest : _K.divider,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isSelected ? Colors.white : _K.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
+          const SizedBox(height: 12),
+          _buildDayCard(selectedDay),
         ],
       ),
     );
@@ -1149,6 +1190,10 @@ class _DashboardScreenState extends State<DashboardScreen>
             ? weather['condition'].toString()
             : 'Clear Skies';
     final date = weather['date']?.toString() ?? 'Today';
+    final timeOfDay =
+        weather['time']?.toString().trim() ??
+        day['time']?.toString().trim() ??
+        '';
 
     // ── Dummy data fallback for any 0 / null values (UI polish only) ──
     var maxTemp = (temperature['max'] as num?)?.toDouble();
@@ -1199,9 +1244,26 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  date,
-                  style: const TextStyle(fontSize: 11, color: _K.textSecondary),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      date,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: _K.textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (timeOfDay.isNotEmpty)
+                      Text(
+                        timeOfDay,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: _K.textSecondary,
+                        ),
+                      ),
+                  ],
                 ),
               ),
               Icon(
@@ -1220,7 +1282,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 6,
@@ -1230,16 +1292,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                     '🌡 ${minTemp.toStringAsFixed(0)}°–${maxTemp.toStringAsFixed(0)}°C',
                 bg: _K.forest.withOpacity(0.07),
                 fg: _K.forest,
-              ),
-              _Chip(
-                label: '💧 $humidity%',
-                bg: _K.sky.withOpacity(0.09),
-                fg: _K.sky,
-              ),
-              _Chip(
-                label: '🌧 $rainfall mm',
-                bg: _K.sky.withOpacity(0.09),
-                fg: _K.sky,
               ),
               _Chip(
                 label: '💨 $windSpeed km/h',
@@ -1292,6 +1344,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final materials = _asList(task['materials']);
     final precautions = _asList(task['precautions'] ?? task['safetyTips']);
     final steps = _asList(task['steps']);
+    final timelineItems = _stepTimelineItems(steps);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -1329,14 +1382,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
           children: [
-            _sectionBlock(
-              'Steps',
-              Icons.format_list_numbered_rounded,
-              steps.map((s) {
-                final step = _asMap(s);
-                return step['instruction']?.toString() ?? '';
-              }).toList(),
-            ),
+            _buildStepTimeline(timelineItems),
             if (materials.isNotEmpty) const SizedBox(height: 10),
             _sectionBlock(
               'Materials',
@@ -1352,6 +1398,150 @@ class _DashboardScreenState extends State<DashboardScreen>
           ],
         ),
       ),
+    );
+  }
+
+  List<_StepTimelineItem> _stepTimelineItems(List<dynamic> steps) {
+    final items = <_StepTimelineItem>[];
+
+    for (var i = 0; i < steps.length; i++) {
+      final rawStep = steps[i];
+      final step = _asMap(rawStep);
+
+      String instruction;
+      if (step.isNotEmpty) {
+        instruction =
+            step['instruction']?.toString().trim() ??
+            step['title']?.toString().trim() ??
+            step['description']?.toString().trim() ??
+            'Step ${i + 1}';
+      } else {
+        final fallback = rawStep.toString().trim();
+        instruction = fallback.isNotEmpty ? fallback : 'Step ${i + 1}';
+      }
+
+      final start = _firstNonEmptyText([
+        step['startTime'],
+        step['start_time'],
+        step['from'],
+        step['fromTime'],
+        step['from_time'],
+      ]);
+      final end = _firstNonEmptyText([
+        step['endTime'],
+        step['end_time'],
+        step['to'],
+        step['toTime'],
+        step['to_time'],
+      ]);
+      final at = _firstNonEmptyText([step['time'], step['at'], step['slot']]);
+
+      final timeLabel =
+          (start != null || end != null)
+              ? '${start ?? 'Start TBD'} - ${end ?? 'End TBD'}'
+              : (at ?? 'Time not specified');
+
+      items.add(
+        _StepTimelineItem(timeLabel: timeLabel, instruction: instruction),
+      );
+    }
+
+    return items;
+  }
+
+  String? _firstNonEmptyText(List<dynamic> values) {
+    for (final v in values) {
+      final text = v?.toString().trim() ?? '';
+      if (text.isNotEmpty) return text;
+    }
+    return null;
+  }
+
+  Widget _buildStepTimeline(List<_StepTimelineItem> items) {
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: const [
+            Icon(Icons.schedule_rounded, size: 14, color: _K.leaf),
+            SizedBox(width: 6),
+            Text(
+              'Step Timeline',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: _K.forest,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ...items.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          final isLast = index == items.length - 1;
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: _K.sprout,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: _K.leaf, width: 1),
+                    ),
+                  ),
+                  if (!isLast)
+                    Container(width: 2, height: 44, color: _K.divider),
+                ],
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _K.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: _K.divider),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.timeLabel,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: _K.forest,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.instruction,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: _K.textSecondary,
+                          height: 1.45,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      ],
     );
   }
 
@@ -1909,4 +2099,11 @@ class _WeatherAlert {
     required this.windSpeed,
     required this.urgent,
   });
+}
+
+class _StepTimelineItem {
+  final String timeLabel;
+  final String instruction;
+
+  const _StepTimelineItem({required this.timeLabel, required this.instruction});
 }
