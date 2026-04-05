@@ -54,6 +54,7 @@ dependencies:
   flutter_tts: ^4.2.5
   flutter_markdown: ^0.7.4
   shared_preferences: ^2.5.5
+  xml: ^6.5.0
 
 dev_dependencies:
   # The "flutter_lints" package below contains a set of recommended lints to

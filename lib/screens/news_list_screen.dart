@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/models/home_feed_models.dart';
+import 'package:krishi_sakhi/services/agri_scraper_agent_service.dart';
 import 'package:krishi_sakhi/services/home_feed_local_storage.dart';
 
 class NewsListScreen extends StatefulWidget {
@@ -20,6 +21,18 @@ class _NewsListScreenState extends State<NewsListScreen> {
 
   Future<List<FarmNewsItem>> _loadNews() async {
     await HomeFeedLocalStorage.ensureSeedData();
+
+    try {
+      final liveNews = await AgriScraperAgentService.fetchLiveNews(limit: 60);
+      if (liveNews.isNotEmpty) {
+        await HomeFeedLocalStorage.saveNews(liveNews);
+        liveNews.sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+        return liveNews;
+      }
+    } catch (_) {
+      // Falls back to cached/local seed data on connectivity or source failures.
+    }
+
     final news = await HomeFeedLocalStorage.getNews();
     news.sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
     return news;
@@ -105,22 +118,19 @@ class _NewsListScreenState extends State<NewsListScreen> {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final item = news[index];
-                  final isMarket = item.category == 'market';
+                  final categoryInfo = _categoryInfo(item.category);
 
                   return Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
                       color: Colors.white,
                       border: Border.all(
-                        color: (isMarket
-                                ? const Color(0xFF388E3C)
-                                : const Color(0xFF3949AB))
-                            .withOpacity(0.2),
+                        color: categoryInfo.color.withValues(alpha: 0.2),
                         width: 1.2,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
+                          color: Colors.black.withValues(alpha: 0.06),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
@@ -136,19 +146,11 @@ class _NewsListScreenState extends State<NewsListScreen> {
                             height: 44,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: (isMarket
-                                      ? const Color(0xFF388E3C)
-                                      : const Color(0xFF3949AB))
-                                  .withOpacity(0.12),
+                              color: categoryInfo.color.withValues(alpha: 0.12),
                             ),
                             child: Icon(
-                              isMarket
-                                  ? Icons.trending_up_rounded
-                                  : Icons.policy_outlined,
-                              color:
-                                  isMarket
-                                      ? const Color(0xFF2E7D32)
-                                      : const Color(0xFF3949AB),
+                              categoryInfo.icon,
+                              color: categoryInfo.color,
                               size: 22,
                             ),
                           ),
@@ -174,6 +176,17 @@ class _NewsListScreenState extends State<NewsListScreen> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
+                                if (item.sourceName.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    item.sourceName,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 10),
                                 Row(
                                   children: [
@@ -183,19 +196,15 @@ class _NewsListScreenState extends State<NewsListScreen> {
                                         vertical: 5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: (isMarket
-                                                ? const Color(0xFF388E3C)
-                                                : const Color(0xFF3949AB))
-                                            .withOpacity(0.12),
+                                        color: categoryInfo.color.withValues(
+                                          alpha: 0.12,
+                                        ),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
-                                        isMarket ? 'Market' : 'Scheme',
+                                        categoryInfo.label,
                                         style: TextStyle(
-                                          color:
-                                              isMarket
-                                                  ? const Color(0xFF1B5E20)
-                                                  : const Color(0xFF283593),
+                                          color: categoryInfo.color,
                                           fontWeight: FontWeight.w700,
                                           fontSize: 12,
                                         ),
@@ -233,4 +242,47 @@ class _NewsListScreenState extends State<NewsListScreen> {
     final month = date.month.toString().padLeft(2, '0');
     return '$day/$month/${date.year}';
   }
+
+  _NewsCategoryStyle _categoryInfo(String category) {
+    final normalized = category.toLowerCase();
+    if (normalized == 'market') {
+      return const _NewsCategoryStyle(
+        label: 'Market',
+        color: Color(0xFF2E7D32),
+        icon: Icons.trending_up_rounded,
+      );
+    }
+    if (normalized == 'loan') {
+      return const _NewsCategoryStyle(
+        label: 'Loan',
+        color: Color(0xFF1565C0),
+        icon: Icons.account_balance_rounded,
+      );
+    }
+    if (normalized == 'policy' || normalized == 'scheme') {
+      return const _NewsCategoryStyle(
+        label: 'Policy',
+        color: Color(0xFF3949AB),
+        icon: Icons.policy_outlined,
+      );
+    }
+
+    return const _NewsCategoryStyle(
+      label: 'General',
+      color: Color(0xFF6A1B9A),
+      icon: Icons.newspaper_rounded,
+    );
+  }
+}
+
+class _NewsCategoryStyle {
+  const _NewsCategoryStyle({
+    required this.label,
+    required this.color,
+    required this.icon,
+  });
+
+  final String label;
+  final Color color;
+  final IconData icon;
 }
