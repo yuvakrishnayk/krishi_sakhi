@@ -7,6 +7,7 @@ import 'package:krishi_sakhi/screens/courses_screen.dart';
 import 'package:krishi_sakhi/screens/forum_screen.dart';
 import 'package:krishi_sakhi/screens/home_screen.dart';
 import 'package:krishi_sakhi/screens/settings_screen.dart';
+import 'package:krishi_sakhi/screens/Signin_Page/signinpage.dart';
 import 'package:krishi_sakhi/providers/auth_provider.dart';
 import 'package:krishi_sakhi/auth/auth_repository.dart';
 import 'package:krishi_sakhi/auth/auth_service.dart';
@@ -518,7 +519,7 @@ class CustomDrawer extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -538,7 +539,7 @@ class CustomDrawer extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: Text(
                 l10n.cancel,
                 style: TextStyle(color: Colors.grey[600]),
@@ -547,9 +548,9 @@ class CustomDrawer extends StatelessWidget {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // TODO: Perform logout
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                await _performLogout(context);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.shade600,
@@ -568,6 +569,19 @@ class CustomDrawer extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _performLogout(BuildContext context) async {
+    try {
+      await _repo().logout();
+      if (!context.mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      debugPrint('Logout failed: $e');
+    }
   }
 }
 
