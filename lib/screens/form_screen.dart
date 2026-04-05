@@ -86,8 +86,8 @@ class _FormScreensState extends State<FormScreens>
   bool _showCropSuggestions = false;
   final _cropFocusNode = FocusNode();
 
-  // ── Irrigation tags ───────────────────────────────────────────────────────
-  final Set<String> _selectedIrrigationMethods = {};
+  // ── Irrigation yes/no ─────────────────────────────────────────────────────
+  bool _hasIrrigation = false;
 
   // ── Farmer level ──────────────────────────────────────────────────────────
   int _farmerLevel = 0; // 0-4 index
@@ -98,8 +98,6 @@ class _FormScreensState extends State<FormScreens>
 
   // ── All crop data ─────────────────────────────────────────────────────────
   List<_CropInfo> _allCrops = [];
-
-  List<String> _irrigationMethods = [];
 
   @override
   void initState() {
@@ -136,7 +134,6 @@ class _FormScreensState extends State<FormScreens>
     final loc = AppLocalizations.of(context)!;
     _allCrops = _buildCropList(loc);
     _filteredCrops = List.from(_allCrops);
-    _irrigationMethods = _buildIrrigationMethods();
   }
 
   List<_CropInfo> _buildCropList(AppLocalizations loc) {
@@ -205,19 +202,6 @@ class _FormScreensState extends State<FormScreens>
         icon: Icons.park,
         color: const Color(0xFF2E7D32),
       ),
-    ];
-  }
-
-  List<String> _buildIrrigationMethods() {
-    return [
-      'Drip Irrigation',
-      'Sprinkler',
-      'Flood Irrigation',
-      'Furrow',
-      'Centre Pivot',
-      'Rainfed',
-      'Manual',
-      'Micro-Sprinkler',
     ];
   }
 
@@ -488,13 +472,13 @@ class _FormScreensState extends State<FormScreens>
                 _buildCropTypeField(loc),
                 const SizedBox(height: 28),
 
-                // 6. Irrigation Methods (tags)
+                // 6. Irrigation (Yes/No toggle)
                 _buildSectionHeader(
                   'Irrigation Methods',
                   Icons.water_drop_outlined,
                 ),
                 const SizedBox(height: 10),
-                _buildIrrigationTags(),
+                _buildIrrigationToggle(),
                 const SizedBox(height: 28),
 
                 // 7. Farmer Level
@@ -1377,95 +1361,48 @@ class _FormScreensState extends State<FormScreens>
     );
   }
 
-  // ─── 6. Irrigation Tags ───────────────────────────────────────────────────
-  Widget _buildIrrigationTags() {
+  // ─── 6. Irrigation Yes/No toggle ─────────────────────────────────────────
+  Widget _buildIrrigationToggle() {
     return _CardWrapper(
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children:
-            _irrigationMethods.map((method) {
-              final isSelected = _selectedIrrigationMethods.contains(method);
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                child: FilterChip(
-                  label: Text(
-                    method,
-                    style: TextStyle(
-                      color:
-                          isSelected ? Colors.white : const Color(0xFF2E7D32),
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w500,
-                      fontSize: 13,
-                    ),
-                  ),
-                  avatar:
-                      isSelected
-                          ? const Icon(
-                            Icons.check,
-                            size: 16,
-                            color: Colors.white,
-                          )
-                          : Icon(
-                            _irrigationIcon(method),
-                            size: 16,
-                            color: const Color(0xFF2E7D32),
-                          ),
-                  selected: isSelected,
-                  onSelected: (sel) {
-                    setState(() {
-                      if (sel) {
-                        _selectedIrrigationMethods.add(method);
-                      } else {
-                        _selectedIrrigationMethods.remove(method);
-                      }
-                    });
-                  },
-                  selectedColor: const Color(0xFF2E7D32),
-                  backgroundColor: const Color(0xFF2E7D32).withOpacity(0.06),
-                  checkmarkColor: Colors.white,
-                  showCheckmark: false,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color:
-                          isSelected
-                              ? const Color(0xFF2E7D32)
-                              : const Color(0xFF2E7D32).withOpacity(0.3),
-                    ),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Irrigation Available',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1B5E20),
                   ),
                 ),
-              );
-            }).toList(),
+                const SizedBox(height: 4),
+                Text(
+                  _hasIrrigation ? 'Yes' : 'No',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color:
+                        _hasIrrigation
+                            ? const Color(0xFF2E7D32)
+                            : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _hasIrrigation,
+            activeColor: const Color(0xFF2E7D32),
+            onChanged: (value) {
+              setState(() => _hasIrrigation = value);
+            },
+          ),
+        ],
       ),
     );
-  }
-
-  IconData _irrigationIcon(String method) {
-    switch (method.toLowerCase()) {
-      case 'drip irrigation':
-        return Icons.water_drop;
-      case 'sprinkler':
-        return Icons.shower;
-      case 'flood irrigation':
-        return Icons.waves;
-      case 'furrow':
-        return Icons.horizontal_rule;
-      case 'centre pivot':
-        return Icons.sync;
-      case 'rainfed':
-        return Icons.cloud;
-      case 'manual':
-        return Icons.pan_tool;
-      case 'micro-sprinkler':
-        return Icons.grain;
-      default:
-        return Icons.water;
-    }
   }
 
   // ─── 7. Farmer Level Selector ─────────────────────────────────────────────
@@ -1609,13 +1546,6 @@ class _FormScreensState extends State<FormScreens>
       child: ElevatedButton(
         onPressed: () {
           if (_formKey.currentState!.validate()) {
-            if (_selectedIrrigationMethods.isEmpty) {
-              _snack(
-                'Please select at least one irrigation method',
-                error: true,
-              );
-              return;
-            }
             if (_selectedLatLng == null) {
               _snack('Please select a location', error: true);
               return;
@@ -1633,9 +1563,17 @@ class _FormScreensState extends State<FormScreens>
               acres: double.tryParse(_acresController.text) ?? 1.0,
               polygonPoints: _polygonPoints,
               cropName: _selectedCrop!,
-              irrigationMethods: Set.from(_selectedIrrigationMethods),
+              irrigationMethods: {_hasIrrigation ? 'Yes' : 'No'},
               farmerLevel: _farmerLevel,
             );
+
+            debugPrint('--- Form Submission ---');
+            debugPrint('Location Name: ${_locationController.text}');
+            debugPrint('Acres: ${_acresController.text}');
+            debugPrint('Crop: $_selectedCrop');
+            debugPrint('Irrigation: ${_hasIrrigation ? 'Yes' : 'No'}');
+            debugPrint('Farmer Level: $_farmerLevel');
+            debugPrint('-----------------------');
 
             // Navigate to ProjectScreen with data
             Navigator.pushReplacement(
