@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:krishi_sakhi/components/drawer.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
 import 'package:krishi_sakhi/models/home_feed_models.dart';
@@ -21,6 +23,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final FlutterTts _tipTts = FlutterTts();
   static const String _weatherApiUrl = String.fromEnvironment(
     'WEATHER_API_URL',
     defaultValue: 'http://api.weatherapi.com/v1/current.json',
@@ -29,11 +32,29 @@ class _HomeScreenState extends State<HomeScreen> {
     'WEATHER_API_KEY',
     defaultValue: '762c1e6ce536412aa8b71612261803',
   );
+  static const String _groqBaseUrl = String.fromEnvironment(
+    'LLM_BASE_URL',
+    defaultValue: 'https://api.groq.com/openai/v1',
+  );
+  static const String _groqModel = String.fromEnvironment(
+    'LLM_MODEL',
+    defaultValue: 'openai/gpt-oss-120b',
+  );
+  static const String _groqApiKey = String.fromEnvironment(
+    'LLM_API_KEY',
+    defaultValue: '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',
+  );
   static const String _defaultWeatherQuery = 'Thrissur';
 
   late Future<_WeatherData> _weatherFuture;
   late Future<List<FarmNewsItem>> _newsPreviewFuture;
   late Future<List<FarmProjectItem>> _projectsPreviewFuture;
+  late Future<_FiveMinuteTip> _fiveMinuteTipFuture;
+
+  bool _tipTtsAvailable = false;
+  bool _isSpeakingTip = false;
+  bool _tipLanguageInitialized = false;
+  String _selectedTipLanguageCode = 'en';
 
   // Calendar State Variables
   bool _isCalendarExpanded = false;
@@ -59,12 +80,44 @@ class _HomeScreenState extends State<HomeScreen> {
     'December',
   ];
 
+  static const List<_TipLanguage> _tipLanguageOptions = [
+    _TipLanguage(code: 'en', name: 'English', flag: '🇬🇧', ttsLocale: 'en-IN'),
+    _TipLanguage(code: 'ml', name: 'മലയാളം', flag: '🇮🇳', ttsLocale: 'ml-IN'),
+    _TipLanguage(code: 'ta', name: 'தமிழ்', flag: '🇮🇳', ttsLocale: 'ta-IN'),
+  ];
+
   @override
   void initState() {
     super.initState();
     _weatherFuture = _fetchWeather();
     _newsPreviewFuture = _loadNewsPreview();
     _projectsPreviewFuture = _loadProjectsPreview();
+    _initializeTipVoice();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_tipLanguageInitialized) {
+      return;
+    }
+
+    final localeCode = Localizations.localeOf(context).languageCode;
+    if (_tipLanguageOptions.any((option) => option.code == localeCode)) {
+      _selectedTipLanguageCode = localeCode;
+    }
+
+    _fiveMinuteTipFuture = _fetchFiveMinuteTip();
+    _tipLanguageInitialized = true;
+  }
+
+  @override
+  void dispose() {
+    if (_tipTtsAvailable) {
+      unawaited(_tipTts.stop());
+    }
+    super.dispose();
   }
 
   Future<List<FarmNewsItem>> _loadNewsPreview() async {
@@ -137,6 +190,222 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     return _WeatherData.fromJson(body);
+  }
+
+  Future<void> _initializeTipVoice() async {
+    try {
+      await _tipTts.setSharedInstance(true);
+      await _tipTts.setSpeechRate(0.48);
+      await _tipTts.setVolume(1.0);
+      await _tipTts.setPitch(1.0);
+      _tipTts.setStartHandler(() {
+        if (mounted) {
+          setState(() => _isSpeakingTip = true);
+        }
+      });
+      _tipTts.setCompletionHandler(() {
+        if (mounted) {
+          setState(() => _isSpeakingTip = false);
+        }
+      });
+      _tipTts.setErrorHandler((_) {
+        if (mounted) {
+          setState(() => _isSpeakingTip = false);
+        }
+      });
+      _tipTtsAvailable = true;
+      await _applyTipVoiceLanguage();
+    } catch (_) {
+      _tipTtsAvailable = false;
+    }
+  }
+
+  Future<void> _applyTipVoiceLanguage() async {
+    if (!_tipTtsAvailable) {
+      return;
+    }
+
+    final selected = _tipLanguageOptions.firstWhere(
+      (option) => option.code == _selectedTipLanguageCode,
+      orElse: () => _tipLanguageOptions.first,
+    );
+
+    try {
+      await _tipTts.setLanguage(selected.ttsLocale);
+    } catch (_) {
+      await _tipTts.setLanguage(_tipLanguageOptions.first.ttsLocale);
+    }
+  }
+
+  Future<_FiveMinuteTip> _fetchFiveMinuteTip() async {
+    final selectedLanguage = _tipLanguageOptions.firstWhere(
+      (option) => option.code == _selectedTipLanguageCode,
+      orElse: () => _tipLanguageOptions.first,
+    );
+
+    try {
+      return await _fetchFiveMinuteTipFromApi(selectedLanguage);
+    } catch (_) {
+      return _fallbackFiveMinuteTip(selectedLanguage);
+    }
+  }
+
+  Future<_FiveMinuteTip> _fetchFiveMinuteTipFromApi(
+    _TipLanguage selectedLanguage,
+  ) async {
+    final uri = Uri.parse(_groqBaseUrl).resolve('chat/completions');
+    final response = await http
+        .post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $_groqApiKey',
+          },
+          body: jsonEncode({
+            'model': _groqModel,
+            'messages': [
+              {
+                'role': 'system',
+                'content': _buildTipSystemPrompt(selectedLanguage),
+              },
+              {
+                'role': 'user',
+                'content':
+                    'Create a fresh 5-minute farming tip for today in the selected language.',
+              },
+            ],
+            'temperature': 0.7,
+            'max_tokens': 420,
+            'stream': false,
+          }),
+        )
+        .timeout(const Duration(seconds: 40));
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to generate tip (${response.statusCode})');
+    }
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final content =
+        body['choices']?[0]?['message']?['content']?.toString().trim() ?? '';
+
+    if (content.isEmpty) {
+      throw Exception('Empty tip response');
+    }
+
+    return _FiveMinuteTip.fromModelContent(content, language: selectedLanguage);
+  }
+
+  _FiveMinuteTip _fallbackFiveMinuteTip(_TipLanguage language) {
+    final season = _getSeasonalData(DateTime.now())['season'] as String;
+
+    switch (language.code) {
+      case 'ml':
+        return _FiveMinuteTip(
+          title: 'ഇന്നത്തെ കൃഷി ഉപദേശം',
+          body:
+              'ഇന്ന് $season അടിസ്ഥാനമാക്കി മണ്ണിലെ ഈർപ്പം പരിശോധിക്കുക. വിത്ത്, തൈ, പച്ചക്കറി വിളകൾക്ക് ഒരേ രീതിയിൽ വെള്ളം നൽകുന്നതിനേക്കാൾ, രാവിലെ നേരത്തെ ചെറിയ അളവിൽ ജലസേചനം ചെയ്യുന്നത് നല്ലതാണ്. ഇലകളിൽ വെള്ളം കെട്ടിക്കിടക്കാതെ ശ്രദ്ധിക്കുക, കാരണം അതിലൂടെ രോഗസാധ്യത ഉയരും. കാറ്റ് കൂടുതലാണെങ്കിൽ തളിക്കൽ ജോലി വൈകുന്നേരത്തേക്ക് മാറ്റുക.',
+        );
+      case 'ta':
+        return _FiveMinuteTip(
+          title: 'இன்றைய விவசாய குறிப்பு',
+          body:
+              'இன்று $season காலநிலையை கருத்தில் கொண்டு மண்ணின் ஈரப்பதத்தைச் சரிபார்க்கவும். அதிக வெப்பம் இருந்தால் காலை நேரத்தில் குறுகிய பாசனத்தை பயன்படுத்துவது நல்லது. இலைகள் நீண்ட நேரம் ஈரமாக இருக்காமல் பார்த்துக் கொள்ளுங்கள், ஏனெனில் அது நோய் அபாயத்தை அதிகரிக்கும். காற்று வேகமாக இருந்தால் தெளிப்பு பணிகளை ஒத்திவைக்கவும்.',
+        );
+      case 'en':
+      default:
+        return _FiveMinuteTip(
+          title: 'Today\'s farming tip',
+          body:
+              'Check soil moisture before irrigating and adjust the water amount to the current $season conditions. Early-morning watering is usually safer than midday watering because it reduces evaporation and plant stress. Keep foliage dry when possible, since wet leaves can increase disease risk. If wind is strong, postpone spraying and secure young plants.',
+        );
+    }
+  }
+
+  String _buildTipSystemPrompt(_TipLanguage language) {
+    return '''
+You are KrishiSakhi generating a short practical tip for a farmer home screen.
+Write in ${language.name} only.
+Make it a useful 5-minute read with a clear title and a concise body.
+Keep it under 220 words.
+Use a warm, practical tone.
+Focus on one concrete topic such as irrigation, pest scouting, crop nutrition, weather safety, or soil care.
+Return plain text in this exact format:
+TITLE: <short title>
+BODY: <the tip text>
+Do not add markdown, quotes, or extra commentary.
+''';
+  }
+
+  Future<void> _regenerateTip({bool speakAfterLoad = false}) async {
+    setState(() {
+      _fiveMinuteTipFuture = _fetchFiveMinuteTip();
+    });
+
+    if (!speakAfterLoad) {
+      return;
+    }
+
+    try {
+      final tip = await _fiveMinuteTipFuture;
+      await _speakTip(tip);
+    } catch (_) {}
+  }
+
+  Future<void> _speakTip(_FiveMinuteTip tip) async {
+    if (!_tipTtsAvailable) {
+      return;
+    }
+
+    if (_isSpeakingTip) {
+      await _tipTts.stop();
+      if (mounted) {
+        setState(() => _isSpeakingTip = false);
+      }
+      return;
+    }
+
+    await _applyTipVoiceLanguage();
+    await _tipTts.speak(_tipSpeechText('${tip.title}. ${tip.body}'));
+  }
+
+  String _tipSpeechText(String text) {
+    var spoken = text;
+    spoken = spoken.replaceAll(RegExp(r'''```[\s\S]*?```'''), '');
+    spoken = spoken.replaceAll(RegExp(r'''`([^`]+)`'''), r'$1');
+    spoken = spoken.replaceAll(RegExp(r'''\[([^\]]+)\]\(([^)]+)\)'''), r'$1');
+    spoken = spoken.replaceAll(
+      RegExp(r'''^\s*[-*+]\s+''', multiLine: true),
+      '',
+    );
+    spoken = spoken.replaceAll(
+      RegExp(r'''^\s*\d+\.\s+''', multiLine: true),
+      '',
+    );
+    spoken = spoken.replaceAll(
+      RegExp(r'''^\s{0,3}#{1,6}\s+''', multiLine: true),
+      '',
+    );
+    spoken = spoken.replaceAll(RegExp(r'''\*\*([^*]+)\*\*'''), r'$1');
+    spoken = spoken.replaceAll(RegExp(r'''__([^_]+)__'''), r'$1');
+    spoken = spoken.replaceAll(RegExp(r'''\*([^*]+)\*'''), r'$1');
+    spoken = spoken.replaceAll(RegExp(r'''_([^_]+)_'''), r'$1');
+    spoken = spoken.replaceAll(RegExp(r'''\n{3,}'''), '\n\n');
+    spoken = spoken.replaceAll(RegExp(r'''[ \t]+'''), ' ');
+    return spoken.trim();
+  }
+
+  void _selectTipLanguage(String languageCode) {
+    if (_selectedTipLanguageCode == languageCode) {
+      return;
+    }
+
+    setState(() {
+      _selectedTipLanguageCode = languageCode;
+    });
+
+    unawaited(_applyTipVoiceLanguage());
+    unawaited(_regenerateTip());
   }
 
   // --- Calendar Helper Methods ---
@@ -615,6 +884,11 @@ class _HomeScreenState extends State<HomeScreen> {
   // --- Existing UI Widgets ---
 
   Widget _buildDailyTipCard(BuildContext context, AppLocalizations l10n) {
+    final selectedTipLanguage = _tipLanguageOptions.firstWhere(
+      (option) => option.code == _selectedTipLanguageCode,
+      orElse: () => _tipLanguageOptions.first,
+    );
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
@@ -678,7 +952,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        l10n.monsoonAlert,
+                        _tipCardSubtitle(selectedTipLanguage),
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
@@ -688,33 +962,206 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+                PopupMenuButton<String>(
+                  tooltip: _tipLanguageLabel(selectedTipLanguage),
+                  onSelected: _selectTipLanguage,
+                  itemBuilder: (context) {
+                    return _tipLanguageOptions
+                        .map(
+                          (option) => PopupMenuItem<String>(
+                            value: option.code,
+                            child: Row(
+                              children: [
+                                Text(
+                                  option.flag,
+                                  style: const TextStyle(fontSize: 20),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(option.name),
+                              ],
+                            ),
+                          ),
+                        )
+                        .toList(growable: false);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.45),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFF4CAF50).withOpacity(0.25),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.translate_rounded,
+                          size: 18,
+                          color: Color(0xFF2E7D32),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          selectedTipLanguage.flag,
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 14),
-            Text(
-              l10n.monsoonMessage,
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.6,
-                color: Color(0xFF424242),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 14),
-            TextButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.play_circle_outline_rounded, size: 20),
-              label: Text(
-                l10n.playAudio,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF2E7D32),
-                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-              ),
+            FutureBuilder<_FiveMinuteTip>(
+              future: _fiveMinuteTipFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 108,
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2.2),
+                    ),
+                  );
+                }
+
+                if (snapshot.hasError || !snapshot.hasData) {
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.55),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFF4CAF50).withOpacity(0.18),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _tipErrorTitle(selectedTipLanguage),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1B5E20),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _tipErrorBody(selectedTipLanguage),
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            height: 1.45,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextButton.icon(
+                          onPressed: () => _regenerateTip(),
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          label: Text(_tipRetryLabel(selectedTipLanguage)),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final tip = snapshot.data!;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.55),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: const Color(0xFF4CAF50).withOpacity(0.18),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tip.title,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1B5E20),
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            tip.body,
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.6,
+                              color: Colors.grey.shade800,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () => _regenerateTip(),
+                          icon: const Icon(Icons.refresh_rounded, size: 20),
+                          label: Text(_tipRefreshLabel(selectedTipLanguage)),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF2E7D32),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 0,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed:
+                              _tipTtsAvailable ? () => _speakTip(tip) : null,
+                          icon: Icon(
+                            _isSpeakingTip
+                                ? Icons.stop_circle_rounded
+                                : Icons.volume_up_rounded,
+                            size: 20,
+                          ),
+                          label: Text(
+                            _isSpeakingTip
+                                ? _tipStopLabel(selectedTipLanguage)
+                                : _tipSpeakLabel(selectedTipLanguage),
+                          ),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFF2E7D32),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 0,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
+                        if (!_tipTtsAvailable)
+                          Text(
+                            _tipVoiceUnavailable(selectedTipLanguage),
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -996,6 +1443,114 @@ class _HomeScreenState extends State<HomeScreen> {
       'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}';
+  }
+
+  String _tipCardSubtitle(_TipLanguage language) {
+    switch (language.code) {
+      case 'ml':
+        return 'എല്ലാ ദിവസവും പുതിയ 5 മിനിറ്റ് കൃഷി ഉപദേശം';
+      case 'ta':
+        return 'ஒவ்வொரு நாளும் புதிய 5 நிமிட விவசாய குறிப்பு';
+      case 'en':
+      default:
+        return 'Fresh 5-minute farming tip generated by Groq';
+    }
+  }
+
+  String _tipLanguageLabel(_TipLanguage language) {
+    switch (language.code) {
+      case 'ml':
+        return 'ഭാഷ തിരഞ്ഞെടുക്കുക';
+      case 'ta':
+        return 'மொழியைத் தேர்ந்தெடுக்கவும்';
+      case 'en':
+      default:
+        return 'Select language';
+    }
+  }
+
+  String _tipRefreshLabel(_TipLanguage language) {
+    switch (language.code) {
+      case 'ml':
+        return 'പുതിയ ഉപദേശം';
+      case 'ta':
+        return 'புதிய குறிப்பு';
+      case 'en':
+      default:
+        return 'Generate tip';
+    }
+  }
+
+  String _tipSpeakLabel(_TipLanguage language) {
+    switch (language.code) {
+      case 'ml':
+        return 'ശബ്ദത്തിൽ കേൾക്കുക';
+      case 'ta':
+        return 'ஒலி மூலம் கேளுங்கள்';
+      case 'en':
+      default:
+        return 'Speak tip';
+    }
+  }
+
+  String _tipStopLabel(_TipLanguage language) {
+    switch (language.code) {
+      case 'ml':
+        return 'നിർത്തുക';
+      case 'ta':
+        return 'நிறுத்து';
+      case 'en':
+      default:
+        return 'Stop';
+    }
+  }
+
+  String _tipRetryLabel(_TipLanguage language) {
+    switch (language.code) {
+      case 'ml':
+        return 'വീണ്ടും ശ്രമിക്കുക';
+      case 'ta':
+        return 'மீண்டும் முயற்சிக்கவும்';
+      case 'en':
+      default:
+        return 'Retry';
+    }
+  }
+
+  String _tipErrorTitle(_TipLanguage language) {
+    switch (language.code) {
+      case 'ml':
+        return 'ഉപദേശം ലഭ്യമല്ല';
+      case 'ta':
+        return 'குறிப்பு கிடைக்கவில்லை';
+      case 'en':
+      default:
+        return 'Tip unavailable';
+    }
+  }
+
+  String _tipErrorBody(_TipLanguage language) {
+    switch (language.code) {
+      case 'ml':
+        return 'ഇപ്പോൾ LLM tip ഉണ്ടാക്കാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.';
+      case 'ta':
+        return 'LLM குறிப்பு இப்போது உருவாக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+      case 'en':
+      default:
+        return 'The LLM tip could not be generated right now. Try again.';
+    }
+  }
+
+  String _tipVoiceUnavailable(_TipLanguage language) {
+    switch (language.code) {
+      case 'ml':
+        return 'ഈ ഉപകരണത്തിൽ voice ലഭ്യമല്ല.';
+      case 'ta':
+        return 'இந்த சாதனத்தில் voice கிடைக்கவில்லை.';
+      case 'en':
+      default:
+        return 'Voice is unavailable on this device.';
+    }
   }
 
   Widget _buildNewsPreviewSection() {
@@ -2592,5 +3147,58 @@ class _WavePainter extends CustomPainter {
         oldDelegate.amplitude != amplitude ||
         oldDelegate.frequency != frequency ||
         oldDelegate.shift != shift;
+  }
+}
+
+class _TipLanguage {
+  const _TipLanguage({
+    required this.code,
+    required this.name,
+    required this.flag,
+    required this.ttsLocale,
+  });
+
+  final String code;
+  final String name;
+  final String flag;
+  final String ttsLocale;
+}
+
+class _FiveMinuteTip {
+  const _FiveMinuteTip({required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  factory _FiveMinuteTip.fromModelContent(
+    String content, {
+    required _TipLanguage language,
+  }) {
+    final normalized = content.replaceAll('\r\n', '\n').trim();
+    final titleMatch = RegExp(
+      r'^TITLE:\s*(.+)$',
+      multiLine: true,
+    ).firstMatch(normalized);
+    final bodyMatch = RegExp(
+      r'^BODY:\s*([\s\S]+)$',
+      multiLine: true,
+    ).firstMatch(normalized);
+
+    final title = titleMatch?.group(1)?.trim() ?? _fallbackTitle(language.code);
+    final body = bodyMatch?.group(1)?.trim() ?? normalized;
+
+    return _FiveMinuteTip(title: title, body: body);
+  }
+
+  static String _fallbackTitle(String code) {
+    switch (code) {
+      case 'ml':
+        return 'ഇന്നത്തെ കൃഷി ഉപദേശം';
+      case 'ta':
+        return 'இன்றைய விவசாய குறிப்பு';
+      case 'en':
+      default:
+        return 'Today\'s farming tip';
+    }
   }
 }
