@@ -19,9 +19,9 @@ class _DashboardScreenState extends State<DashboardScreen>
   late final AnimationController _animController;
   late final Animation<double> _fadeAnim;
 
-  late dynamic _rawResponse;
-  late Map<String, dynamic> _planData;
-  late List<_WeatherAlert> _weatherAlerts;
+  dynamic _rawResponse;
+  Map<String, dynamic> _planData = <String, dynamic>{};
+  List<_WeatherAlert> _weatherAlerts = <_WeatherAlert>[];
 
   int _selectedMonthIndex = 0;
 
@@ -66,8 +66,14 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Map<String, dynamic> _fallbackPlan() {
-    final crop = _cropName;
-    final location = _locationName;
+    final crop =
+        widget.project?.cropName.isNotEmpty == true
+            ? widget.project!.cropName
+            : 'Crop Advisory';
+    final location =
+        widget.project?.locationName.isNotEmpty == true
+            ? widget.project!.locationName
+            : 'Your farm';
     final today = DateTime.now();
     return {
       'crop': crop,
