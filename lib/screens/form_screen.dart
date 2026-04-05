@@ -5,11 +5,13 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
-import 'package:krishi_sakhi/screens/Project_Details/bottom_nav_proj.dart';
 import 'package:latlong2/latlong.dart';
 import '../l10n/app_localizations.dart';
 import '../models/farm_project.dart';
+import '../models/home_feed_models.dart';
+import '../services/home_feed_local_storage.dart';
 import 'map_screen.dart';
+import 'projects_list_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Crop data model for suggestions
@@ -91,6 +93,9 @@ class _FormScreensState extends State<FormScreens>
 
   // ── Farmer level ──────────────────────────────────────────────────────────
   int _farmerLevel = 0; // 0-4 index
+
+  // ── Form Submission State ─────────────────────────────────────────────────
+  bool _isSubmitting = false;
 
   // ── Animations ────────────────────────────────────────────────────────────
   late AnimationController _animationController;
@@ -373,30 +378,35 @@ class _FormScreensState extends State<FormScreens>
         'icon': Icons.eco_outlined,
         'color': const Color(0xFFA5D6A7),
         'desc': 'Just starting out',
+        'apiValue': 'beginner',
       },
       {
         'label': loc.novice,
         'icon': Icons.spa_outlined,
         'color': const Color(0xFF81C784),
         'desc': '1-2 years',
+        'apiValue': 'novice',
       },
       {
         'label': loc.intermediate,
         'icon': Icons.agriculture_outlined,
         'color': const Color(0xFF66BB6A),
         'desc': '3-5 years',
+        'apiValue': 'intermediate',
       },
       {
         'label': loc.advanced,
         'icon': Icons.landscape_outlined,
         'color': const Color(0xFF43A047),
         'desc': '5-10 years',
+        'apiValue': 'advanced',
       },
       {
         'label': loc.expert,
         'icon': Icons.emoji_events_outlined,
         'color': const Color(0xFF2E7D32),
         'desc': '10+ years',
+        'apiValue': 'expert',
       },
     ];
   }
@@ -413,6 +423,92 @@ class _FormScreensState extends State<FormScreens>
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  dynamic _decodeResponseBody(String body) {
+    try {
+      return jsonDecode(body);
+    } catch (_) {
+      return body;
+    }
+  }
+
+  String _monthLabel(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[date.month - 1];
+  }
+
+  Future<void> _saveProjectToLocalList(FarmProject project) async {
+    await HomeFeedLocalStorage.ensureSeedData();
+    final existingItems = await HomeFeedLocalStorage.getProjects();
+
+    final String status = _hasIrrigation ? 'On Track' : 'Needs Attention';
+    final String priority = _hasIrrigation ? 'normal' : 'high';
+    final double progress = (0.2 + (_farmerLevel * 0.15)).clamp(0.1, 0.95);
+
+    final FarmProjectItem newItem = FarmProjectItem(
+      id: 'project_${DateTime.now().millisecondsSinceEpoch}',
+      name: project.farmName,
+      crop: project.cropName,
+      startedLabel: 'Started in ${_monthLabel(DateTime.now())}',
+      progress: progress,
+      status: status,
+      irrigationNote:
+          _hasIrrigation ? 'Irrigation setup ready' : 'Irrigation needed',
+      priority: priority,
+    );
+
+    final updatedItems = <FarmProjectItem>[newItem, ...existingItems];
+    await HomeFeedLocalStorage.saveProjects(updatedItems);
+  }
+
+  Map<String, dynamic> _buildDummyResponse(FarmProject project) {
+    final targetAcres = project.acres <= 0 ? 1.0 : project.acres;
+    final nextIrrigationHours = _hasIrrigation ? 24 : 12;
+
+    return {
+      'summary': {
+        'project_name': project.farmName,
+        'crop': project.cropName,
+        'location': project.locationName,
+        'land_size_acres': targetAcres,
+        'experience_level': _farmerLevel,
+      },
+      'recommendations': {
+        'watering':
+            'Schedule irrigation in the next $nextIrrigationHours hours and monitor soil moisture daily.',
+        'fertilizer':
+            'Apply balanced NPK in split doses this week for better crop establishment.',
+        'pest_control':
+            'Inspect leaf underside every morning and use preventive organic spray if early signs appear.',
+      },
+      'weekly_plan': [
+        'Day 1: Field inspection and weed removal',
+        'Day 3: Nutrient application',
+        'Day 5: Water management check',
+        'Day 7: Health review and growth note',
+      ],
+      'alerts':
+          _hasIrrigation
+              ? ['Irrigation is available. Keep flow uniform across the plot.']
+              : [
+                'Irrigation is not configured. Prioritize water source planning.',
+              ],
+      'note': 'Demo output generated locally for testing project flow.',
+    };
   }
 
   // ═════════════════════════════════════════════════════════════════════════
@@ -1544,46 +1640,77 @@ class _FormScreensState extends State<FormScreens>
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: () {
-          if (_formKey.currentState!.validate()) {
-            if (_selectedLatLng == null) {
-              _snack('Please select a location', error: true);
-              return;
-            }
-            if (_selectedCrop == null) {
-              _snack('Please select a crop', error: true);
-              return;
-            }
+        onPressed:
+            _isSubmitting
+                ? null
+                : () async {
+                  if (_formKey.currentState!.validate()) {
+                    if (_selectedLatLng == null) {
+                      _snack('Please select a location', error: true);
+                      return;
+                    }
+                    if (_selectedCrop == null) {
+                      _snack('Please select a crop', error: true);
+                      return;
+                    }
 
-            // Create FarmProject with all data
-            final project = FarmProject(
-              farmName: _farmNameController.text,
-              locationName: _locationController.text,
-              location: _selectedLatLng!,
-              acres: double.tryParse(_acresController.text) ?? 1.0,
-              polygonPoints: _polygonPoints,
-              cropName: _selectedCrop!,
-              irrigationMethods: {_hasIrrigation ? 'Yes' : 'No'},
-              farmerLevel: _farmerLevel,
-            );
+                    setState(() {
+                      _isSubmitting = true;
+                    });
 
-            debugPrint('--- Form Submission ---');
-            debugPrint('Location Name: ${_locationController.text}');
-            debugPrint('Acres: ${_acresController.text}');
-            debugPrint('Crop: $_selectedCrop');
-            debugPrint('Irrigation: ${_hasIrrigation ? 'Yes' : 'No'}');
-            debugPrint('Farmer Level: $_farmerLevel');
-            debugPrint('-----------------------');
+                    debugPrint('--- Form Submission ---');
+                    debugPrint('Location Name: ${_locationController.text}');
+                    debugPrint('Acres: ${_acresController.text}');
+                    debugPrint('Crop: $_selectedCrop');
+                    debugPrint('Irrigation: ${_hasIrrigation ? 'Yes' : 'No'}');
+                    debugPrint('Farmer Level: $_farmerLevel');
+                    debugPrint('-----------------------');
 
-            // Navigate to ProjectScreen with data
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ProjectScreen(project: project),
-              ),
-            );
-          }
-        },
+                    try {
+                      final project = FarmProject(
+                        farmName: _farmNameController.text,
+                        locationName: _locationController.text,
+                        location: _selectedLatLng!,
+                        acres: double.tryParse(_acresController.text) ?? 1.0,
+                        polygonPoints: _polygonPoints,
+                        cropName: _selectedCrop!,
+                        irrigationMethods: {_hasIrrigation ? 'Yes' : 'No'},
+                        farmerLevel: _farmerLevel,
+                      );
+
+                      await _saveProjectToLocalList(project);
+                      final decodedResponse = _buildDummyResponse(project);
+                      final responseBody = const JsonEncoder.withIndent(
+                        '  ',
+                      ).convert(decodedResponse);
+
+                      if (!mounted) return;
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => _ApiResponseScreen(
+                                project: project,
+                                responseBody: responseBody,
+                                parsedResponse: decodedResponse,
+                              ),
+                        ),
+                      );
+                    } catch (e) {
+                      debugPrint('Local project save failed: $e');
+                      _snack(
+                        'Failed to create project. Please try again.',
+                        error: true,
+                      );
+                    } finally {
+                      if (mounted) {
+                        setState(() {
+                          _isSubmitting = false;
+                        });
+                      }
+                    }
+                  }
+                },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF2E7D32),
           shape: RoundedRectangleBorder(
@@ -1592,26 +1719,36 @@ class _FormScreensState extends State<FormScreens>
           elevation: 6,
           shadowColor: const Color(0xFF2E7D32).withOpacity(0.4),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.check_circle_outline,
-              color: Colors.white,
-              size: 22,
-            ),
-            const SizedBox(width: 10),
-            Text(
-              loc.submit,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
+        child:
+            _isSubmitting
+                ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                )
+                : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      loc.submit,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
       ),
     );
   }
@@ -1665,6 +1802,334 @@ class _FormScreensState extends State<FormScreens>
 // ═════════════════════════════════════════════════════════════════════════════
 // Reusable Widgets
 // ═════════════════════════════════════════════════════════════════════════════
+
+class _ApiResponseScreen extends StatelessWidget {
+  final FarmProject project;
+  final String responseBody;
+  final dynamic parsedResponse;
+
+  const _ApiResponseScreen({
+    required this.project,
+    required this.responseBody,
+    required this.parsedResponse,
+  });
+
+  String _prettyLabel(String value) {
+    return value
+        .replaceAll('_', ' ')
+        .replaceAll('-', ' ')
+        .split(' ')
+        .where((word) => word.trim().isNotEmpty)
+        .map(
+          (word) =>
+              '${word[0].toUpperCase()}${word.length > 1 ? word.substring(1) : ''}',
+        )
+        .join(' ');
+  }
+
+  String _displayValue(dynamic value) {
+    if (value == null) return 'N/A';
+    if (value is num || value is bool) return value.toString();
+    if (value is String) return value.trim().isEmpty ? 'N/A' : value;
+    return jsonEncode(value);
+  }
+
+  Widget _buildScalarTile(String title, dynamic value, {IconData? icon}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FBF7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE0EDE0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon ?? Icons.bolt_rounded,
+            size: 18,
+            color: const Color(0xFF2E7D32),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1B5E20),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _displayValue(value),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.35,
+                    color: Color(0xFF1F2A1F),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListSection(String title, List<dynamic> values) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _prettyLabel(title),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1B5E20),
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...List.generate(values.length, (index) {
+            final item = values[index];
+            final itemTitle = '${_prettyLabel(title)} ${index + 1}';
+            if (item is Map<String, dynamic>) {
+              return _buildMapSection(itemTitle, item);
+            }
+            if (item is List<dynamic>) {
+              return _buildListSection(itemTitle, item);
+            }
+            return _buildScalarTile(
+              itemTitle,
+              item,
+              icon: Icons.list_alt_rounded,
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMapSection(String title, Map<String, dynamic> values) {
+    final entries = values.entries.toList();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _prettyLabel(title),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1B5E20),
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...entries.map((entry) {
+            final keyTitle = _prettyLabel(entry.key);
+            final value = entry.value;
+            if (value is Map<String, dynamic>) {
+              return _buildMapSection(keyTitle, value);
+            }
+            if (value is List<dynamic>) {
+              return _buildListSection(keyTitle, value);
+            }
+            return _buildScalarTile(keyTitle, value);
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResponseSection() {
+    if (parsedResponse is Map<String, dynamic>) {
+      return _buildMapSection(
+        'Recommendations',
+        parsedResponse as Map<String, dynamic>,
+      );
+    }
+    if (parsedResponse is List<dynamic>) {
+      return _buildListSection(
+        'Recommendations',
+        parsedResponse as List<dynamic>,
+      );
+    }
+    return _buildScalarTile(
+      'Response',
+      parsedResponse,
+      icon: Icons.description_rounded,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F8F5),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF2E7D32),
+        title: const Text(
+          'All Responses',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Color(0xFFE8F5E9),
+                      child: Icon(
+                        Icons.check_circle_outline,
+                        color: Color(0xFF2E7D32),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            project.farmName,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1B5E20),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${project.locationName} • ${project.cropName}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              _buildResponseSection(),
+              const SizedBox(height: 8),
+              ExpansionTile(
+                tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+                title: const Text(
+                  'Raw Response',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1B5E20),
+                  ),
+                ),
+                children: [
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F1A12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: SelectableText(
+                      responseBody,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        height: 1.4,
+                        color: Color(0xFFDCE8DD),
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProjectsListScreen(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E7D32),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.list_alt_rounded, color: Colors.white),
+                  label: const Text(
+                    'View Project List',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Card wrapper for sections.
 class _CardWrapper extends StatelessWidget {

@@ -6,8 +6,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:krishi_sakhi/components/drawer.dart';
 import 'package:krishi_sakhi/l10n/app_localizations.dart';
-import 'package:krishi_sakhi/screens/Project_Details/bottom_nav_proj.dart';
+import 'package:krishi_sakhi/models/home_feed_models.dart';
 import 'package:krishi_sakhi/screens/form_screen.dart';
+import 'package:krishi_sakhi/screens/news_list_screen.dart';
+import 'package:krishi_sakhi/screens/projects_list_screen.dart';
+import 'package:krishi_sakhi/services/home_feed_local_storage.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -29,11 +32,28 @@ class _HomeScreenState extends State<HomeScreen> {
   static const String _defaultWeatherQuery = 'Thrissur';
 
   late Future<_WeatherData> _weatherFuture;
+  late Future<List<FarmNewsItem>> _newsPreviewFuture;
+  late Future<List<FarmProjectItem>> _projectsPreviewFuture;
 
   @override
   void initState() {
     super.initState();
     _weatherFuture = _fetchWeather();
+    _newsPreviewFuture = _loadNewsPreview();
+    _projectsPreviewFuture = _loadProjectsPreview();
+  }
+
+  Future<List<FarmNewsItem>> _loadNewsPreview() async {
+    await HomeFeedLocalStorage.ensureSeedData();
+    final items = await HomeFeedLocalStorage.getNews();
+    items.sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+    return items.take(2).toList(growable: false);
+  }
+
+  Future<List<FarmProjectItem>> _loadProjectsPreview() async {
+    await HomeFeedLocalStorage.ensureSeedData();
+    final items = await HomeFeedLocalStorage.getProjects();
+    return items.take(2).toList(growable: false);
   }
 
   void _toggleDrawer() {
@@ -146,26 +166,42 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 24),
                     _buildWeatherSection(context, l10n),
                     const SizedBox(height: 28),
-                    _buildSectionHeader(context, l10n.latestNews, ''),
+                    _buildSectionHeader(
+                      context,
+                      l10n.latestNews,
+                      'View All',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NewsListScreen(),
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 14),
-                    _buildAnnouncementSection(context, l10n),
+                    _buildNewsPreviewSection(),
                     const SizedBox(height: 28),
-                    _buildSectionHeader(context, l10n.projects, ''),
+                    _buildSectionHeader(
+                      context,
+                      l10n.projects,
+                      'View All',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ProjectsListScreen(),
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 14),
+                    _buildProjectsPreviewSection(),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildProjectCard(context, index, l10n),
-                  childCount: 3,
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
       ),
@@ -525,8 +561,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSectionHeader(
     BuildContext context,
     String title,
-    String action,
-  ) {
+    String action, {
+    VoidCallback? onPressed,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -541,7 +578,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         if (action.isNotEmpty)
           TextButton(
-            onPressed: () {},
+            onPressed: onPressed,
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               minimumSize: const Size(0, 0),
@@ -560,403 +597,239 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProjectCard(
-    BuildContext context,
-    int index,
-    AppLocalizations l10n,
-  ) {
-    final crops = [l10n.rice, l10n.vegetables, l10n.coconut];
-    final dates = [l10n.startedMay, l10n.startedJun, l10n.startedApr];
-    final progress = [0.7, 0.35, 0.9];
-    final bgColors = [
-      const Color(0xFFE8F5E9),
-      const Color(0xFFF1F8E9),
-      const Color(0xFFDCEDC8),
-    ];
+  Widget _buildNewsPreviewSection() {
+    return FutureBuilder<List<FarmNewsItem>>(
+      future: _newsPreviewFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 110,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2.2)),
+          );
+        }
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ProjectScreen()),
+        final news = snapshot.data ?? const <FarmNewsItem>[];
+        if (news.isEmpty) {
+          return _buildEmptyPreviewCard(
+            icon: Icons.feed_outlined,
+            title: 'No local news yet',
+            subtitle: 'Open News page to refresh and view offline items.',
+          );
+        }
+
+        return Column(
+          children: news
+              .map(
+                (item) => Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color:
+                          item.category == 'market'
+                              ? const Color(0xFF388E3C).withOpacity(0.2)
+                              : const Color(0xFF3949AB).withOpacity(0.2),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 4,
+                    ),
+                    leading: CircleAvatar(
+                      backgroundColor: (item.category == 'market'
+                              ? const Color(0xFF388E3C)
+                              : const Color(0xFF3949AB))
+                          .withOpacity(0.15),
+                      child: Icon(
+                        item.category == 'market'
+                            ? Icons.trending_up_rounded
+                            : Icons.policy_outlined,
+                        color:
+                            item.category == 'market'
+                                ? const Color(0xFF2E7D32)
+                                : const Color(0xFF3949AB),
+                      ),
+                    ),
+                    title: Text(
+                      item.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1B5E20),
+                      ),
+                    ),
+                    subtitle: Text(
+                      item.subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NewsListScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              )
+              .toList(growable: false),
         );
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: bgColors[index],
-          border: Border.all(
-            color: const Color(0xFF4CAF50).withOpacity(0.2),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProjectScreen()),
-              );
-            },
-            borderRadius: BorderRadius.circular(18),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFF4CAF50).withOpacity(0.3),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.grass_rounded,
-                          color: Color(0xFF2E7D32),
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              index == 0
-                                  ? l10n.riceField
-                                  : '${crops[index]} ${l10n.fieldSuffix}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                                color: Color(0xFF1B5E20),
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              dates[index],
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF689F38),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              index == 1
-                                  ? Colors.orange.withOpacity(0.15)
-                                  : const Color(0xFF2E7D32).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color:
-                                index == 1
-                                    ? Colors.orange.withOpacity(0.3)
-                                    : const Color(0xFF2E7D32).withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: Text(
-                          index == 1 ? l10n.needsAttention : l10n.onTrack,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                index == 1
-                                    ? Colors.orange.shade800
-                                    : const Color(0xFF2E7D32),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            l10n.progress,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF424242),
-                            ),
-                          ),
-                          Text(
-                            '${(progress[index] * 100).toInt()}%',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1B5E20),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: LinearProgressIndicator(
-                          value: progress[index],
-                          backgroundColor: Colors.grey.withOpacity(0.2),
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            index == 1
-                                ? Colors.orange.shade400
-                                : const Color(0xFF4CAF50),
-                          ),
-                          minHeight: 10,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color:
-                            index == 1
-                                ? Colors.orange.withOpacity(0.2)
-                                : const Color(0xFF4CAF50).withOpacity(0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.water_drop_rounded,
-                          color:
-                              index == 1
-                                  ? Colors.orange.shade700
-                                  : const Color(0xFF2E7D32),
-                          size: 18,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          index == 1
-                              ? l10n.irrigationNeeded
-                              : l10n.wateredToday,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                index == 1
-                                    ? Colors.orange.shade800
-                                    : const Color(0xFF2E7D32),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
-  Widget _buildAnnouncementSection(
-    BuildContext context,
-    AppLocalizations l10n,
-  ) {
-    final announcements = [
-      {
-        'title': l10n.riceMSPUpdate,
-        'type': 'market',
-        'subtitle': l10n.mspEffectiveDate,
-      },
-      {
-        'title': l10n.pmKisanUpdate,
-        'type': 'scheme',
-        'subtitle': l10n.schemeDeadline,
-      },
-      {
-        'title': l10n.marketUpdate,
-        'type': 'market',
-        'subtitle': l10n.marketSubtitle,
-      },
-      {
-        'title': l10n.schemeSubsidy,
-        'type': 'scheme',
-        'subtitle': l10n.schemeSubsidySubtitle,
-      },
-    ];
+  Widget _buildProjectsPreviewSection() {
+    return FutureBuilder<List<FarmProjectItem>>(
+      future: _projectsPreviewFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 110,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2.2)),
+          );
+        }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade300, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: ListView.separated(
-          physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          itemCount: announcements.length,
-          separatorBuilder:
-              (context, index) => Divider(
-                height: 1,
-                color: Colors.grey.shade200,
-                indent: 16,
-                endIndent: 16,
-              ),
-          itemBuilder: (context, index) {
-            final item = announcements[index];
-            final isMarket = item['type'] == 'market';
+        final projects = snapshot.data ?? const <FarmProjectItem>[];
+        if (projects.isEmpty) {
+          return _buildEmptyPreviewCard(
+            icon: Icons.agriculture_rounded,
+            title: 'No local projects yet',
+            subtitle: 'Open Projects page to refresh and view offline items.',
+          );
+        }
 
-            return Material(
-              color:
-                  isMarket
-                      ? const Color(0xFFE8F5E9).withOpacity(0.5)
-                      : const Color(0xFFE8EAF6).withOpacity(0.5),
-              child: InkWell(
-                onTap: () {},
-                splashColor: (isMarket
-                        ? const Color(0xFF388E3C)
-                        : const Color(0xFF3949AB))
-                    .withOpacity(0.12),
-                highlightColor: (isMarket
-                        ? const Color(0xFF388E3C)
-                        : const Color(0xFF3949AB))
-                    .withOpacity(0.06),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 18,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color:
-                              isMarket
-                                  ? const Color(0xFFE8F5E9)
-                                  : const Color(0xFFE8EAF6),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: (isMarket
-                                    ? const Color(0xFF388E3C)
-                                    : const Color(0xFF3949AB))
-                                .withOpacity(0.25),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: (isMarket
-                                      ? const Color(0xFF388E3C)
-                                      : const Color(0xFF3949AB))
-                                  .withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          isMarket
-                              ? Icons.trending_up_rounded
-                              : Icons.policy_outlined,
-                          size: 20,
-                          color:
-                              isMarket
-                                  ? const Color(0xFF388E3C)
-                                  : const Color(0xFF3949AB),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item['title']!,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color:
-                                    isMarket
-                                        ? const Color(0xFF1B5E20)
-                                        : const Color(0xFF283593),
-                                letterSpacing: 0.2,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              item['subtitle']!,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade600,
-                                height: 1.4,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 16,
-                        color: Colors.grey.shade400,
+        return Column(
+          children: projects
+              .map(
+                (item) => Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFE8F5E9), Color(0xFFF1F8E9)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    border: Border.all(
+                      color: const Color(0xFF4CAF50).withOpacity(0.2),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 4,
+                    ),
+                    leading: const CircleAvatar(
+                      backgroundColor: Color(0x1F2E7D32),
+                      child: Icon(
+                        Icons.grass_rounded,
+                        color: Color(0xFF2E7D32),
+                      ),
+                    ),
+                    title: Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1B5E20),
+                      ),
+                    ),
+                    subtitle: Text(
+                      '${item.crop} | ${(item.progress * 100).toInt()}% complete',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: Colors.grey.shade500,
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ProjectsListScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
+              )
+              .toList(growable: false),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyPreviewCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF2E7D32), size: 26),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1B5E20),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
