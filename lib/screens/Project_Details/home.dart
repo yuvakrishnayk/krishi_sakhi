@@ -232,7 +232,6 @@ class _DashboardScreenState extends State<DashboardScreen>
             SliverToBoxAdapter(
               child: Column(
                 children: [
-                  _buildWeatherHeroCard(),
                   _buildDateStrip(),
                   _buildFarmerStatsRow(),
                   _buildPlanTabsSection(),
@@ -307,128 +306,6 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         ),
       ],
-    );
-  }
-
-  // ── Weather Hero Card ──────────────────────────────────────────────────────
-
-  Widget _buildWeatherHeroCard() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1B5E20), Color(0xFF388E3C), Color(0xFF66BB6A)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1B5E20).withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Good Morning, Ramesh! 🌾',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Madurai, Tamil Nadu',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Column(
-                  children: [
-                    Icon(
-                      Icons.wb_sunny_rounded,
-                      color: Colors.yellow,
-                      size: 32,
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      '32°C',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    Text(
-                      'Sunny',
-                      style: TextStyle(color: Colors.white70, fontSize: 10),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildWeatherStat(
-                Icons.water_drop_rounded,
-                '68%',
-                'Air Moisture',
-              ),
-              _buildWeatherStat(Icons.air_rounded, '12 km/h', 'Wind'),
-              _buildWeatherStat(Icons.umbrella_rounded, '5%', 'Rain Chance'),
-              _buildWeatherStat(Icons.wb_twilight_rounded, 'Clear', 'Sky'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.check_circle_rounded,
-                  color: Colors.greenAccent,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Good day to water your field today 💧',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
