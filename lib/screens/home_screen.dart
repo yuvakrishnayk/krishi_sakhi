@@ -35,6 +35,30 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<List<FarmNewsItem>> _newsPreviewFuture;
   late Future<List<FarmProjectItem>> _projectsPreviewFuture;
 
+  // Calendar State Variables
+  bool _isCalendarExpanded = false;
+  DateTime _selectedDate = DateTime.now();
+  DateTime _displayMonth = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    1,
+  );
+
+  static const List<String> _monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +86,16 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       _scaffoldKey.currentState?.openDrawer();
     }
+  }
+
+  void _toggleCalendar() {
+    setState(() {
+      _isCalendarExpanded = !_isCalendarExpanded;
+      // Reset view to current selected date month when opening
+      if (_isCalendarExpanded) {
+        _displayMonth = DateTime(_selectedDate.year, _selectedDate.month, 1);
+      }
+    });
   }
 
   Future<String> _resolveWeatherQuery() async {
@@ -105,6 +139,67 @@ class _HomeScreenState extends State<HomeScreen> {
     return _WeatherData.fromJson(body);
   }
 
+  // --- Calendar Helper Methods ---
+
+  void _changeMonth(int increment) {
+    setState(() {
+      int newMonth = _displayMonth.month + increment;
+      int newYear = _displayMonth.year;
+      if (newMonth > 12) {
+        newMonth = 1;
+        newYear++;
+      } else if (newMonth < 1) {
+        newMonth = 12;
+        newYear--;
+      }
+      _displayMonth = DateTime(newYear, newMonth, 1);
+    });
+  }
+
+  // Returns seasonal crops based on month
+  Map<String, dynamic> _getSeasonalData(DateTime date) {
+    final month = date.month;
+    if (month >= 6 && month <= 10) {
+      return {
+        'season': 'Kharif Season (Monsoon)',
+        'color': const Color(0xFF1E88E5), // Blue for monsoon
+        'crops': [
+          'Rice / Paddy',
+          'Maize',
+          'Cotton',
+          'Soybean',
+          'Sugarcane',
+          'Groundnut',
+        ],
+      };
+    } else if (month == 11 || month == 12 || month <= 3) {
+      return {
+        'season': 'Rabi Season (Winter)',
+        'color': const Color(0xFFF4511E), // Orange for winter
+        'crops': [
+          'Wheat',
+          'Mustard',
+          'Barley',
+          'Oats',
+          'Chickpea (Gram)',
+          'Linseed',
+        ],
+      };
+    } else {
+      return {
+        'season': 'Zaid Season (Summer)',
+        'color': const Color(0xFFFFB300), // Yellow for summer
+        'crops': [
+          'Watermelon',
+          'Muskmelon',
+          'Cucumber',
+          'Bitter Gourd',
+          'Fodder Crops',
+        ],
+      };
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -128,6 +223,33 @@ class _HomeScreenState extends State<HomeScreen> {
           tooltip: l10n.openNavigationMenu,
         ),
         actions: [
+          // New Calendar Button
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color:
+                      _isCalendarExpanded
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.calendar_month_rounded,
+                  color:
+                      _isCalendarExpanded
+                          ? const Color(0xFF2E7D32)
+                          : Colors.white,
+                  size: 22,
+                ),
+              ),
+              splashRadius: 24,
+              tooltip: 'Seasonal Crop Calendar',
+              onPressed: _toggleCalendar,
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: IconButton(
@@ -155,6 +277,17 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
+            // Slide-down interactive calendar
+            SliverToBoxAdapter(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOutCubic,
+                child:
+                    _isCalendarExpanded
+                        ? _buildSlideDownCalendar()
+                        : const SizedBox.shrink(),
+              ),
+            ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -166,9 +299,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 24),
                     _buildWeatherSection(context, l10n),
                     const SizedBox(height: 28),
-                    _buildSectionHeader(context, 'Crop Calendar', ''),
-                    const SizedBox(height: 14),
-                    _buildCropCalendarSection(),
+
+                    _buildCropCalendarSection(), // Existing static timeline
                     const SizedBox(height: 28),
                     _buildSectionHeader(
                       context,
@@ -234,6 +366,255 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  // --- New Interactive Calendar Widget ---
+  Widget _buildSlideDownCalendar() {
+    final seasonalData = _getSeasonalData(_selectedDate);
+    final seasonColor = seasonalData['color'] as Color;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          // Calendar Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F8E9),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left_rounded),
+                  onPressed: () => _changeMonth(-1),
+                  color: const Color(0xFF2E7D32),
+                ),
+                Text(
+                  '${_monthNames[_displayMonth.month - 1]} ${_displayMonth.year}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1B5E20),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right_rounded),
+                  onPressed: () => _changeMonth(1),
+                  color: const Color(0xFF2E7D32),
+                ),
+              ],
+            ),
+          ),
+
+          // Days of Week
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children:
+                  ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) {
+                    return SizedBox(
+                      width: 32,
+                      child: Center(
+                        child: Text(
+                          day,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Colors.grey.shade600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+            ),
+          ),
+
+          // Calendar Grid
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildCalendarGrid(),
+          ),
+
+          // Seasonal Output Panel
+          const Divider(height: 24),
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            width: double.infinity,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.grass_rounded, color: seasonColor, size: 22),
+                    const SizedBox(width: 8),
+                    Text(
+                      seasonalData['season'],
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: seasonColor.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Recommended crops for ${_monthNames[_selectedDate.month - 1]}:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      (seasonalData['crops'] as List<String>).map((crop) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: seasonColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: seasonColor.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Text(
+                            crop,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: seasonColor.withOpacity(0.9),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarGrid() {
+    final daysInMonth = DateUtils.getDaysInMonth(
+      _displayMonth.year,
+      _displayMonth.month,
+    );
+    // 1 = Monday, 7 = Sunday in DateTime. We want Sunday = 0.
+    int firstWeekday =
+        DateTime(_displayMonth.year, _displayMonth.month, 1).weekday;
+    if (firstWeekday == 7) firstWeekday = 0;
+
+    final int totalSlots = daysInMonth + firstWeekday;
+    final int rows = (totalSlots / 7).ceil();
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: rows * 7,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 7,
+        childAspectRatio: 1.1,
+      ),
+      itemBuilder: (context, index) {
+        if (index < firstWeekday || index >= totalSlots) {
+          return const SizedBox.shrink(); // Empty slot
+        }
+
+        final int day = index - firstWeekday + 1;
+        final dateToRender = DateTime(
+          _displayMonth.year,
+          _displayMonth.month,
+          day,
+        );
+        final bool isSelected =
+            _selectedDate.year == dateToRender.year &&
+            _selectedDate.month == dateToRender.month &&
+            _selectedDate.day == dateToRender.day;
+        final bool isToday =
+            DateTime.now().year == dateToRender.year &&
+            DateTime.now().month == dateToRender.month &&
+            DateTime.now().day == dateToRender.day;
+
+        // Determine marker dot color based on season
+        final dotColor = _getSeasonalData(dateToRender)['color'] as Color;
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedDate = dateToRender;
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFF2E7D32) : Colors.transparent,
+              shape: BoxShape.circle,
+              border:
+                  isToday && !isSelected
+                      ? Border.all(color: const Color(0xFF2E7D32), width: 1.5)
+                      : null,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Text(
+                  '$day',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight:
+                        isSelected || isToday
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                    color: isSelected ? Colors.white : Colors.black87,
+                  ),
+                ),
+                // Small indicator dot for season
+                Positioned(
+                  bottom: 4,
+                  child: Container(
+                    width: 4,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.white : dotColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // --- Existing UI Widgets ---
 
   Widget _buildDailyTipCard(BuildContext context, AppLocalizations l10n) {
     return Container(
