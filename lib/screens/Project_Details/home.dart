@@ -305,6 +305,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildBody() {
     return ListView(
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 32),
       children: [
         _buildStatRow(),
@@ -934,6 +937,9 @@ class _DashboardScreenState extends State<DashboardScreen>
     final selectedDay = _asMap(days[selectedIndex]);
 
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1010,6 +1016,9 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (weeks.isEmpty) return _emptyState('No weekly data available.');
 
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       child: Column(
         children: [
           ...weeks.asMap().entries.map((entry) {
@@ -1035,6 +1044,9 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (_months.isEmpty) return _emptyState('No monthly plan available.');
 
     return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
