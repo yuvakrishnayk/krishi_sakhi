@@ -64,7 +64,10 @@ class _ProjectScreenState extends State<ProjectScreen>
         advisoryResponse: widget.advisoryResponse,
       ),
       FieldMapScreen(project: widget.project),
-      AnalyticsScreen(project: widget.project),
+      AnalyticsScreen(
+        project: widget.project,
+        advisoryResponse: widget.advisoryResponse,
+      ),
       InventoryScreen(
         project: widget.project,
         advisoryResponse: widget.advisoryResponse,

@@ -103,12 +103,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   void _loadPlanData() {
     final response = widget.advisoryResponse;
     _rawResponse = response;
-    _planData =
-        response is Map<String, dynamic>
-            ? Map<String, dynamic>.from(response)
-            : response is Map
-            ? Map<String, dynamic>.from(response as Map<dynamic, dynamic>)
-            : {};
+    _planData = response != null ? Map<String, dynamic>.from(response) : {};
     _weatherAlerts = _collectWeatherAlerts(_planData);
     _selectedMonthIndex = 0;
     _selectedDailyIndex = 0;
@@ -604,18 +599,27 @@ class _DashboardScreenState extends State<DashboardScreen>
       ),
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 32),
       children: [
-        _buildStatRow(),
-        const SizedBox(height: 22),
+        if (_weatherAlerts.isNotEmpty) ...[
+          // _buildSectionLabel('Weather Alerts'),
+          // const SizedBox(height: 12),
+          // _buildWeatherAlerts(),
+          // const SizedBox(height: 22),
+        ],
 
-        _buildProjectCard(),
-        const SizedBox(height: 22),
+        if (_weatherAlerts.isEmpty) ...[
+          _buildSummaryCard(
+            title: 'Plan Overview',
+            summary:
+                'Your top dashboard summary has moved to Dashboard & Inventory. This page now focuses on daily, weekly, and monthly execution.',
+            metrics: [
+              'Days: $_daysCount',
+              'Weeks: $_weeksCount',
+              'Months: $_durationMonths',
+            ],
+          ),
+          const SizedBox(height: 22),
+        ],
 
-        // if (_weatherAlerts.isNotEmpty) ...[
-        //   _buildSectionLabel('Weather Alerts'),
-        //   const SizedBox(height: 12),
-        //   _buildWeatherAlerts(),
-        //   const SizedBox(height: 22),
-        // ],
         _buildSectionLabel('Detailed Plan'),
         const SizedBox(height: 12),
 

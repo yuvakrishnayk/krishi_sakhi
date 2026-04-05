@@ -41,7 +41,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   Map<String, dynamic> _asMap(dynamic value) {
     if (value is Map<String, dynamic>) return value;
-    if (value is Map) return Map<String, dynamic>.from(value as Map);
+    if (value is Map) return Map<String, dynamic>.from(value);
     return {};
   }
 
@@ -59,6 +59,64 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return 'Your farm';
   }
 
+  String get _cropName {
+    final crop =
+        _asMap(widget.advisoryResponse?['summary'])['crop']?.toString().trim();
+    if (crop != null && crop.isNotEmpty) return crop;
+    if (widget.project?.cropName.isNotEmpty == true) {
+      return widget.project!.cropName;
+    }
+    return 'Crop Advisory';
+  }
+
+  List<Map<String, dynamic>> get _months =>
+      _asList(widget.advisoryResponse?['months']).map(_asMap).toList();
+
+  int get _weeksCount =>
+      _months.fold(0, (sum, month) => sum + _asList(month['weeks']).length);
+
+  int get _daysCount => _months.fold(
+    0,
+    (sum, month) =>
+        sum +
+        _asList(month['weeks']).fold<int>(
+          0,
+          (weekSum, week) => weekSum + _asList(_asMap(week)['days']).length,
+        ),
+  );
+
+  int get _alertsCount {
+    var alerts = 0;
+    for (final month in _months) {
+      for (final week in _asList(month['weeks'])) {
+        for (final day in _asList(_asMap(week)['days'])) {
+          final weather = _asMap(_asMap(day)['weather']);
+          final advisory = weather['advisory']?.toString().trim() ?? '';
+          final maxTemp =
+              (_asMap(weather['temperature'])['max'] as num?)?.toDouble();
+          final rainfall = (weather['rainfall'] as num?)?.toDouble() ?? 0;
+          final windSpeed = (weather['windSpeed'] as num?)?.toDouble() ?? 0;
+          if (advisory.isNotEmpty ||
+              rainfall > 0 ||
+              windSpeed >= 28 ||
+              (maxTemp != null && maxTemp >= 37)) {
+            alerts += 1;
+          }
+        }
+      }
+    }
+    return alerts;
+  }
+
+  String get _summaryText {
+    final summary = _asMap(widget.advisoryResponse?['summary']);
+    final text =
+        summary['summary']?.toString().trim() ??
+        widget.advisoryResponse?['summary']?.toString().trim();
+    if (text != null && text.isNotEmpty) return text;
+    return 'Track your crop plan, weather alerts, stock and mandi rates in one place.';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,21 +124,21 @@ class _InventoryScreenState extends State<InventoryScreen> {
       body: Column(
         children: [
           ProjectHeroAppBar(
-            title: 'Inventory & Rates',
+            title: 'Dashboard & Inventory',
             subtitle: '$_farmerName • $_locationName',
             leadingIcon: Icons.inventory_2_rounded,
-            chips: const [
+            chips: [
               ProjectHeroChipData(
-                icon: Icons.category_rounded,
-                value: '12 Items',
+                icon: Icons.today_rounded,
+                value: '$_daysCount Days',
               ),
               ProjectHeroChipData(
                 icon: Icons.warning_rounded,
-                value: '2 Low Stock',
+                value: '$_alertsCount Alerts',
               ),
               ProjectHeroChipData(
                 icon: Icons.trending_up_rounded,
-                value: 'Updated Today',
+                value: '${_months.length} Months',
               ),
             ],
           ),
@@ -90,6 +148,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
+                    _buildDashboardOverviewCard(),
+                    const SizedBox(height: 16),
+                    _buildDashboardStatRow(),
+                    const SizedBox(height: 16),
                     _buildInventorySummaryCard(),
                     const SizedBox(height: 16),
                     _buildInventoryList(),
@@ -104,6 +166,189 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardOverviewCard() {
+    final irrigationText =
+        widget.project == null || widget.project!.irrigationMethods.isEmpty
+            ? 'Not set'
+            : widget.project!.irrigationMethods.join(', ');
+
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.agriculture_rounded,
+                  color: Color(0xFF2E7D32),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _cropName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1A2E1A),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _locationName,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _summaryText,
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.45,
+              color: Colors.grey.shade800,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _overviewChip('🌾 $_cropName', const Color(0xFF2E7D32)),
+              _overviewChip('💧 $irrigationText', const Color(0xFF1565C0)),
+              _overviewChip(
+                '🌍 ${(widget.project?.calculatedAreaAcres ?? widget.project?.acres ?? 1.0).toStringAsFixed(1)} acres',
+                const Color(0xFFF57F17),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardStatRow() {
+    final stats = [
+      _DashStat(
+        icon: Icons.calendar_month_rounded,
+        label: 'Months',
+        value: '${_months.length}',
+      ),
+      _DashStat(
+        icon: Icons.view_week_rounded,
+        label: 'Weeks',
+        value: '$_weeksCount',
+      ),
+      _DashStat(icon: Icons.today_rounded, label: 'Days', value: '$_daysCount'),
+      _DashStat(
+        icon: Icons.warning_amber_rounded,
+        label: 'Alerts',
+        value: '$_alertsCount',
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 10.0;
+        final columns = constraints.maxWidth < 430 ? 2 : 4;
+        final itemWidth =
+            (constraints.maxWidth - (spacing * (columns - 1))) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children:
+              stats
+                  .map(
+                    (stat) => SizedBox(
+                      width: itemWidth,
+                      child: _buildStatBubble(stat),
+                    ),
+                  )
+                  .toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatBubble(_DashStat stat) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8E2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(stat.icon, color: const Color(0xFF2E7D32), size: 16),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  stat.value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1A2E1A),
+                  ),
+                ),
+                Text(
+                  stat.label,
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade700),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _overviewChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -367,4 +612,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
       child: child,
     );
   }
+}
+
+class _DashStat {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _DashStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 }
