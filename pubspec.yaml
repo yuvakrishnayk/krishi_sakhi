@@ -56,6 +56,8 @@ dependencies:
   video_thumbnail: ^0.5.3
   shared_preferences: ^2.5.5
   xml: ^6.5.0
+  pdf: ^3.11.1
+  path_provider: ^2.1.4
 
 dev_dependencies:
   # The "flutter_lints" package below contains a set of recommended lints to

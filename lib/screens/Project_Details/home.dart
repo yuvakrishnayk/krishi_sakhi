@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:krishi_sakhi/models/farm_project.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 // ─── Palette ────────────────────────────────────────────────────────────────
 class _K {
@@ -270,6 +274,295 @@ class _DashboardScreenState extends State<DashboardScreen>
         ).fold<int>(0, (ws, w) => ws + _asList(_asMap(w)['days']).length),
   );
 
+  Future<void> _exportTasksPdf() async {
+    final allDays = _flattenedDays;
+    if (allDays.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No day-wise tasks found to export.')),
+      );
+      return;
+    }
+
+    try {
+      final doc = pw.Document();
+      final generatedAt = DateTime.now();
+
+      doc.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.fromLTRB(24, 24, 24, 28),
+          build: (context) {
+            final widgets = <pw.Widget>[
+              _pdfHeader(generatedAt),
+              pw.SizedBox(height: 14),
+            ];
+
+            for (var i = 0; i < allDays.length; i++) {
+              widgets.add(_pdfDayCard(i + 1, _asMap(allDays[i])));
+              widgets.add(pw.SizedBox(height: 12));
+            }
+            return widgets;
+          },
+        ),
+      );
+
+      final bytes = await doc.save();
+      final now = DateTime.now();
+      final fileName =
+          'krishi_tasks_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}.pdf';
+
+      final outputDir = await _resolvePdfDirectory();
+      if (!await outputDir.exists()) {
+        await outputDir.create(recursive: true);
+      }
+
+      final file = File('${outputDir.path}${Platform.pathSeparator}$fileName');
+      await file.writeAsBytes(bytes, flush: true);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('PDF saved: ${file.path}'),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to create PDF: $e')));
+    }
+  }
+
+  Future<Directory> _resolvePdfDirectory() async {
+    if (Platform.isAndroid) {
+      final dirs = await getExternalStorageDirectories(
+        type: StorageDirectory.downloads,
+      );
+      if (dirs != null && dirs.isNotEmpty) {
+        return dirs.first;
+      }
+
+      final extDir = await getExternalStorageDirectory();
+      if (extDir != null) return extDir;
+    }
+    return getApplicationDocumentsDirectory();
+  }
+
+  pw.Widget _pdfHeader(DateTime generatedAt) {
+    final generatedText =
+        '${generatedAt.day.toString().padLeft(2, '0')}-${generatedAt.month.toString().padLeft(2, '0')}-${generatedAt.year} ${generatedAt.hour.toString().padLeft(2, '0')}:${generatedAt.minute.toString().padLeft(2, '0')}';
+
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.all(16),
+      decoration: pw.BoxDecoration(
+        borderRadius: pw.BorderRadius.circular(12),
+        gradient: const pw.LinearGradient(
+          colors: [PdfColor(0.05, 0.17, 0.10), PdfColor(0.18, 0.49, 0.32)],
+          begin: pw.Alignment.topLeft,
+          end: pw.Alignment.bottomRight,
+        ),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            'Krishi Sakhi - Day Task Planner',
+            style: pw.TextStyle(
+              color: PdfColors.white,
+              fontSize: 18,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            'Crop: $_cropName  |  Location: $_locationName',
+            style: const pw.TextStyle(color: PdfColors.white, fontSize: 11),
+          ),
+          pw.SizedBox(height: 2),
+          pw.Text(
+            'Generated on: $generatedText',
+            style: pw.TextStyle(
+              color: PdfColor(0.86, 0.93, 0.87),
+              fontSize: 10,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _pdfDayCard(int index, Map<String, dynamic> day) {
+    final weather = _asMap(day['weather']);
+    final tasks = _asList(day['tasks']);
+    final dayNumber = day['dayNumber']?.toString().trim();
+    final date = weather['date']?.toString().trim();
+    final condition = weather['condition']?.toString().trim();
+    final advisory = weather['advisory']?.toString().trim();
+
+    final title =
+        (dayNumber != null && dayNumber.isNotEmpty)
+            ? 'Day $dayNumber'
+            : 'Day $index';
+
+    final metaParts = <String>[
+      if (date != null && date.isNotEmpty) date,
+      if (condition != null && condition.isNotEmpty) condition,
+    ];
+
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.all(12),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.white,
+        borderRadius: pw.BorderRadius.circular(10),
+        border: pw.Border.all(color: PdfColor(0.84, 0.90, 0.85)),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            children: [
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: pw.BoxDecoration(
+                  color: const PdfColor(0.18, 0.49, 0.32),
+                  borderRadius: pw.BorderRadius.circular(6),
+                ),
+                child: pw.Text(
+                  title,
+                  style: pw.TextStyle(
+                    color: PdfColors.white,
+                    fontSize: 10,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (metaParts.isNotEmpty) ...[
+                pw.SizedBox(width: 8),
+                pw.Expanded(
+                  child: pw.Text(
+                    metaParts.join('  |  '),
+                    style: pw.TextStyle(
+                      color: PdfColor(0.29, 0.38, 0.31),
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          if (advisory != null && advisory.isNotEmpty) ...[
+            pw.SizedBox(height: 8),
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(8),
+              decoration: pw.BoxDecoration(
+                color: const PdfColor(1, 0.96, 0.92),
+                borderRadius: pw.BorderRadius.circular(6),
+              ),
+              child: pw.Text(
+                'Weather Advisory: $advisory',
+                style: pw.TextStyle(
+                  color: PdfColor(0.72, 0.24, 0.10),
+                  fontSize: 10,
+                ),
+              ),
+            ),
+          ],
+          pw.SizedBox(height: 10),
+          if (tasks.isEmpty)
+            pw.Text(
+              'No tasks available for this day.',
+              style: pw.TextStyle(
+                color: PdfColor(0.35, 0.43, 0.36),
+                fontSize: 10,
+              ),
+            )
+          else
+            ...tasks.asMap().entries.map((entry) {
+              final task = _asMap(entry.value);
+              final titleText =
+                  task['title']?.toString().trim().isNotEmpty == true
+                      ? task['title'].toString().trim()
+                      : 'Task ${entry.key + 1}';
+              final desc = task['description']?.toString().trim() ?? '';
+              final materials =
+                  _asList(task['materials'])
+                      .map((m) => m.toString())
+                      .where((t) => t.trim().isNotEmpty)
+                      .toList();
+              final precautions =
+                  _asList(task['precautions'] ?? task['safetyTips'])
+                      .map((p) => p.toString())
+                      .where((t) => t.trim().isNotEmpty)
+                      .toList();
+
+              return pw.Padding(
+                padding: const pw.EdgeInsets.only(bottom: 8),
+                child: pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.all(10),
+                  decoration: pw.BoxDecoration(
+                    color: const PdfColor(0.96, 0.98, 0.96),
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        '${entry.key + 1}. $titleText',
+                        style: pw.TextStyle(
+                          color: const PdfColor(0.10, 0.28, 0.19),
+                          fontSize: 11,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      if (desc.isNotEmpty) ...[
+                        pw.SizedBox(height: 4),
+                        pw.Text(
+                          desc,
+                          style: pw.TextStyle(
+                            color: PdfColor(0.27, 0.36, 0.29),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                      if (materials.isNotEmpty) ...[
+                        pw.SizedBox(height: 5),
+                        pw.Text(
+                          'Materials: ${materials.join(', ')}',
+                          style: pw.TextStyle(
+                            color: PdfColor(0.18, 0.32, 0.44),
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                      if (precautions.isNotEmpty) ...[
+                        pw.SizedBox(height: 3),
+                        pw.Text(
+                          'Precautions: ${precautions.join(', ')}',
+                          style: pw.TextStyle(
+                            color: PdfColor(0.58, 0.29, 0.09),
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
   // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
@@ -287,6 +580,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               landSize: _landSize,
               heroScale: _heroScale,
               heroFade: _heroFade,
+              onDownloadPressed: _exportTasksPdf,
             ),
             Expanded(
               child: FadeTransition(
@@ -1899,6 +2193,7 @@ class _HeroAppBar extends StatelessWidget {
   final double? landSize;
   final Animation<double> heroScale;
   final Animation<double> heroFade;
+  final VoidCallback onDownloadPressed;
 
   const _HeroAppBar({
     required this.cropName,
@@ -1907,6 +2202,7 @@ class _HeroAppBar extends StatelessWidget {
     required this.landSize,
     required this.heroScale,
     required this.heroFade,
+    required this.onDownloadPressed,
   });
 
   @override
@@ -1960,7 +2256,10 @@ class _HeroAppBar extends StatelessWidget {
                   ),
                   _AppBarAction(icon: Icons.notifications_none_rounded),
                   const SizedBox(width: 8),
-                  _AppBarAction(icon: Icons.tune_rounded),
+                  _AppBarAction(
+                    icon: Icons.download_rounded,
+                    onTap: onDownloadPressed,
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -2074,18 +2373,26 @@ class _HeroAppBar extends StatelessWidget {
 
 class _AppBarAction extends StatelessWidget {
   final IconData icon;
-  const _AppBarAction({required this.icon});
+  final VoidCallback? onTap;
+  const _AppBarAction({required this.icon, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: Colors.white, size: 18),
+        ),
       ),
-      child: Icon(icon, color: Colors.white, size: 18),
     );
   }
 }
