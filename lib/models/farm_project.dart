@@ -22,6 +22,56 @@ class FarmProject {
     required this.farmerLevel,
   });
 
+  factory FarmProject.fromMap(Map<String, dynamic> map) {
+    final locationMap = (map['location'] as Map?)?.cast<String, dynamic>();
+    final polygonList = map['polygonPoints'] as List?;
+
+    return FarmProject(
+      farmName: map['farmName'] as String? ?? '',
+      locationName: map['locationName'] as String? ?? '',
+      location: _latLngFromMap(locationMap),
+      acres: (map['acres'] as num?)?.toDouble() ?? 0,
+      polygonPoints:
+          polygonList
+              ?.whereType<Map>()
+              .map((p) => _latLngFromMap(p.cast<String, dynamic>()))
+              .toList(growable: false) ??
+          const <LatLng>[],
+      cropName: map['cropName'] as String? ?? '',
+      irrigationMethods:
+          ((map['irrigationMethods'] as List?)
+              ?.map((e) => e.toString())
+              .toSet()) ??
+          const <String>{},
+      farmerLevel: (map['farmerLevel'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'farmName': farmName,
+      'locationName': locationName,
+      'location': _latLngToMap(location),
+      'acres': acres,
+      'polygonPoints': polygonPoints
+          .map((p) => _latLngToMap(p))
+          .toList(growable: false),
+      'cropName': cropName,
+      'irrigationMethods': irrigationMethods.toList(growable: false),
+      'farmerLevel': farmerLevel,
+    };
+  }
+
+  static LatLng _latLngFromMap(Map<String, dynamic>? map) {
+    final lat = (map?['lat'] as num?)?.toDouble() ?? 20.5937;
+    final lng = (map?['lng'] as num?)?.toDouble() ?? 78.9629;
+    return LatLng(lat, lng);
+  }
+
+  static Map<String, dynamic> _latLngToMap(LatLng point) {
+    return {'lat': point.latitude, 'lng': point.longitude};
+  }
+
   /// Calculate area in acres from polygon points using Shoelace formula.
   double get calculatedAreaAcres {
     if (polygonPoints.length < 3) return acres;

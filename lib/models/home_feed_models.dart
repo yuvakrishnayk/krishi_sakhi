@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:krishi_sakhi/models/farm_project.dart';
+
 class FarmNewsItem {
   const FarmNewsItem({
     required this.id,
@@ -107,6 +109,8 @@ class FarmProjectItem {
     required this.status,
     required this.irrigationNote,
     required this.priority,
+    this.project,
+    this.advisoryResponse,
   });
 
   final String id;
@@ -117,8 +121,13 @@ class FarmProjectItem {
   final String status;
   final String irrigationNote;
   final String priority;
+  final FarmProject? project;
+  final Map<String, dynamic>? advisoryResponse;
 
   factory FarmProjectItem.fromMap(Map<String, dynamic> map) {
+    final dynamic projectRaw = map['project'];
+    final dynamic advisoryRaw = map['advisoryResponse'];
+
     return FarmProjectItem(
       id: map['id'] as String? ?? '',
       name: map['name'] as String? ?? '',
@@ -128,6 +137,14 @@ class FarmProjectItem {
       status: map['status'] as String? ?? 'On Track',
       irrigationNote: map['irrigationNote'] as String? ?? '',
       priority: map['priority'] as String? ?? 'normal',
+      project:
+          projectRaw is Map
+              ? FarmProject.fromMap(projectRaw.cast<String, dynamic>())
+              : null,
+      advisoryResponse:
+          advisoryRaw is Map
+              ? Map<String, dynamic>.from(advisoryRaw as Map)
+              : null,
     );
   }
 
@@ -141,6 +158,8 @@ class FarmProjectItem {
       'status': status,
       'irrigationNote': irrigationNote,
       'priority': priority,
+      if (project != null) 'project': project!.toMap(),
+      if (advisoryResponse != null) 'advisoryResponse': advisoryResponse,
     };
   }
 

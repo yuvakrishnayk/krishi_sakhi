@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:krishi_sakhi/models/farm_project.dart';
 import 'package:krishi_sakhi/models/home_feed_models.dart';
 import 'package:krishi_sakhi/screens/Project_Details/bottom_nav_proj.dart';
 import 'package:krishi_sakhi/services/home_feed_local_storage.dart';
@@ -12,6 +14,19 @@ class ProjectsListScreen extends StatefulWidget {
 
 class _ProjectsListScreenState extends State<ProjectsListScreen> {
   late Future<List<FarmProjectItem>> _projectsFuture;
+
+  FarmProject _fallbackProjectFromItem(FarmProjectItem item) {
+    return FarmProject(
+      farmName: item.name,
+      locationName: item.name,
+      location: const LatLng(20.5937, 78.9629),
+      acres: 0,
+      polygonPoints: const <LatLng>[],
+      cropName: item.crop,
+      irrigationMethods: {item.irrigationNote},
+      farmerLevel: 0,
+    );
+  }
 
   @override
   void initState() {
@@ -164,9 +179,18 @@ class _ProjectsListScreenState extends State<ProjectsListScreen> {
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18),
                       onTap: () {
+                        final selectedProject =
+                            project.project ??
+                            _fallbackProjectFromItem(project);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => ProjectScreen()),
+                          MaterialPageRoute(
+                            builder:
+                                (_) => ProjectScreen(
+                                  project: selectedProject,
+                                  advisoryResponse: project.advisoryResponse,
+                                ),
+                          ),
                         );
                       },
                       child: Ink(

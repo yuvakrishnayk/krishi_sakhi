@@ -457,7 +457,10 @@ class _FormScreensState extends State<FormScreens>
     return months[date.month - 1];
   }
 
-  Future<void> _saveProjectToLocalList(FarmProject project) async {
+  Future<void> _saveProjectToLocalList(
+    FarmProject project, {
+    Map<String, dynamic>? advisoryResponse,
+  }) async {
     await HomeFeedLocalStorage.ensureSeedData();
     final existingItems = await HomeFeedLocalStorage.getProjects();
 
@@ -475,6 +478,8 @@ class _FormScreensState extends State<FormScreens>
       irrigationNote:
           _hasIrrigation ? 'Irrigation setup ready' : 'Irrigation needed',
       priority: priority,
+      project: project,
+      advisoryResponse: advisoryResponse,
     );
 
     final updatedItems = <FarmProjectItem>[newItem, ...existingItems];
@@ -1683,7 +1688,15 @@ class _FormScreensState extends State<FormScreens>
                         farmerLevel: _farmerLevel,
                       );
 
-                      await _saveProjectToLocalList(project);
+                      final advisoryMap =
+                          responseData is Map<String, dynamic>
+                              ? responseData
+                              : {'raw_response': responseData.toString()};
+
+                      await _saveProjectToLocalList(
+                        project,
+                        advisoryResponse: advisoryMap,
+                      );
                       _snack('Advisory loaded. Opening dashboard...');
 
                       if (!mounted) return;
@@ -1693,13 +1706,7 @@ class _FormScreensState extends State<FormScreens>
                           builder:
                               (_) => ProjectScreen(
                                 project: project,
-                                advisoryResponse:
-                                    responseData is Map<String, dynamic>
-                                        ? responseData
-                                        : {
-                                          'raw_response':
-                                              responseData.toString(),
-                                        },
+                                advisoryResponse: advisoryMap,
                               ),
                         ),
                       );
