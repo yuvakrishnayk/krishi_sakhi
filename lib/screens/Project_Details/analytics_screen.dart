@@ -3,7 +3,9 @@ import 'package:krishi_sakhi/models/farm_project.dart';
 import 'package:krishi_sakhi/screens/Project_Details/widgets/project_hero_app_bar.dart';
 
 class AnalyticsScreen extends StatefulWidget {
-  const AnalyticsScreen({super.key, FarmProject? project});
+  final FarmProject? project;
+
+  const AnalyticsScreen({super.key, this.project});
 
   @override
   State<AnalyticsScreen> createState() => _AnalyticsScreenState();
@@ -12,6 +14,45 @@ class AnalyticsScreen extends StatefulWidget {
 class _AnalyticsScreenState extends State<AnalyticsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  double get _estimatedYieldTonPerAcre {
+    final project = widget.project;
+    if (project == null) return 4.2;
+    final area = project.calculatedAreaAcres;
+    if (area <= 0) return 4.2;
+    // Simple heuristic to keep demo analytics project-aware and stable.
+    final estimate = 3.4 + (area * 0.18);
+    return estimate.clamp(2.0, 6.0);
+  }
+
+  int get _estimatedRevenue {
+    final area = widget.project?.calculatedAreaAcres ?? 1.0;
+    return (area * 85000).round();
+  }
+
+  int get _estimatedExpenses {
+    final area = widget.project?.calculatedAreaAcres ?? 1.0;
+    return (area * 33500).round();
+  }
+
+  int get _estimatedProfit => _estimatedRevenue - _estimatedExpenses;
+
+  String _formatCurrency(int amount) {
+    final normalized = amount.toString();
+    final regex = RegExp(r'(\d{1,2})(?=(\d{2})+(?!\d))');
+    final lastThree = normalized.substring(normalized.length - 3);
+    final otherNumbers = normalized.substring(0, normalized.length - 3);
+    if (otherNumbers.isEmpty) {
+      return '₹$lastThree';
+    }
+    return '₹${otherNumbers.replaceAllMapped(regex, (m) => '${m[1]},')}$lastThree';
+  }
+
+  String get _cropName {
+    final crop = widget.project?.cropName.trim();
+    if (crop == null || crop.isEmpty) return 'Samba Rice';
+    return crop;
+  }
 
   @override
   void initState() {
@@ -97,6 +138,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
+          _buildFarmerTipCard(
+            title: 'How to read this section',
+            message:
+                'Yield shows expected production per acre. If trend is flat for 2-3 weeks, increase nutrient and irrigation checks.',
+            icon: Icons.lightbulb_rounded,
+            color: const Color(0xFF2E7D32),
+          ),
+          const SizedBox(height: 12),
           _buildYieldCard(),
           const SizedBox(height: 16),
           _buildYieldHistoryChart(),
@@ -109,6 +158,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   }
 
   Widget _buildYieldCard() {
+    final yield = _estimatedYieldTonPerAcre;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -122,8 +172,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Estimated Yield 2024',
+          Text(
+            'Expected Yield • $_cropName',
             style: TextStyle(
               color: Colors.white70,
               fontSize: 13,
@@ -131,11 +181,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             ),
           ),
           const SizedBox(height: 8),
-          const Row(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '4.2',
+                yield.toStringAsFixed(1),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 48,
@@ -160,7 +210,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               const SizedBox(width: 24),
               _buildYieldStat('District Avg', '3.8 T', Colors.white70),
               const SizedBox(width: 24),
-              _buildYieldStat('Target', '4.5 T', Colors.white70),
+              _buildYieldStat(
+                'Target',
+                '${(yield + 0.3).toStringAsFixed(1)} T',
+                Colors.white70,
+              ),
             ],
           ),
         ],
@@ -190,7 +244,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
 
   Widget _buildYieldHistoryChart() {
     final months = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    final values = [2.1, 2.8, 3.2, 3.8, 4.0, 4.2];
+    final peak = _estimatedYieldTonPerAcre;
+    final values = [
+      (peak * 0.50),
+      (peak * 0.65),
+      (peak * 0.75),
+      (peak * 0.88),
+      (peak * 0.95),
+      peak,
+    ];
     const maxVal = 5.0;
 
     return Container(
@@ -229,7 +291,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(
-                      values[i].toString(),
+                      values[i].toStringAsFixed(1),
                       style: const TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
@@ -269,8 +331,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   }
 
   Widget _buildCropComparisonCard() {
+    final projectCrop = _cropName;
     final crops = [
-      {'name': 'Samba Rice', 'yield': 4.2, 'profit': '₹85,000'},
+      {
+        'name': projectCrop,
+        'yield': _estimatedYieldTonPerAcre,
+        'profit': _formatCurrency(_estimatedProfit),
+      },
       {'name': 'Ponni Rice', 'yield': 3.8, 'profit': '₹72,000'},
       {'name': 'Kala Jeera', 'yield': 2.9, 'profit': '₹95,000'},
     ];
@@ -423,6 +490,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
+          _buildFarmerTipCard(
+            title: 'Weather to action',
+            message:
+                'Check rain % before spraying. If rain chance is above 60%, postpone pesticide and prefer drainage checks.',
+            icon: Icons.info_rounded,
+            color: const Color(0xFF1565C0),
+          ),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -559,44 +634,58 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   }
 
   Widget _buildExpensesTab() {
+    final areaMultiplier = (widget.project?.calculatedAreaAcres ?? 1.0).clamp(
+      0.5,
+      6.0,
+    );
     final expenses = [
       {
         'category': 'Seeds',
-        'amount': 4200,
+        'amount': (4200 * areaMultiplier).round(),
         'icon': Icons.grass_rounded,
         'color': const Color(0xFF2E7D32),
       },
       {
         'category': 'Fertilizers',
-        'amount': 8500,
+        'amount': (8500 * areaMultiplier).round(),
         'icon': Icons.science_rounded,
         'color': const Color(0xFF1565C0),
       },
       {
         'category': 'Pesticides',
-        'amount': 3200,
+        'amount': (3200 * areaMultiplier).round(),
         'icon': Icons.pest_control_rounded,
         'color': const Color(0xFFD32F2F),
       },
       {
         'category': 'Labour',
-        'amount': 12000,
+        'amount': (12000 * areaMultiplier).round(),
         'icon': Icons.people_rounded,
         'color': const Color(0xFFF57F17),
       },
       {
         'category': 'Irrigation',
-        'amount': 5600,
+        'amount': (5600 * areaMultiplier).round(),
         'icon': Icons.water_drop_rounded,
         'color': const Color(0xFF0097A7),
       },
     ];
-    final total = expenses.fold(0, (sum, e) => sum + (e['amount'] as int));
+    final total = expenses.fold<int>(0, (sum, e) => sum + (e['amount'] as int));
+    final revenue = _estimatedRevenue;
+    final profit = _estimatedProfit;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
+          _buildFarmerTipCard(
+            title: 'Expense guidance',
+            message:
+                'Try to keep spending below 45% of expected revenue. If a category spikes, review usage before next purchase.',
+            icon: Icons.account_balance_wallet_rounded,
+            color: const Color(0xFF1B5E20),
+          ),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -607,23 +696,23 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             ),
             child: Row(
               children: [
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Total Expenses',
                       style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
-                      '₹33,500',
-                      style: TextStyle(
+                      _formatCurrency(total),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 32,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    Text(
+                    const Text(
                       'Season 2024',
                       style: TextStyle(color: Colors.white60, fontSize: 11),
                     ),
@@ -637,8 +726,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       'Revenue',
                       style: TextStyle(color: Colors.white70, fontSize: 11),
                     ),
-                    const Text(
-                      '₹85,000',
+                    Text(
+                      _formatCurrency(revenue),
                       style: TextStyle(
                         color: Colors.greenAccent,
                         fontSize: 20,
@@ -655,8 +744,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                         color: Colors.greenAccent.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Text(
-                        'Profit: ₹51,500',
+                      child: Text(
+                        'Profit: ${_formatCurrency(profit)}',
                         style: TextStyle(
                           color: Colors.greenAccent,
                           fontSize: 11,
@@ -696,7 +785,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 ),
                 const SizedBox(height: 16),
                 ...expenses.map((e) {
-                  final pct = (e['amount'] as int) / total;
+                  final amount = e['amount'] as int;
+                  final pct = amount / total;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
@@ -730,7 +820,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                                     ),
                                   ),
                                   Text(
-                                    '₹${e['amount']}',
+                                    _formatCurrency(amount),
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 12,
@@ -762,6 +852,61 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             ),
           ),
           const SizedBox(height: 100),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFarmerTipCard({
+    required String title,
+    required String message,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.14),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  message,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    height: 1.35,
+                    color: Color(0xFF2C3E2D),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

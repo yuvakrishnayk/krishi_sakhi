@@ -176,6 +176,28 @@ class _FieldMapScreenState extends State<FieldMapScreen>
     }
   }
 
+  String get _layerMeaning {
+    switch (_mapLayer) {
+      case _MapLayer.satellite:
+        return 'Use this for field boundary and on-ground visual checks.';
+      case _MapLayer.ndvi:
+        return 'Green means healthier crop growth; yellow/red needs attention.';
+      case _MapLayer.moisture:
+        return 'Blue indicates better soil moisture; pale zones may need irrigation.';
+    }
+  }
+
+  String get _layerActionTip {
+    switch (_mapLayer) {
+      case _MapLayer.satellite:
+        return 'Walk to spots with visible patchiness and check pest or weed spread.';
+      case _MapLayer.ndvi:
+        return 'If weak patches stay for 5-7 days, inspect nutrients and root health.';
+      case _MapLayer.moisture:
+        return 'Prioritize irrigation for dry zones and prevent waterlogging in wet zones.';
+    }
+  }
+
   Color get _layerBadgeColor {
     switch (_mapLayer) {
       case _MapLayer.satellite:
@@ -237,6 +259,8 @@ class _FieldMapScreenState extends State<FieldMapScreen>
                 children: [
                   _buildInteractiveMap(),
                   _buildLayerSelector(),
+                  _buildLayerEducationCard(),
+                  _buildFieldCardsHint(),
                   _buildFieldCards(),
                   if (fields.isNotEmpty)
                     _buildFieldDetails(fields[_selectedField]),
@@ -809,6 +833,88 @@ class _FieldMapScreenState extends State<FieldMapScreen>
     );
   }
 
+  Widget _buildLayerEducationCard() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF1B5E20).withOpacity(0.14)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B5E20).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.menu_book_rounded,
+              size: 18,
+              color: Color(0xFF1B5E20),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$_layerLabel Layer Guide',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1B5E20),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _layerMeaning,
+                  style: const TextStyle(fontSize: 11, height: 1.35),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Tip: $_layerActionTip',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2E7D32),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFieldCardsHint() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+      child: Row(
+        children: [
+          Icon(Icons.touch_app_rounded, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'Tap a field card to focus the map and view quick crop-health advice.',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Field cards horizontal list ────────────────────────────────
 
   Widget _buildFieldCards() {
@@ -942,6 +1048,7 @@ class _FieldMapScreenState extends State<FieldMapScreen>
     final health = field['health'] as double;
     final pestRisk = field['pest'] as String;
     final isHighRisk = pestRisk.contains('High');
+    final recommendation = _buildRecommendationText(health, isHighRisk);
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -1113,9 +1220,53 @@ class _FieldMapScreenState extends State<FieldMapScreen>
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF2E7D32).withOpacity(0.22),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.tips_and_updates_rounded,
+                  color: Color(0xFF2E7D32),
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    recommendation,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      height: 1.35,
+                      color: Color(0xFF1B5E20),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  String _buildRecommendationText(double health, bool isHighRisk) {
+    if (isHighRisk) {
+      return 'High pest risk detected. Inspect leaves within 24 hours and apply targeted treatment only in affected patches.';
+    }
+    if (health < 0.65) {
+      return 'Crop health is moderate. Check soil moisture and nutrition schedule to recover weak areas early.';
+    }
+    return 'Field condition is stable. Continue current irrigation plan and monitor NDVI every 3-4 days.';
   }
 
   Widget _buildFieldStat(

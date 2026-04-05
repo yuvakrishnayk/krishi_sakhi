@@ -482,7 +482,7 @@ class _ProjectScreenState extends State<ProjectScreen>
             _buildNavItem(1, Icons.terrain_rounded, 'Fields'),
             _buildCenterActionButton(),
             _buildNavItem(2, Icons.insights_rounded, 'Stats'),
-            _buildNavItem(3, Icons.person_rounded, 'Me'),
+            _buildNavItem(3, Icons.person_rounded, 'Inventory'),
           ],
         ),
       ),
