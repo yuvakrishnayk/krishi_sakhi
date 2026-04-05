@@ -1,9 +1,28 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:krishi_sakhi/models/farm_project.dart';
 
+// ─── Palette ────────────────────────────────────────────────────────────────
+class _K {
+  static const soil = Color(0xFF3D2B1F);
+  static const forest = Color(0xFF1A4731);
+  static const leaf = Color(0xFF2E7D52);
+  static const sprout = Color(0xFF4CAF72);
+  static const lime = Color(0xFFB5D96A);
+  static const harvest = Color(0xFFE8A838);
+  static const sky = Color(0xFF4FA8C5);
+  static const alert = Color(0xFFD95F3B);
+  static const surface = Color(0xFFF4F6F0);
+  static const card = Color(0xFFFFFFFF);
+  static const textPrimary = Color(0xFF1C2B1C);
+  static const textSecondary = Color(0xFF5A6B5A);
+  static const divider = Color(0xFFDDE8D8);
+}
+
+// ─── Main Screen ─────────────────────────────────────────────────────────────
 class DashboardScreen extends StatefulWidget {
   final FarmProject? project;
   final Map<String, dynamic>? advisoryResponse;
@@ -15,140 +34,88 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _animController;
-  late final Animation<double> _fadeAnim;
+    with TickerProviderStateMixin {
+  late final AnimationController _heroCtrl;
+  late final AnimationController _contentCtrl;
+  late final Animation<double> _heroScale;
+  late final Animation<double> _heroFade;
+  late final Animation<double> _contentFade;
+  late final Animation<Offset> _contentSlide;
 
   dynamic _rawResponse;
-  Map<String, dynamic> _planData = <String, dynamic>{};
-  List<_WeatherAlert> _weatherAlerts = <_WeatherAlert>[];
-
+  Map<String, dynamic> _planData = {};
+  List<_WeatherAlert> _weatherAlerts = [];
   int _selectedMonthIndex = 0;
+  bool _showRaw = false;
 
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(
+    _heroCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _contentCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
-    _fadeAnim = CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeOutCubic,
+
+    _heroScale = Tween<double>(
+      begin: 0.92,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _heroCtrl, curve: Curves.easeOutBack));
+    _heroFade = CurvedAnimation(parent: _heroCtrl, curve: Curves.easeOut);
+    _contentFade = CurvedAnimation(parent: _contentCtrl, curve: Curves.easeOut);
+    _contentSlide = Tween<Offset>(
+      begin: const Offset(0, 0.04),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _contentCtrl, curve: Curves.easeOutCubic),
     );
+
     _loadPlanData();
-    _animController.forward();
+    _heroCtrl.forward().then((_) => _contentCtrl.forward());
   }
 
   @override
-  void didUpdateWidget(covariant DashboardScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.advisoryResponse != widget.advisoryResponse ||
-        oldWidget.project != widget.project) {
+  void didUpdateWidget(covariant DashboardScreen old) {
+    super.didUpdateWidget(old);
+    if (old.advisoryResponse != widget.advisoryResponse ||
+        old.project != widget.project) {
       _loadPlanData();
     }
   }
 
   @override
   void dispose() {
-    _animController.dispose();
+    _heroCtrl.dispose();
+    _contentCtrl.dispose();
     super.dispose();
   }
 
+  // ── Data helpers ──────────────────────────────────────────────────────────
+
   void _loadPlanData() {
     final response = widget.advisoryResponse;
-    _rawResponse = response ?? _fallbackPlan();
-    final hasPlan = response != null && response['months'] is List;
+    _rawResponse = response;
     _planData =
-        hasPlan ? Map<String, dynamic>.from(response!) : _fallbackPlan();
+        response is Map<String, dynamic>
+            ? Map<String, dynamic>.from(response)
+            : response is Map
+            ? Map<String, dynamic>.from(response as Map<dynamic, dynamic>)
+            : {};
     _weatherAlerts = _collectWeatherAlerts(_planData);
     _selectedMonthIndex = 0;
   }
 
-  Map<String, dynamic> _fallbackPlan() {
-    final crop =
-        widget.project?.cropName.isNotEmpty == true
-            ? widget.project!.cropName
-            : 'Crop Advisory';
-    final location =
-        widget.project?.locationName.isNotEmpty == true
-            ? widget.project!.locationName
-            : 'Your farm';
-    final today = DateTime.now();
-    return {
-      'crop': crop,
-      'durationMonths': 1,
-      'months': [
-        {
-          'monthId': 'month_1',
-          'monthName': 'Current Month',
-          'summary':
-              'Local advisory plan for $crop in $location. This plan is shown when the API is unavailable.',
-          'weeks': [
-            {
-              'weekId': 'week_1',
-              'weekNumber': 1,
-              'summary': 'Initial crop management and moisture monitoring',
-              'days': [
-                {
-                  'dayId': 'day_1',
-                  'dayNumber': 1,
-                  'weather': {
-                    'date': today.toIso8601String().split('T').first,
-                    'temperature': {'min': 27, 'max': 37},
-                    'humidity': 62,
-                    'rainfall': 0,
-                    'windSpeed': 28,
-                    'condition': 'Sunny',
-                    'advisory':
-                        'Heat risk. Irrigate early morning and avoid midday field work.',
-                  },
-                  'tasks': [
-                    {
-                      'taskId': 'task_1',
-                      'title': 'Check soil moisture',
-                      'description':
-                          'Measure moisture before watering and record the reading.',
-                      'isCompleted': false,
-                      'materials': ['Moisture meter', 'Notebook'],
-                      'precautions': ['Avoid midday heat', 'Do not overwater'],
-                      'steps': [
-                        {
-                          'stepNumber': 1,
-                          'instruction':
-                              'Walk the field and test moisture at 0-15 cm depth.',
-                        },
-                        {
-                          'stepNumber': 2,
-                          'instruction':
-                              'Write the reading and decide if light irrigation is needed.',
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    };
-  }
-
   List<_WeatherAlert> _collectWeatherAlerts(Map<String, dynamic> planData) {
     final alerts = <_WeatherAlert>[];
-    final months = _asList(planData['months']);
-
-    for (final monthEntry in months) {
+    for (final monthEntry in _asList(planData['months'])) {
       final month = _asMap(monthEntry);
       final monthName = month['monthName']?.toString() ?? 'Month';
-      final weeks = _asList(month['weeks']);
-
-      for (final weekEntry in weeks) {
+      for (final weekEntry in _asList(month['weeks'])) {
         final week = _asMap(weekEntry);
-        final days = _asList(week['days']);
-
-        for (final dayEntry in days) {
+        for (final dayEntry in _asList(week['days'])) {
           final day = _asMap(dayEntry);
           final weather = _asMap(day['weather']);
           final advisory = weather['advisory']?.toString().trim() ?? '';
@@ -158,21 +125,15 @@ class _DashboardScreenState extends State<DashboardScreen>
           final humidity = (weather['humidity'] as num?)?.toInt();
           final rainfall = (weather['rainfall'] as num?)?.toInt();
           final windSpeed = (weather['windSpeed'] as num?)?.toInt();
-          final condition =
-              weather['condition']?.toString() ?? 'Weather update';
+          final condition = weather['condition']?.toString() ?? 'Weather';
           final date = weather['date']?.toString() ?? '';
           final dayNumber = day['dayNumber']?.toString() ?? '';
-
           final isAlert =
               advisory.isNotEmpty ||
               (maxTemp != null && maxTemp >= 37) ||
               (windSpeed != null && windSpeed >= 28) ||
               (rainfall != null && rainfall > 0);
-
-          if (!isAlert) {
-            continue;
-          }
-
+          if (!isAlert) continue;
           alerts.add(
             _WeatherAlert(
               monthName: monthName,
@@ -197,95 +158,19 @@ class _DashboardScreenState extends State<DashboardScreen>
         }
       }
     }
-
-    final directAlertEntries = _asList(
-      planData['weather_alerts'] ??
-          planData['weatherAlerts'] ??
-          planData['alerts'],
-    );
-    for (final entry in directAlertEntries) {
-      final alert = _asMap(entry);
-      final weather = _asMap(alert['weather']);
-      final temperature = _asMap(
-        alert['temperature'] ?? weather['temperature'],
-      );
-      final minTemp = (temperature['min'] as num?)?.toDouble();
-      final maxTemp = (temperature['max'] as num?)?.toDouble();
-      final humidity =
-          (alert['humidity'] as num?)?.toInt() ??
-          (weather['humidity'] as num?)?.toInt();
-      final rainfall =
-          (alert['rainfall'] as num?)?.toInt() ??
-          (weather['rainfall'] as num?)?.toInt();
-      final windSpeed =
-          (alert['windSpeed'] as num?)?.toInt() ??
-          (weather['windSpeed'] as num?)?.toInt();
-      final condition =
-          alert['condition']?.toString().trim().isNotEmpty == true
-              ? alert['condition'].toString()
-              : alert['title']?.toString().trim().isNotEmpty == true
-              ? alert['title'].toString()
-              : 'Weather alert';
-      final advisory =
-          alert['advisory']?.toString().trim().isNotEmpty == true
-              ? alert['advisory'].toString()
-              : alert['message']?.toString().trim().isNotEmpty == true
-              ? alert['message'].toString()
-              : alert['summary']?.toString().trim().isNotEmpty == true
-              ? alert['summary'].toString()
-              : 'Weather conditions need attention before field work.';
-      final date =
-          alert['date']?.toString().trim().isNotEmpty == true
-              ? alert['date'].toString()
-              : weather['date']?.toString() ?? '';
-      final severity = alert['severity']?.toString().toLowerCase() ?? '';
-      final urgent =
-          alert['urgent'] == true ||
-          severity.contains('high') ||
-          severity.contains('critical') ||
-          advisory.toLowerCase().contains('heat') ||
-          advisory.toLowerCase().contains('storm') ||
-          advisory.toLowerCase().contains('flood');
-
-      alerts.add(
-        _WeatherAlert(
-          monthName: alert['monthName']?.toString() ?? 'Alert',
-          dayLabel:
-              alert['dayLabel']?.toString() ??
-              alert['label']?.toString() ??
-              'Weather',
-          date: date,
-          condition: condition,
-          advisory: advisory,
-          minTemp: minTemp,
-          maxTemp: maxTemp,
-          humidity: humidity,
-          rainfall: rainfall,
-          windSpeed: windSpeed,
-          urgent: urgent,
-        ),
-      );
-    }
-
     return alerts;
   }
 
-  List<dynamic> _asList(dynamic value) {
-    if (value is List<dynamic>) return value;
-    return const [];
-  }
-
-  Map<String, dynamic> _asMap(dynamic value) {
-    if (value is Map<String, dynamic>) return value;
-    if (value is Map) return Map<String, dynamic>.from(value as Map);
-    return <String, dynamic>{};
+  List<dynamic> _asList(dynamic v) => v is List ? v : const [];
+  Map<String, dynamic> _asMap(dynamic v) {
+    if (v is Map<String, dynamic>) return v;
+    if (v is Map) return Map<String, dynamic>.from(v as Map);
+    return {};
   }
 
   String get _cropName {
-    final responseCrop = _planData['crop']?.toString().trim();
-    if (responseCrop != null && responseCrop.isNotEmpty) {
-      return responseCrop;
-    }
+    final r = _planData['crop']?.toString().trim();
+    if (r != null && r.isNotEmpty) return r;
     return widget.project?.cropName.isNotEmpty == true
         ? widget.project!.cropName
         : 'Crop Advisory';
@@ -293,10 +178,8 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   String get _locationName {
     final summary = _asMap(_planData['summary']);
-    final responseLocation = summary['location']?.toString().trim();
-    if (responseLocation != null && responseLocation.isNotEmpty) {
-      return responseLocation;
-    }
+    final r = summary['location']?.toString().trim();
+    if (r != null && r.isNotEmpty) return r;
     return widget.project?.locationName.isNotEmpty == true
         ? widget.project!.locationName
         : 'Your farm';
@@ -304,35 +187,40 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   String get _summaryText {
     final summary = _asMap(_planData['summary']);
-    final value =
+    final v =
         summary['summary']?.toString().trim() ??
         _planData['summary']?.toString().trim();
-    if (value != null && value.isNotEmpty) {
-      return value;
+    if (v != null && v.isNotEmpty) return v;
+    if (_rawResponse is String) {
+      final raw = (_rawResponse as String).trim();
+      if (raw.isNotEmpty) return raw;
     }
-
+    if (_rawResponse is Map) {
+      final rawMap = _asMap(_rawResponse);
+      final rawText =
+          rawMap['answer']?.toString().trim() ??
+          rawMap['message']?.toString().trim() ??
+          rawMap['raw_response']?.toString().trim();
+      if (rawText != null && rawText.isNotEmpty) return rawText;
+    }
     final months = _asList(_planData['months']);
     if (months.isNotEmpty) {
-      final firstMonth = _asMap(months.first);
-      final monthSummary = firstMonth['summary']?.toString().trim();
-      if (monthSummary != null && monthSummary.isNotEmpty) {
-        return monthSummary;
-      }
+      final s = _asMap(months.first)['summary']?.toString().trim();
+      if (s != null && s.isNotEmpty) return s;
     }
-    return 'No summary returned by the advisory service.';
+    return 'No advisory response returned by the endpoint.';
   }
 
   int get _durationMonths {
-    final value = _planData['durationMonths'];
-    if (value is num) return value.toInt();
+    final v = _planData['durationMonths'];
+    if (v is num) return v.toInt();
     final months = _asList(_planData['months']);
     return months.isEmpty ? 1 : months.length;
   }
 
   double? get _landSize {
-    final summary = _asMap(_planData['summary']);
-    final size = summary['land_size_acres'];
-    if (size is num) return size.toDouble();
+    final s = _asMap(_planData['summary'])['land_size_acres'];
+    if (s is num) return s.toDouble();
     return widget.project?.acres;
   }
 
@@ -341,256 +229,47 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Map<String, dynamic>? get _selectedMonth {
     if (_months.isEmpty) return null;
-    final index = _selectedMonthIndex.clamp(0, _months.length - 1);
-    return _months[index];
+    return _months[_selectedMonthIndex.clamp(0, _months.length - 1)];
   }
+
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  int get _weeksCount =>
+      _months.fold(0, (s, m) => s + _asList(m['weeks']).length);
+
+  int get _daysCount => _months.fold(
+    0,
+    (s, m) =>
+        s +
+        _asList(
+          m['weeks'],
+        ).fold<int>(0, (ws, w) => ws + _asList(_asMap(w)['days']).length),
+  );
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F8F5),
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnim,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 14),
-                _buildGeneratedProjectCard(),
-                const SizedBox(height: 16),
-                _buildOverviewCard(),
-                if (_weatherAlerts.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _buildWeatherAlertsSection(),
-                ],
-                const SizedBox(height: 16),
-                _buildMonthChips(),
-                const SizedBox(height: 14),
-                _buildMonthPlanCard(),
-                const SizedBox(height: 16),
-                _buildRawResponseCard(),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1B5E20), Color(0xFF43A047)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1B5E20).withOpacity(0.2),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.eco_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _cropName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _locationName,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              _buildHeaderChip(
-                'Duration',
-                '$_durationMonths month${_durationMonths == 1 ? '' : 's'}',
-              ),
-              const SizedBox(width: 10),
-              _buildHeaderChip(
-                'Land',
-                _landSize == null
-                    ? 'N/A'
-                    : '${_landSize!.toStringAsFixed(1)} acres',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGeneratedProjectCard() {
-    final project = widget.project;
-    final farmName = _cropName;
-    final location = _locationName;
-    final irrigationText =
-        project == null || project.irrigationMethods.isEmpty
-            ? 'Irrigation not set'
-            : project.irrigationMethods.join(', ');
-    final farmerLevel = project?.farmerLevel;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.dashboard_customize_rounded,
-                  color: Color(0xFF2E7D32),
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'Generated project',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1B5E20),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            farmName,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1A2E1A),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            location,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.45,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _summaryText,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.45,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _miniChip('Crop: $farmName', const Color(0xFF2E7D32)),
-              _miniChip('Irrigation: $irrigationText', const Color(0xFF1565C0)),
-              _miniChip(
-                'Level: ${farmerLevel == null ? 'N/A' : farmerLevel + 1}',
-                const Color(0xFF6A1B9A),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeaderChip(String label, String value) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.16),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.14)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: _K.surface,
+        body: Column(
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
+            _HeroAppBar(
+              cropName: _cropName,
+              locationName: _locationName,
+              durationMonths: _durationMonths,
+              landSize: _landSize,
+              heroScale: _heroScale,
+              heroFade: _heroFade,
             ),
-            const SizedBox(height: 3),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+            Expanded(
+              child: FadeTransition(
+                opacity: _contentFade,
+                child: SlideTransition(
+                  position: _contentSlide,
+                  child: _buildBody(),
+                ),
               ),
             ),
           ],
@@ -599,31 +278,285 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildOverviewCard() {
-    final months = _months;
-    final weeksCount = months.fold<int>(
-      0,
-      (sum, month) => sum + _asList(month['weeks']).length,
+  Widget _buildBody() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(18, 20, 18, 32),
+      children: [
+        _buildStatRow(),
+        const SizedBox(height: 22),
+        _buildSectionLabel('Project Overview'),
+        const SizedBox(height: 10),
+        _buildProjectCard(),
+        const SizedBox(height: 22),
+        _buildSectionLabel('Advisory Summary'),
+        const SizedBox(height: 10),
+        _buildAdvisoryCard(),
+        if (_weatherAlerts.isNotEmpty) ...[
+          const SizedBox(height: 22),
+          _buildSectionLabel('⚠ Weather Alerts'),
+          const SizedBox(height: 10),
+          _buildWeatherAlerts(),
+        ],
+        if (_months.isNotEmpty) ...[
+          const SizedBox(height: 22),
+          _buildSectionLabel('Monthly Plan'),
+          const SizedBox(height: 10),
+          _buildMonthChips(),
+          const SizedBox(height: 14),
+          _buildMonthPlanCard(),
+        ] else ...[
+          const SizedBox(height: 22),
+          _buildSectionLabel('Endpoint Response'),
+          const SizedBox(height: 10),
+          _buildEndpointResponseCard(),
+        ],
+        const SizedBox(height: 22),
+        _buildRawToggle(),
+      ],
     );
-    final daysCount = months.fold<int>(
-      0,
-      (sum, month) =>
-          sum +
-          _asList(month['weeks']).fold<int>(
-            0,
-            (weekSum, week) => weekSum + _asList(_asMap(week)['days']).length,
-          ),
-    );
+  }
 
+  // ── Stat Row ──────────────────────────────────────────────────────────────
+
+  Widget _buildStatRow() {
+    return Row(
+      children: [
+        _StatBubble(
+          icon: Icons.calendar_month_rounded,
+          label: 'Months',
+          value: '$_durationMonths',
+          color: _K.forest,
+        ),
+        const SizedBox(width: 10),
+        _StatBubble(
+          icon: Icons.view_week_rounded,
+          label: 'Weeks',
+          value: '$_weeksCount',
+          color: _K.leaf,
+        ),
+        const SizedBox(width: 10),
+        _StatBubble(
+          icon: Icons.today_rounded,
+          label: 'Days',
+          value: '$_daysCount',
+          color: _K.harvest,
+        ),
+        const SizedBox(width: 10),
+        _StatBubble(
+          icon: Icons.warning_amber_rounded,
+          label: 'Alerts',
+          value: '${_weatherAlerts.length}',
+          color: _weatherAlerts.isEmpty ? _K.textSecondary : _K.alert,
+        ),
+      ],
+    );
+  }
+
+  // ── Section Label ─────────────────────────────────────────────────────────
+
+  Widget _buildSectionLabel(String text) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: _K.sprout,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: _K.textPrimary,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Project Card ──────────────────────────────────────────────────────────
+
+  Widget _buildProjectCard() {
+    final project = widget.project;
+    final irrigationText =
+        project == null || project.irrigationMethods.isEmpty
+            ? 'Not set'
+            : project.irrigationMethods.join(', ');
+    final farmerLevel = project?.farmerLevel;
+
+    return _GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _IconBox(icon: Icons.agriculture_rounded, color: _K.forest),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _cropName,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: _K.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_rounded,
+                          size: 13,
+                          color: _K.leaf,
+                        ),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            _locationName,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: _K.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(color: _K.divider, height: 1),
+          const SizedBox(height: 14),
+          Text(
+            _summaryText,
+            style: const TextStyle(
+              fontSize: 13,
+              color: _K.textSecondary,
+              height: 1.55,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _Chip(
+                label: '🌾 $_cropName',
+                bg: _K.forest.withOpacity(0.09),
+                fg: _K.forest,
+              ),
+              _Chip(
+                label: '💧 $irrigationText',
+                bg: _K.sky.withOpacity(0.1),
+                fg: _K.sky,
+              ),
+              _Chip(
+                label:
+                    '👨‍🌾 Level ${farmerLevel == null ? 'N/A' : farmerLevel + 1}',
+                bg: _K.harvest.withOpacity(0.1),
+                fg: _K.harvest,
+              ),
+              if (_landSize != null)
+                _Chip(
+                  label: '🌍 ${_landSize!.toStringAsFixed(1)} acres',
+                  bg: _K.lime.withOpacity(0.25),
+                  fg: Color(0xFF4A6B12),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Advisory Card ─────────────────────────────────────────────────────────
+
+  Widget _buildAdvisoryCard() {
+    return _GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _IconBox(icon: Icons.auto_awesome_rounded, color: _K.sprout),
+              const SizedBox(width: 12),
+              const Text(
+                'Advisory Summary',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: _K.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  _K.forest.withOpacity(0.05),
+                  _K.leaf.withOpacity(0.03),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _K.divider),
+            ),
+            child: Text(
+              _summaryText,
+              style: const TextStyle(
+                fontSize: 13,
+                color: _K.textSecondary,
+                height: 1.6,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Weather Alerts ────────────────────────────────────────────────────────
+
+  Widget _buildWeatherAlerts() {
+    return SizedBox(
+      height: 185,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _weatherAlerts.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, i) => _buildAlertCard(_weatherAlerts[i]),
+      ),
+    );
+  }
+
+  Widget _buildAlertCard(_WeatherAlert alert) {
+    final color = alert.urgent ? _K.alert : _K.harvest;
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      width: 280,
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        color: _K.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: color.withOpacity(0.12),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -635,118 +568,17 @@ class _DashboardScreenState extends State<DashboardScreen>
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.auto_awesome_rounded,
-                  color: Color(0xFF2E7D32),
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Text(
-                  'Advisory summary',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1B5E20),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _summaryText,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.45,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _MetricPill(label: 'Months', value: '$_durationMonths'),
-              const SizedBox(width: 8),
-              _MetricPill(label: 'Weeks', value: '$weeksCount'),
-              const SizedBox(width: 8),
-              _MetricPill(label: 'Days', value: '$daysCount'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWeatherAlertsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Weather Alerts',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF1B5E20),
-          ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 176,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _weatherAlerts.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              return _buildWeatherAlertCard(_weatherAlerts[index]);
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWeatherAlertCard(_WeatherAlert alert) {
-    final color =
-        alert.urgent ? const Color(0xFFC62828) : const Color(0xFFEF6C00);
-    final background =
-        alert.urgent ? const Color(0xFFFFEBEE) : const Color(0xFFFFF3E0);
-
-    return Container(
-      width: 290,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.14)),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: background,
-                  borderRadius: BorderRadius.circular(12),
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  alert.urgent ? Icons.warning_rounded : Icons.info_rounded,
+                  alert.urgent
+                      ? Icons.warning_rounded
+                      : Icons.info_outline_rounded,
                   color: color,
-                  size: 18,
+                  size: 17,
                 ),
               ),
               const SizedBox(width: 10),
@@ -755,19 +587,18 @@ class _DashboardScreenState extends State<DashboardScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${alert.monthName} • ${alert.dayLabel}',
+                      '${alert.monthName} · ${alert.dayLabel}',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                         color: color,
                       ),
                     ),
-                    const SizedBox(height: 2),
                     Text(
                       alert.date,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: _K.textSecondary,
                       ),
                     ),
                   ],
@@ -775,37 +606,47 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             alert.condition,
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1A2E1A),
+              color: _K.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: Text(
+              alert.advisory,
+              style: const TextStyle(
+                fontSize: 11,
+                height: 1.4,
+                color: _K.textSecondary,
+              ),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            alert.advisory,
-            style: TextStyle(
-              fontSize: 12,
-              height: 1.35,
-              color: Colors.grey.shade700,
-            ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const Spacer(),
           Wrap(
             spacing: 6,
-            runSpacing: 6,
             children: [
-              _miniChip(
-                'Max ${alert.maxTemp?.toStringAsFixed(0) ?? '--'}°C',
-                color,
+              _Chip(
+                label: '${alert.maxTemp?.toStringAsFixed(0) ?? '--'}°C',
+                bg: color.withOpacity(0.09),
+                fg: color,
               ),
-              _miniChip('Wind ${alert.windSpeed ?? '--'} km/h', color),
-              _miniChip('Humidity ${alert.humidity ?? '--'}%', color),
+              _Chip(
+                label: '💨 ${alert.windSpeed ?? '--'} km/h',
+                bg: color.withOpacity(0.09),
+                fg: color,
+              ),
+              _Chip(
+                label: '💧 ${alert.humidity ?? '--'}%',
+                bg: color.withOpacity(0.09),
+                fg: color,
+              ),
             ],
           ),
         ],
@@ -813,46 +654,46 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildMonthChips() {
-    if (_months.isEmpty) {
-      return const SizedBox.shrink();
-    }
+  // ── Month Chips ───────────────────────────────────────────────────────────
 
+  Widget _buildMonthChips() {
+    if (_months.isEmpty) return const SizedBox.shrink();
     return SizedBox(
-      height: 42,
+      height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _months.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final month = _months[index];
-          final isSelected = index == _selectedMonthIndex;
+        itemBuilder: (_, i) {
+          final month = _months[i];
+          final sel = i == _selectedMonthIndex;
           return GestureDetector(
-            onTap: () => setState(() => _selectedMonthIndex = index),
+            onTap: () => setState(() => _selectedMonthIndex = i),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFF2E7D32) : Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: isSelected ? Colors.transparent : Colors.grey.shade200,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: sel ? _K.forest : _K.card,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: sel ? _K.forest : _K.divider),
+                boxShadow:
+                    sel
+                        ? [
+                          BoxShadow(
+                            color: _K.forest.withOpacity(0.25),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                        : [],
               ),
               child: Center(
                 child: Text(
-                  month['monthName']?.toString() ?? 'Month ${index + 1}',
+                  month['monthName']?.toString() ?? 'Month ${i + 1}',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: isSelected ? Colors.white : Colors.grey.shade700,
+                    color: sel ? Colors.white : _K.textSecondary,
                   ),
                 ),
               ),
@@ -863,55 +704,96 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
+  // ── Month Plan ────────────────────────────────────────────────────────────
+
   Widget _buildMonthPlanCard() {
     final month = _selectedMonth;
-    if (month == null) {
-      return _emptyState('No plan data was returned for this advisory.');
-    }
-
+    if (month == null) return _emptyState('No plan data available.');
     final weeks = _asList(month['weeks']);
-    if (weeks.isEmpty) {
-      return _emptyState('No weeks were included in the advisory response.');
-    }
-
+    if (weeks.isEmpty) return _emptyState('No weeks in this advisory.');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          month['monthName']?.toString() ?? 'Current Month',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF1B5E20),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [_K.forest, _K.leaf],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Text(
+            month['monthName']?.toString() ?? 'Current Month',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
-          month['summary']?.toString() ?? '',
-          style: TextStyle(
-            fontSize: 13,
-            height: 1.45,
-            color: Colors.grey.shade700,
+        if ((month['summary']?.toString().trim() ?? '').isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(
+            month['summary']?.toString() ?? '',
+            style: const TextStyle(
+              fontSize: 12,
+              color: _K.textSecondary,
+              height: 1.5,
+            ),
           ),
-        ),
+        ],
         const SizedBox(height: 14),
-        ...weeks.map((weekEntry) => _buildWeekCard(_asMap(weekEntry))),
+        ...weeks.map((w) => _buildWeekCard(_asMap(w))),
       ],
+    );
+  }
+
+  Widget _buildEndpointResponseCard() {
+    return _GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _IconBox(icon: Icons.cloud_done_rounded, color: _K.leaf),
+              const SizedBox(width: 12),
+              const Text(
+                'Live Endpoint Response',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: _K.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            _summaryText,
+            style: const TextStyle(
+              fontSize: 13,
+              color: _K.textSecondary,
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildWeekCard(Map<String, dynamic> week) {
     final days = _asList(week['days']);
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: _K.card,
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 14,
+            blurRadius: 16,
             offset: const Offset(0, 5),
           ),
         ],
@@ -919,56 +801,68 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF43A047), Color(0xFF1B5E20)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(
-                    'W${week['weekNumber'] ?? ''}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: _K.divider, width: 1)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [_K.leaf, _K.forest],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      week['summary']?.toString() ?? 'Weekly advisory',
+                  child: Center(
+                    child: Text(
+                      'W${week['weekNumber'] ?? ''}',
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF1A2E1A),
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${days.length} day${days.length == 1 ? '' : 's'} planned',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        week['summary']?.toString() ?? 'Weekly advisory',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: _K.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${days.length} day${days.length == 1 ? '' : 's'} planned',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: _K.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 14),
-          ...days.map((dayEntry) => _buildDayCard(_asMap(dayEntry))),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            child: Column(
+              children: days.map((d) => _buildDayCard(_asMap(d))).toList(),
+            ),
+          ),
         ],
       ),
     );
@@ -979,27 +873,23 @@ class _DashboardScreenState extends State<DashboardScreen>
     final tasks = _asList(day['tasks']);
     final temperature = _asMap(weather['temperature']);
     final advisory = weather['advisory']?.toString() ?? '';
-    final condition = weather['condition']?.toString() ?? 'Weather update';
+    final condition = weather['condition']?.toString() ?? 'Weather';
     final date = weather['date']?.toString() ?? '';
     final maxTemp = temperature['max']?.toString() ?? '--';
     final minTemp = temperature['min']?.toString() ?? '--';
     final humidity = weather['humidity']?.toString() ?? '--';
     final rainfall = weather['rainfall']?.toString() ?? '--';
     final windSpeed = weather['windSpeed']?.toString() ?? '--';
-
     final alertColor =
-        advisory.toLowerCase().contains('heat') ||
-                advisory.toLowerCase().contains('high temperature')
-            ? const Color(0xFFC62828)
-            : const Color(0xFFEF6C00);
+        advisory.toLowerCase().contains('heat') ? _K.alert : _K.harvest;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FBF8),
+        color: _K.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE0EDE0)),
+        border: Border.all(color: _K.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1009,16 +899,16 @@ class _DashboardScreenState extends State<DashboardScreen>
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
-                  vertical: 6,
+                  vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
+                  color: _K.forest,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   'Day ${day['dayNumber'] ?? ''}',
                   style: const TextStyle(
-                    color: Color(0xFF2E7D32),
+                    color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                   ),
@@ -1028,33 +918,60 @@ class _DashboardScreenState extends State<DashboardScreen>
               Expanded(
                 child: Text(
                   date,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  style: const TextStyle(fontSize: 11, color: _K.textSecondary),
                 ),
               ),
               Icon(
                 _weatherIcon(condition),
-                size: 16,
+                size: 18,
                 color: _weatherColor(condition),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                condition,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _weatherColor(condition),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
             children: [
-              _miniChip(condition, _weatherColor(condition)),
-              const SizedBox(width: 8),
-              _miniChip('$minTemp°-$maxTemp°C', const Color(0xFF1B5E20)),
+              _Chip(
+                label: '🌡 $minTemp°–$maxTemp°C',
+                bg: _K.forest.withOpacity(0.07),
+                fg: _K.forest,
+              ),
+              _Chip(
+                label: '💧 $humidity%',
+                bg: _K.sky.withOpacity(0.09),
+                fg: _K.sky,
+              ),
+              _Chip(
+                label: '🌧 $rainfall mm',
+                bg: _K.sky.withOpacity(0.09),
+                fg: _K.sky,
+              ),
+              _Chip(
+                label: '💨 $windSpeed km/h',
+                bg: _K.sky.withOpacity(0.09),
+                fg: _K.sky,
+              ),
             ],
           ),
           if (advisory.isNotEmpty) ...[
             const SizedBox(height: 10),
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: alertColor.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: alertColor.withOpacity(0.14)),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: alertColor.withOpacity(0.18)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1062,7 +979,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   Icon(
                     Icons.warning_amber_rounded,
                     color: alertColor,
-                    size: 18,
+                    size: 16,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -1070,8 +987,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                       advisory,
                       style: TextStyle(
                         fontSize: 12,
-                        height: 1.4,
-                        color: Colors.grey.shade800,
+                        height: 1.45,
+                        color: alertColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1081,17 +998,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ],
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _miniChip('Humidity $humidity%', const Color(0xFF1565C0)),
-              _miniChip('Rain $rainfall mm', const Color(0xFF1565C0)),
-              _miniChip('Wind $windSpeed km/h', const Color(0xFF1565C0)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...tasks.map((taskEntry) => _buildTaskTile(_asMap(taskEntry))),
+          ...tasks.map((t) => _buildTaskTile(_asMap(t))),
         ],
       ),
     );
@@ -1101,85 +1008,84 @@ class _DashboardScreenState extends State<DashboardScreen>
     final materials = _asList(task['materials']);
     final precautions = _asList(task['precautions'] ?? task['safetyTips']);
     final steps = _asList(task['steps']);
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _K.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEAF1EA)),
+        border: Border.all(color: _K.divider),
       ),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-        title: Text(
-          task['title']?.toString() ?? 'Task',
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF1A2E1A),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+          leading: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: _K.sprout.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.task_alt_rounded, color: _K.leaf, size: 17),
           ),
+          title: Text(
+            task['title']?.toString() ?? 'Task',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: _K.textPrimary,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              task['description']?.toString() ?? '',
+              style: const TextStyle(fontSize: 11, color: _K.textSecondary),
+            ),
+          ),
+          children: [
+            _sectionBlock(
+              'Steps',
+              Icons.format_list_numbered_rounded,
+              steps.map((s) {
+                final step = _asMap(s);
+                return step['instruction']?.toString() ?? '';
+              }).toList(),
+            ),
+            if (materials.isNotEmpty) const SizedBox(height: 10),
+            _sectionBlock(
+              'Materials',
+              Icons.handyman_rounded,
+              materials.map((m) => m.toString()).toList(),
+            ),
+            if (precautions.isNotEmpty) const SizedBox(height: 10),
+            _sectionBlock(
+              'Precautions',
+              Icons.shield_rounded,
+              precautions.map((p) => p.toString()).toList(),
+            ),
+          ],
         ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            task['description']?.toString() ?? '',
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-          ),
-        ),
-        children: [
-          _sectionBlock(
-            'Steps',
-            Icons.format_list_numbered_rounded,
-            steps.map((stepEntry) {
-              final step = _asMap(stepEntry);
-              final instruction = step['instruction']?.toString() ?? '';
-              final startTime = step['startTime']?.toString();
-              final endTime = step['endTime']?.toString();
-              final timeRange =
-                  (startTime != null && endTime != null)
-                      ? '$startTime - $endTime'
-                      : null;
-              return timeRange == null
-                  ? instruction
-                  : '$instruction\n$timeRange';
-            }).toList(),
-          ),
-          const SizedBox(height: 10),
-          _sectionBlock(
-            'Materials',
-            Icons.handyman_rounded,
-            materials.map((item) => item.toString()).toList(),
-          ),
-          const SizedBox(height: 10),
-          _sectionBlock(
-            'Precautions',
-            Icons.shield_rounded,
-            precautions.map((item) => item.toString()).toList(),
-          ),
-        ],
       ),
     );
   }
 
   Widget _sectionBlock(String title, IconData icon, List<String> items) {
-    if (items.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
+    if (items.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, size: 15, color: const Color(0xFF2E7D32)),
+            Icon(icon, size: 14, color: _K.leaf),
             const SizedBox(width: 6),
             Text(
               title,
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF1B5E20),
+                color: _K.forest,
               ),
             ),
           ],
@@ -1192,21 +1098,21 @@ class _DashboardScreenState extends State<DashboardScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 6,
-                  height: 6,
+                  width: 5,
+                  height: 5,
                   margin: const EdgeInsets.only(top: 6, right: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2E7D32).withOpacity(0.55),
+                    color: _K.sprout,
                     shape: BoxShape.circle,
                   ),
                 ),
                 Expanded(
                   child: Text(
                     item,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
-                      height: 1.45,
-                      color: Colors.grey.shade700,
+                      height: 1.5,
+                      color: _K.textSecondary,
                     ),
                   ),
                 ),
@@ -1218,94 +1124,79 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildRawResponseCard() {
-    return ExpansionTile(
-      tilePadding: EdgeInsets.zero,
-      childrenPadding: const EdgeInsets.only(top: 8),
-      title: const Text(
-        'Raw Response',
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w800,
-          color: Color(0xFF1B5E20),
-        ),
-      ),
+  // ── Raw Response ──────────────────────────────────────────────────────────
+
+  Widget _buildRawToggle() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F1A12),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: SelectableText(
-            _rawResponse is String
-                ? _rawResponse as String
-                : JsonEncoder.withIndent('  ').convert(_rawResponse),
-            style: const TextStyle(
-              fontSize: 11,
-              height: 1.45,
-              color: Color(0xFFDCE8DD),
-              fontFamily: 'monospace',
+        GestureDetector(
+          onTap: () => setState(() => _showRaw = !_showRaw),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: _K.soil.withOpacity(0.06),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: _K.soil.withOpacity(0.12)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.data_object_rounded, size: 16, color: _K.soil),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Raw Response',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: _K.soil,
+                    ),
+                  ),
+                ),
+                Icon(
+                  _showRaw
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
+                  color: _K.soil,
+                  size: 18,
+                ),
+              ],
             ),
           ),
         ),
+        if (_showRaw) ...[
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F1A12),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: SelectableText(
+              _rawResponse is String
+                  ? _rawResponse as String
+                  : const JsonEncoder.withIndent('  ').convert(_rawResponse),
+              style: const TextStyle(
+                fontSize: 10.5,
+                height: 1.55,
+                color: Color(0xFFB5D96A),
+                fontFamily: 'monospace',
+              ),
+            ),
+          ),
+        ],
       ],
     );
-  }
-
-  Widget _miniChip(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  IconData _weatherIcon(String condition) {
-    final lower = condition.toLowerCase();
-    if (lower.contains('cloud')) return Icons.cloud_rounded;
-    if (lower.contains('rain') || lower.contains('storm')) {
-      return Icons.umbrella_rounded;
-    }
-    if (lower.contains('mist') || lower.contains('fog')) {
-      return Icons.air_rounded;
-    }
-    return Icons.wb_sunny_rounded;
-  }
-
-  Color _weatherColor(String condition) {
-    final lower = condition.toLowerCase();
-    if (lower.contains('cloud')) return Colors.blueGrey;
-    if (lower.contains('rain') || lower.contains('storm')) return Colors.blue;
-    if (lower.contains('mist') || lower.contains('fog')) return Colors.teal;
-    return Colors.orange;
   }
 
   Widget _emptyState(String message) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _K.card,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       child: Column(
         children: [
@@ -1314,10 +1205,251 @@ class _DashboardScreenState extends State<DashboardScreen>
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey.shade600,
+            style: const TextStyle(
+              color: _K.textSecondary,
               fontSize: 13,
-              height: 1.4,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _weatherIcon(String condition) {
+    final l = condition.toLowerCase();
+    if (l.contains('cloud')) return Icons.cloud_rounded;
+    if (l.contains('rain') || l.contains('storm'))
+      return Icons.thunderstorm_rounded;
+    if (l.contains('mist') || l.contains('fog')) return Icons.water_rounded;
+    return Icons.wb_sunny_rounded;
+  }
+
+  Color _weatherColor(String condition) {
+    final l = condition.toLowerCase();
+    if (l.contains('cloud')) return Colors.blueGrey;
+    if (l.contains('rain') || l.contains('storm')) return _K.sky;
+    if (l.contains('mist') || l.contains('fog')) return Colors.teal;
+    return _K.harvest;
+  }
+}
+
+// ─── Hero AppBar ──────────────────────────────────────────────────────────────
+class _HeroAppBar extends StatelessWidget {
+  final String cropName;
+  final String locationName;
+  final int durationMonths;
+  final double? landSize;
+  final Animation<double> heroScale;
+  final Animation<double> heroFade;
+
+  const _HeroAppBar({
+    required this.cropName,
+    required this.locationName,
+    required this.durationMonths,
+    required this.landSize,
+    required this.heroScale,
+    required this.heroFade,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.of(context).padding.top;
+    return ScaleTransition(
+      scale: heroScale,
+      child: FadeTransition(
+        opacity: heroFade,
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.fromLTRB(20, top + 14, 20, 22),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0D2B1A), Color(0xFF1A4731), Color(0xFF2E7D52)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // AppBar row
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    child: const Icon(
+                      Icons.eco_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Krishi Sakhi',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                  _AppBarAction(icon: Icons.notifications_none_rounded),
+                  const SizedBox(width: 8),
+                  _AppBarAction(icon: Icons.tune_rounded),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Crop info
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          cropName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_rounded,
+                              color: Color(0xFFB5D96A),
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              locationName,
+                              style: const TextStyle(
+                                color: Color(0xFFB5D96A),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Season badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.wb_sunny_outlined,
+                          color: Color(0xFFE8A838),
+                          size: 16,
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Kharif',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Bottom chips
+              Row(
+                children: [
+                  _HeroChip(
+                    icon: Icons.schedule_rounded,
+                    value:
+                        '$durationMonths month${durationMonths == 1 ? '' : 's'}',
+                  ),
+                  const SizedBox(width: 10),
+                  _HeroChip(
+                    icon: Icons.straighten_rounded,
+                    value:
+                        landSize == null
+                            ? 'N/A'
+                            : '${landSize!.toStringAsFixed(1)} acres',
+                  ),
+                  const SizedBox(width: 10),
+                  _HeroChip(icon: Icons.grass_rounded, value: 'Active'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AppBarAction extends StatelessWidget {
+  final IconData icon;
+  const _AppBarAction({required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(icon, color: Colors.white, size: 18),
+    );
+  }
+}
+
+class _HeroChip extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  const _HeroChip({required this.icon, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: const Color(0xFFB5D96A), size: 13),
+          const SizedBox(width: 5),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -1326,6 +1458,132 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 }
 
+// ─── Shared Widgets ───────────────────────────────────────────────────────────
+
+class _GlassCard extends StatelessWidget {
+  final Widget child;
+  const _GlassCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _K.card,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        border: Border.all(color: _K.divider),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _IconBox extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  const _IconBox({required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, color: color, size: 20),
+    );
+  }
+}
+
+class _StatBubble extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  const _StatBubble({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: _K.card,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(color: color.withOpacity(0.12)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(height: 5),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+            ),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: _K.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String label;
+  final Color bg;
+  final Color fg;
+  const _Chip({required this.label, required this.bg, required this.fg});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: fg),
+      ),
+    );
+  }
+}
+
+// ─── Model ────────────────────────────────────────────────────────────────────
 class _WeatherAlert {
   final String monthName;
   final String dayLabel;
@@ -1352,47 +1610,4 @@ class _WeatherAlert {
     required this.windSpeed,
     required this.urgent,
   });
-}
-
-class _MetricPill extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _MetricPill({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF7FBF7),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE1EBE1)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey.shade500,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF1B5E20),
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

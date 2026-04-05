@@ -61,6 +61,8 @@ class FormScreens extends StatefulWidget {
 
 class _FormScreensState extends State<FormScreens>
     with TickerProviderStateMixin {
+  static const double _minimumAdvisoryAreaAcres = 2.5;
+
   final _formKey = GlobalKey<FormState>();
 
   // ── Controllers ──────────────────────────────────────────────────────────
@@ -424,6 +426,11 @@ class _FormScreensState extends State<FormScreens>
     );
   }
 
+  double get _currentPolygonAreaAcres {
+    if (_polygonPoints.length < 3) return 0.0;
+    return polygonAreaAcres(_polygonPoints);
+  }
+
   dynamic _decodeResponseBody(String body) {
     try {
       return jsonDecode(body);
@@ -472,80 +479,6 @@ class _FormScreensState extends State<FormScreens>
 
     final updatedItems = <FarmProjectItem>[newItem, ...existingItems];
     await HomeFeedLocalStorage.saveProjects(updatedItems);
-  }
-
-  Map<String, dynamic> _buildDummyResponse() {
-    final landSize = double.tryParse(_acresController.text) ?? 1.0;
-    final crop = _selectedCrop ?? 'Crop';
-    final location = _locationController.text;
-    final now = DateTime.now();
-
-    return {
-      'crop': crop,
-      'durationMonths': 1,
-      'summary': {
-        'location': location,
-        'land_size_acres': landSize,
-        'experience_level': _farmerLevel,
-      },
-      'months': [
-        {
-          'monthId': 'month_1',
-          'monthName': 'Current Month',
-          'summary':
-              'Local advisory plan for $crop in $location. Focus on moisture management, weed scouting, and heat protection.',
-          'weeks': [
-            {
-              'weekId': 'week_1',
-              'weekNumber': 1,
-              'summary': 'Early crop management',
-              'days': [
-                {
-                  'dayId': 'day_1',
-                  'dayNumber': 1,
-                  'weather': {
-                    'date': now.toIso8601String().split('T').first,
-                    'temperature': {'min': 27, 'max': 37},
-                    'humidity': 62,
-                    'rainfall': 0,
-                    'windSpeed': 28,
-                    'condition': 'Sunny',
-                    'advisory':
-                        _hasIrrigation
-                            ? 'Heat stress risk. Irrigate early morning.'
-                            : 'Heat stress risk. Plan irrigation before midday.',
-                  },
-                  'tasks': [
-                    {
-                      'taskId': 'task_1',
-                      'title': 'Review field conditions',
-                      'description':
-                          'Check moisture and crop vigor before field work.',
-                      'isCompleted': false,
-                      'materials': ['Notebook', 'Moisture meter'],
-                      'precautions': ['Avoid midday heat', 'Do not overwater'],
-                      'steps': [
-                        {
-                          'stepNumber': 1,
-                          'instruction':
-                              'Walk the field and note any dry patches or stress signs.',
-                        },
-                        {
-                          'stepNumber': 2,
-                          'instruction':
-                              'Measure soil moisture at 0-15 cm and record the result.',
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      'note': 'Demo output generated locally for testing project flow.',
-    };
   }
 
   // ═════════════════════════════════════════════════════════════════════════
@@ -1668,6 +1601,16 @@ class _FormScreensState extends State<FormScreens>
                       return;
                     }
 
+                    final polygonAreaAcresValue = _currentPolygonAreaAcres;
+                    if (polygonAreaAcresValue > 0 &&
+                        polygonAreaAcresValue < _minimumAdvisoryAreaAcres) {
+                      _snack(
+                        'Your farm boundary is too small for advisory generation. Please draw at least ${_minimumAdvisoryAreaAcres.toStringAsFixed(1)} acres (1 hectare) and try again.',
+                        error: true,
+                      );
+                      return;
+                    }
+
                     setState(() {
                       _isSubmitting = true;
                     });
@@ -1701,11 +1644,26 @@ class _FormScreensState extends State<FormScreens>
                         body: jsonEncode(payload),
                       );
 
-                      final responseData =
-                          response.statusCode >= 200 &&
-                                  response.statusCode < 300
-                              ? _decodeResponseBody(response.body)
-                              : _buildDummyResponse();
+                      if (response.statusCode < 200 ||
+                          response.statusCode >= 300) {
+                        String? backendDetails;
+                        try {
+                          final decoded = jsonDecode(response.body);
+                          if (decoded is Map) {
+                            backendDetails =
+                                decoded['details']?.toString().trim() ??
+                                decoded['error']?.toString().trim() ??
+                                decoded['message']?.toString().trim();
+                          }
+                        } catch (_) {}
+                        throw Exception(
+                          backendDetails != null && backendDetails.isNotEmpty
+                              ? 'Advisory endpoint returned ${response.statusCode}: $backendDetails'
+                              : 'Advisory endpoint returned ${response.statusCode}: ${response.body}',
+                        );
+                      }
+
+                      final responseData = _decodeResponseBody(response.body);
 
                       debugPrint('Advisory status: ${response.statusCode}');
                       debugPrint('Advisory payload: ${jsonEncode(payload)}');
@@ -1746,9 +1704,9 @@ class _FormScreensState extends State<FormScreens>
                         ),
                       );
                     } catch (e) {
-                      debugPrint('Local project save failed: $e');
+                      debugPrint('Advisory submission failed: $e');
                       _snack(
-                        'Failed to create project. Please try again.',
+                        'Failed to load advisory from the endpoint. Please try again.',
                         error: true,
                       );
                     } finally {
