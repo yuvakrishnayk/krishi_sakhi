@@ -309,20 +309,12 @@ class _DashboardScreenState extends State<DashboardScreen>
       children: [
         _buildStatRow(),
         const SizedBox(height: 22),
-        _buildSectionLabel('Project Overview'),
-        const SizedBox(height: 10),
+
         _buildProjectCard(),
         const SizedBox(height: 22),
-        _buildSectionLabel('Advisory Summary'),
-        const SizedBox(height: 10),
-        _buildAdvisoryCard(),
-        if (_weatherAlerts.isNotEmpty) ...[
-          const SizedBox(height: 22),
-          _buildSectionLabel('⚠ Weather Alerts'),
-          const SizedBox(height: 10),
-          _buildWeatherAlerts(),
-        ],
-        const SizedBox(height: 22),
+
+        if (_weatherAlerts.isNotEmpty) ...[const SizedBox(height: 22)],
+
         _buildSectionLabel('Detailed Plan'),
         const SizedBox(height: 12),
 
@@ -581,54 +573,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   // ── Advisory Card ─────────────────────────────────────────────────────────
-
-  Widget _buildAdvisoryCard() {
-    return _GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _IconBox(icon: Icons.auto_awesome_rounded, color: _K.sprout),
-              const SizedBox(width: 12),
-              const Text(
-                'Advisory Summary',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: _K.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  _K.forest.withOpacity(0.05),
-                  _K.leaf.withOpacity(0.03),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: _K.divider),
-            ),
-            child: Text(
-              _summaryText,
-              style: const TextStyle(
-                fontSize: 13,
-                color: _K.textSecondary,
-                height: 1.6,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ── Weather Alerts ────────────────────────────────────────────────────────
 
