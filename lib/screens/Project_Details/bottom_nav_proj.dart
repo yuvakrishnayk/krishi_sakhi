@@ -9,8 +9,9 @@ import 'package:krishi_sakhi/screens/Project_Details/profile.dart';
 
 class ProjectScreen extends StatefulWidget {
   final FarmProject? project;
+  final Map<String, dynamic>? advisoryResponse;
 
-  const ProjectScreen({super.key, this.project});
+  const ProjectScreen({super.key, this.project, this.advisoryResponse});
 
   @override
   State<ProjectScreen> createState() => _ProjectScreenState();
@@ -30,7 +31,10 @@ class _ProjectScreenState extends State<ProjectScreen>
   void initState() {
     super.initState();
     _screens = [
-      DashboardScreen(),
+      DashboardScreen(
+        project: widget.project,
+        advisoryResponse: widget.advisoryResponse,
+      ),
       FieldMapScreen(project: widget.project),
       AnalyticsScreen(project: widget.project),
       ProfileScreen(),

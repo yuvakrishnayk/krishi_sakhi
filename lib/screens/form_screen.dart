@@ -476,38 +476,76 @@ class _FormScreensState extends State<FormScreens>
     await HomeFeedLocalStorage.saveProjects(updatedItems);
   }
 
-  Map<String, dynamic> _buildDummyResponse(FarmProject project) {
-    final targetAcres = project.acres <= 0 ? 1.0 : project.acres;
-    final nextIrrigationHours = _hasIrrigation ? 24 : 12;
+  Map<String, dynamic> _buildDummyResponse() {
+    final landSize = double.tryParse(_acresController.text) ?? 1.0;
+    final crop = _selectedCrop ?? 'Crop';
+    final location = _locationController.text;
+    final now = DateTime.now();
 
     return {
+      'crop': crop,
+      'durationMonths': 1,
       'summary': {
-        'project_name': project.farmName,
-        'crop': project.cropName,
-        'location': project.locationName,
-        'land_size_acres': targetAcres,
+        'location': location,
+        'land_size_acres': landSize,
         'experience_level': _farmerLevel,
       },
-      'recommendations': {
-        'watering':
-            'Schedule irrigation in the next $nextIrrigationHours hours and monitor soil moisture daily.',
-        'fertilizer':
-            'Apply balanced NPK in split doses this week for better crop establishment.',
-        'pest_control':
-            'Inspect leaf underside every morning and use preventive organic spray if early signs appear.',
-      },
-      'weekly_plan': [
-        'Day 1: Field inspection and weed removal',
-        'Day 3: Nutrient application',
-        'Day 5: Water management check',
-        'Day 7: Health review and growth note',
-      ],
-      'alerts':
-          _hasIrrigation
-              ? ['Irrigation is available. Keep flow uniform across the plot.']
-              : [
-                'Irrigation is not configured. Prioritize water source planning.',
+      'months': [
+        {
+          'monthId': 'month_1',
+          'monthName': 'Current Month',
+          'summary':
+              'Local advisory plan for $crop in $location. Focus on moisture management, weed scouting, and heat protection.',
+          'weeks': [
+            {
+              'weekId': 'week_1',
+              'weekNumber': 1,
+              'summary': 'Early crop management',
+              'days': [
+                {
+                  'dayId': 'day_1',
+                  'dayNumber': 1,
+                  'weather': {
+                    'date': now.toIso8601String().split('T').first,
+                    'temperature': {'min': 27, 'max': 37},
+                    'humidity': 62,
+                    'rainfall': 0,
+                    'windSpeed': 28,
+                    'condition': 'Sunny',
+                    'advisory':
+                        _hasIrrigation
+                            ? 'Heat stress risk. Irrigate early morning.'
+                            : 'Heat stress risk. Plan irrigation before midday.',
+                  },
+                  'tasks': [
+                    {
+                      'taskId': 'task_1',
+                      'title': 'Review field conditions',
+                      'description':
+                          'Check moisture and crop vigor before field work.',
+                      'isCompleted': false,
+                      'materials': ['Notebook', 'Moisture meter'],
+                      'precautions': ['Avoid midday heat', 'Do not overwater'],
+                      'steps': [
+                        {
+                          'stepNumber': 1,
+                          'instruction':
+                              'Walk the field and note any dry patches or stress signs.',
+                        },
+                        {
+                          'stepNumber': 2,
+                          'instruction':
+                              'Measure soil moisture at 0-15 cm and record the result.',
+                        },
+                      ],
+                    },
+                  ],
+                },
               ],
+            },
+          ],
+        },
+      ],
       'note': 'Demo output generated locally for testing project flow.',
     };
   }
@@ -536,25 +574,19 @@ class _FormScreensState extends State<FormScreens>
                 _buildStepIndicator(loc),
                 const SizedBox(height: 24),
 
-                // 1. Farm Name
-                _buildSectionHeader(loc.farmName, Icons.agriculture_outlined),
-                const SizedBox(height: 10),
-                _buildFarmNameField(loc),
-                const SizedBox(height: 28),
-
-                // 2. Location with GPS + autocomplete
+                // 1. Location with GPS + autocomplete
                 _buildSectionHeader(loc.location, Icons.location_on_outlined),
                 const SizedBox(height: 10),
                 _buildLocationField(loc),
                 const SizedBox(height: 20),
 
-                // 3. Map grid preview – plot your land
+                // 2. Map grid preview – plot your land
                 if (_selectedLatLng != null) ...[
                   _buildMapGridPreview(loc),
                   const SizedBox(height: 28),
                 ],
 
-                // 4. Acres
+                // 3. Acres
                 _buildSectionHeader(
                   loc.landSize,
                   Icons.crop_landscape_outlined,
@@ -563,13 +595,13 @@ class _FormScreensState extends State<FormScreens>
                 _buildAcresField(loc),
                 const SizedBox(height: 28),
 
-                // 5. Crop Type with search suggestions
+                // 4. Crop Type with search suggestions
                 _buildSectionHeader(loc.cropType, Icons.grass_outlined),
                 const SizedBox(height: 10),
                 _buildCropTypeField(loc),
                 const SizedBox(height: 28),
 
-                // 6. Irrigation (Yes/No toggle)
+                // 5. Irrigation (Yes/No toggle)
                 _buildSectionHeader(
                   'Irrigation Methods',
                   Icons.water_drop_outlined,
@@ -578,7 +610,7 @@ class _FormScreensState extends State<FormScreens>
                 _buildIrrigationToggle(),
                 const SizedBox(height: 28),
 
-                // 7. Farmer Level
+                // 6. Farmer Level
                 _buildSectionHeader(loc.experience, Icons.trending_up),
                 const SizedBox(height: 10),
                 _buildFarmerLevelSelector(loc),
@@ -637,12 +669,11 @@ class _FormScreensState extends State<FormScreens>
 
   // ─── Step Indicator ───────────────────────────────────────────────────────
   Widget _buildStepIndicator(AppLocalizations loc) {
-    final steps = ['Farm Info', 'Location', 'Crop & Land', 'Review'];
+    final steps = ['Location', 'Crop & Land', 'Review'];
     // Auto-detect current step based on filled fields
     int progress = 0;
-    if (_farmNameController.text.isNotEmpty) progress = 1;
-    if (_selectedLatLng != null) progress = 2;
-    if (_selectedCrop != null && _acresController.text.isNotEmpty) progress = 3;
+    if (_selectedLatLng != null) progress = 1;
+    if (_selectedCrop != null && _acresController.text.isNotEmpty) progress = 2;
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
@@ -1668,8 +1699,34 @@ class _FormScreensState extends State<FormScreens>
                     debugPrint('-----------------------');
 
                     try {
+                      final experienceLevel =
+                          _farmerLevels(loc)[_farmerLevel]['apiValue']
+                              as String;
+                      final payload = <String, dynamic>{
+                        'location': _locationController.text,
+                        'crop_type': _selectedCrop!,
+                        'land_size':
+                            double.tryParse(_acresController.text) ?? 1.0,
+                        'irrigation': _hasIrrigation ? 'yes' : 'no',
+                        'experience_level': experienceLevel,
+                      };
+
+                      final response = await http.post(
+                        Uri.parse(
+                          'https://agent-krishi-sakhi.onrender.com/api/advisory',
+                        ),
+                        headers: const {'Content-Type': 'application/json'},
+                        body: jsonEncode(payload),
+                      );
+
+                      final responseData =
+                          response.statusCode >= 200 &&
+                                  response.statusCode < 300
+                              ? _decodeResponseBody(response.body)
+                              : _buildDummyResponse();
+
                       final project = FarmProject(
-                        farmName: _farmNameController.text,
+                        farmName: _selectedCrop!,
                         locationName: _locationController.text,
                         location: _selectedLatLng!,
                         acres: double.tryParse(_acresController.text) ?? 1.0,
@@ -1680,13 +1737,23 @@ class _FormScreensState extends State<FormScreens>
                       );
 
                       await _saveProjectToLocalList(project);
-                      _snack('Project saved locally. Opening project...');
+                      _snack('Advisory loaded. Opening dashboard...');
 
                       if (!mounted) return;
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ProjectScreen(project: project),
+                          builder:
+                              (_) => ProjectScreen(
+                                project: project,
+                                advisoryResponse:
+                                    responseData is Map<String, dynamic>
+                                        ? responseData
+                                        : {
+                                          'raw_response':
+                                              responseData.toString(),
+                                        },
+                              ),
                         ),
                       );
                     } catch (e) {
