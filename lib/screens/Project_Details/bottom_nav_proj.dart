@@ -63,7 +63,10 @@ class _ProjectScreenState extends State<ProjectScreen>
       ),
       FieldMapScreen(project: widget.project),
       AnalyticsScreen(project: widget.project),
-      InventoryScreen(),
+      InventoryScreen(
+        project: widget.project,
+        advisoryResponse: widget.advisoryResponse,
+      ),
     ];
     _fabController = AnimationController(
       vsync: this,

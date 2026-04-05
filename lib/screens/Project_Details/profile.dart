@@ -1,8 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:krishi_sakhi/auth/auth_repository.dart';
+import 'package:krishi_sakhi/auth/auth_service.dart';
+import 'package:krishi_sakhi/models/farm_project.dart';
 import 'package:krishi_sakhi/screens/Project_Details/widgets/project_hero_app_bar.dart';
 
-class InventoryScreen extends StatelessWidget {
-  const InventoryScreen({super.key});
+class InventoryScreen extends StatefulWidget {
+  final FarmProject? project;
+  final Map<String, dynamic>? advisoryResponse;
+
+  const InventoryScreen({super.key, this.project, this.advisoryResponse});
+
+  @override
+  State<InventoryScreen> createState() => _InventoryScreenState();
+}
+
+class _InventoryScreenState extends State<InventoryScreen> {
+  final AuthRepository _authRepository = AuthRepository(service: AuthService());
+
+  String _farmerName = 'Farmer';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFarmerName();
+  }
+
+  Future<void> _loadFarmerName() async {
+    final cachedUser = await _authRepository.currentUser;
+    if (cachedUser != null && cachedUser.name.trim().isNotEmpty && mounted) {
+      setState(() => _farmerName = cachedUser.name.trim());
+    }
+
+    final latestUser = await _authRepository.fetchProfile();
+    if (latestUser != null && latestUser.name.trim().isNotEmpty && mounted) {
+      setState(() => _farmerName = latestUser.name.trim());
+    }
+  }
+
+  List<dynamic> _asList(dynamic value) => value is List ? value : const [];
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value as Map);
+    return {};
+  }
+
+  String get _locationName {
+    final summary = _asMap(widget.advisoryResponse?['summary']);
+    final responseLocation = summary['location']?.toString().trim();
+    if (responseLocation != null && responseLocation.isNotEmpty) {
+      return responseLocation;
+    }
+
+    if (widget.project?.locationName.isNotEmpty == true) {
+      return widget.project!.locationName;
+    }
+
+    return 'Your farm';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,11 +65,11 @@ class InventoryScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFF0F4F0),
       body: Column(
         children: [
-          const ProjectHeroAppBar(
+          ProjectHeroAppBar(
             title: 'Inventory & Rates',
-            subtitle: 'Ramesh Farm Stock • Madurai, TN',
+            subtitle: '$_farmerName • $_locationName',
             leadingIcon: Icons.inventory_2_rounded,
-            chips: [
+            chips: const [
               ProjectHeroChipData(
                 icon: Icons.category_rounded,
                 value: '12 Items',
@@ -99,7 +154,7 @@ class InventoryScreen extends StatelessWidget {
   }
 
   Widget _buildInventoryList() {
-    final inventoryItems = [
+    const inventoryItems = [
       {'item': 'Wheat Seeds (Premium)', 'qty': '50 kg', 'status': 'Good'},
       {'item': 'Urea Fertilizer', 'qty': '10 kg', 'status': 'Low'},
       {'item': 'Organic Pesticide', 'qty': '5 Liters', 'status': 'Good'},
@@ -177,7 +232,7 @@ class InventoryScreen extends StatelessWidget {
   }
 
   Widget _buildMarketRates() {
-    final rates = [
+    const rates = [
       {'crop': 'Wheat', 'price': '₹2,500', 'unit': '/ quintal', 'trend': 'up'},
       {
         'crop': 'Rice (Paddy)',
