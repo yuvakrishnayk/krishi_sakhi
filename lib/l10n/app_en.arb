@@ -11,7 +11,6 @@
   "signOut": "Sign Out",
   "signOutQuestion": "Are you sure you want to sign out?",
   "cancel": "Cancel",
-  
   "latestNews": "Latest News",
   "projects": "Projects",
   "dailyTip": "5-Minute Daily Tip",
@@ -26,7 +25,6 @@
   "needsAttention": "Needs Attention",
   "wateredToday": "Watered today",
   "details": "Details",
-  
   "rice": "Rice",
   "vegetables": "Vegetables",
   "coconut": "Coconut",
@@ -34,7 +32,6 @@
   "startedMay": "Started: May 15",
   "startedJun": "Started: Jun 02",
   "startedApr": "Started: Apr 10",
-  
   "roadmap": "Roadmap",
   "week": "Week {number}",
   "prepareNursery": "Prepare nursery",
@@ -42,20 +39,17 @@
   "transplantSeedlings": "Transplant seedlings",
   "applyUrea": "Apply urea",
   "checkLeafSpot": "Check for leaf spot",
-  
   "todaysTasks": "Today's Tasks",
   "yesterdaysTasks": "Yesterday's Tasks",
   "tasksFor": "Tasks for {date}",
   "noTasks": "No tasks for this day",
   "futureTaskMessage": "Future tasks will be available on their scheduled date",
   "dismiss": "DISMISS",
-  
   "applyFertilizer": "Apply organic fertilizer",
   "irrigationCheck": "Irrigation check",
   "pestMonitoring": "Pest monitoring",
   "harvestPlanning": "Harvest planning",
   "soilTesting": "Soil testing",
-  
   "riceProject": "Rice Cultivation Project",
   "weatherConditionsOptimal": "Weather conditions are optimal for field operations today.",
   "weatherConditionsSuitable": "Weather conditions were suitable for field activities.",
@@ -68,7 +62,6 @@
   "todaysAdvisory": "Today's Advisory",
   "advisoryFor": "Advisory for {date}",
   "refresh": "Refresh",
-  
   "notifications": "Notifications",
   "on": "On",
   "off": "Off",
@@ -92,11 +85,13 @@
   "fillAllFields": "Please fill in all fields.",
   "english": "English",
   "malayalam": "മലയാളം",
+  "tamil": "Tamil",
   "selectLanguage": "Select Language",
   "language": "Language",
-  
+  "about": "About",
+  "aboutSubtitle": "Learn about the creators and the app",
   "faqLanguage": "How do I change the app language?",
-  "faqLanguageAnswer": "Go to Settings and tap on the Language option. Select between English or Malayalam. The app will update to your chosen language instantly.",
+  "faqLanguageAnswer": "Go to Settings and tap on the Language option. Select between English, Malayalam, or Tamil. The app will update to your chosen language instantly.",
   "faqNotifications": "How do I enable or disable notifications?",
   "faqNotificationsAnswer": "In Settings, use the Notifications switch to turn notifications on or off. You will receive updates about your projects and important information based on your preference.",
   "faqProfile": "How do I edit my profile information?",
@@ -107,7 +102,6 @@
   "faqPerformanceAnswer": "Try closing and reopening the app. If the issue persists, restart your device. For continued problems, contact support.",
   "faqFarmingHelp": "How can I get help with farming techniques?",
   "faqFarmingHelpAnswer": "Use the Chatbot feature for instant farming advice, or visit the Forum section to connect with other farmers and share experiences.",
-  
   "chatGreeting": "Hello! How can I assist you today with your farming needs?",
   "chatPestQuery": "I'm having trouble with pests on my tomato plants, Can you help?",
   "chatPestResponse": "Of course! To better understand the issue, could you describe the pests or upload a photo of the affected plants?",
@@ -120,7 +114,6 @@
   "krishiAssist": "Krishi Assist",
   "pests": "Pests",
   "market": "Market",
-  
   "newProject": "New Project",
   "farmName": "Farm Name",
   "location": "Location",
@@ -135,7 +128,6 @@
   "advanced": "Advanced",
   "expert": "Expert",
   "submit": "Submit Project",
-  
   "wheat": "Wheat",
   "corn": "Corn",
   "soybeans": "Soybeans",
@@ -143,7 +135,6 @@
   "sugarcane": "Sugarcane",
   "barley": "Barley",
   "oats": "Oats",
-  
   "clay": "Clay",
   "sandy": "Sandy",
   "loamy": "Loamy",
@@ -151,13 +142,11 @@
   "peaty": "Peaty",
   "chalky": "Chalky",
   "saline": "Saline",
-  
   "schemeSubsidy": "Subsidies for micro-irrigation systems",
   "schemeSubsidySubtitle": "Up to 55% subsidy available",
   "schemeDeadline": "Apply before September 25",
   "marketUpdate": "Coconut prices reach ₹40 per piece",
   "marketSubtitle": "Local mandi rates updated",
-  
   "openNavigationMenu": "Open navigation menu",
   "settings": "Settings",
   "irrigationNeeded": "Irrigation needed",

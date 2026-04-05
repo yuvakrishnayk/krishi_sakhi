@@ -165,8 +165,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSettingCard(
               context,
               icon: Icons.info_outline_rounded,
-              title: "About", // Hardcoded assuming it's not in l10n yet
-              subtitle: "Learn about the creators and the app",
+              title: loc.about,
+              subtitle: loc.aboutSubtitle,
               onTap: () {
                 Navigator.push(
                   context,
@@ -634,6 +634,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     switch (locale.languageCode) {
       case 'ml':
         return loc.malayalamLanguage;
+      case 'ta':
+        return loc.tamil;
       case 'en':
       default:
         return loc.englishLanguage;
@@ -670,6 +672,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   value: const Locale('ml'),
                   groupValue: Localizations.localeOf(context),
                   title: Text(AppLocalizations.of(context)!.malayalamLanguage),
+                  activeColor: const Color(0xFF388E3C),
+                  onChanged: (locale) {
+                    MyApp.of(context)?.changeLocale(locale!);
+                    Navigator.pop(context);
+                    setState(() {}); // Trigger rebuild to update username
+                  },
+                ),
+                RadioListTile<Locale>(
+                  value: const Locale('ta'),
+                  groupValue: Localizations.localeOf(context),
+                  title: Text(AppLocalizations.of(context)!.tamil),
                   activeColor: const Color(0xFF388E3C),
                   onChanged: (locale) {
                     MyApp.of(context)?.changeLocale(locale!);

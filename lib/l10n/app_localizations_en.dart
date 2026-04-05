@@ -59,7 +59,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get monsoonAlert => 'Monsoon Season Alert';
 
   @override
-  String get monsoonMessage => 'Prepare your fields for heavy rainfall. Ensure proper drainage channels are clear and ready for the upcoming monsoon rains.';
+  String get monsoonMessage =>
+      'Prepare your fields for heavy rainfall. Ensure proper drainage channels are clear and ready for the upcoming monsoon rains.';
 
   @override
   String get playAudio => 'Play Audio';
@@ -147,7 +148,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noTasks => 'No tasks for this day';
 
   @override
-  String get futureTaskMessage => 'Future tasks will be available on their scheduled date';
+  String get futureTaskMessage =>
+      'Future tasks will be available on their scheduled date';
 
   @override
   String get dismiss => 'DISMISS';
@@ -171,10 +173,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get riceProject => 'Rice Cultivation Project';
 
   @override
-  String get weatherConditionsOptimal => 'Weather conditions are optimal for field operations today.';
+  String get weatherConditionsOptimal =>
+      'Weather conditions are optimal for field operations today.';
 
   @override
-  String get weatherConditionsSuitable => 'Weather conditions were suitable for field activities.';
+  String get weatherConditionsSuitable =>
+      'Weather conditions were suitable for field activities.';
 
   @override
   String get soilMoisture => 'Soil Moisture';
@@ -198,7 +202,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get todaysAdvisory => 'Today\'s Advisory';
 
   @override
-  String get advisoryFor => 'Advisory for';
+  String advisoryFor(Object date) {
+    return 'Advisory for';
+  }
 
   @override
   String get refresh => 'Refresh';
@@ -261,7 +267,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messageSent => 'Message Sent';
 
   @override
-  String get thankYouMessage => 'Thank you for contacting us! We\'ll get back to you within 24 hours.';
+  String get thankYouMessage =>
+      'Thank you for contacting us! We\'ll get back to you within 24 hours.';
 
   @override
   String get fillAllFields => 'Please fill in all fields.';
@@ -273,61 +280,80 @@ class AppLocalizationsEn extends AppLocalizations {
   String get malayalam => 'മലയാളം';
 
   @override
+  String get tamil => 'Tamil';
+
+  @override
   String get selectLanguage => 'Select Language';
 
   @override
   String get language => 'Language';
 
   @override
+  String get about => 'About';
+
+  @override
+  String get aboutSubtitle => 'Learn about the creators and the app';
+
+  @override
   String get faqLanguage => 'How do I change the app language?';
 
   @override
-  String get faqLanguageAnswer => 'Go to Settings and tap on the Language option. Select between English or Malayalam. The app will update to your chosen language instantly.';
+  String get faqLanguageAnswer =>
+      'Go to Settings and tap on the Language option. Select from English, Malayalam, or Tamil. The app will update to your chosen language instantly.';
 
   @override
   String get faqNotifications => 'How do I enable or disable notifications?';
 
   @override
-  String get faqNotificationsAnswer => 'In Settings, use the Notifications switch to turn notifications on or off. You will receive updates about your projects and important information based on your preference.';
+  String get faqNotificationsAnswer =>
+      'In Settings, use the Notifications switch to turn notifications on or off. You will receive updates about your projects and important information based on your preference.';
 
   @override
   String get faqProfile => 'How do I edit my profile information?';
 
   @override
-  String get faqProfileAnswer => 'Go to Settings and tap the edit icon on your profile section. You can change your name and profile picture by tapping on the camera icon.';
+  String get faqProfileAnswer =>
+      'Go to Settings and tap the edit icon on your profile section. You can change your name and profile picture by tapping on the camera icon.';
 
   @override
   String get faqProjects => 'How do I add or manage my agricultural projects?';
 
   @override
-  String get faqProjectsAnswer => 'Use the main dashboard to add new projects. You can track progress, add notes, and manage multiple farming activities from the projects section.';
+  String get faqProjectsAnswer =>
+      'Use the main dashboard to add new projects. You can track progress, add notes, and manage multiple farming activities from the projects section.';
 
   @override
   String get faqPerformance => 'What should I do if the app is running slowly?';
 
   @override
-  String get faqPerformanceAnswer => 'Try closing and reopening the app. If the issue persists, restart your device. For continued problems, contact support.';
+  String get faqPerformanceAnswer =>
+      'Try closing and reopening the app. If the issue persists, restart your device. For continued problems, contact support.';
 
   @override
   String get faqFarmingHelp => 'How can I get help with farming techniques?';
 
   @override
-  String get faqFarmingHelpAnswer => 'Use the Chatbot feature for instant farming advice, or visit the Forum section to connect with other farmers and share experiences.';
+  String get faqFarmingHelpAnswer =>
+      'Use the Chatbot feature for instant farming advice, or visit the Forum section to connect with other farmers and share experiences.';
 
   @override
-  String get chatGreeting => 'Hello! How can I assist you today with your farming needs?';
+  String get chatGreeting =>
+      'Hello! How can I assist you today with your farming needs?';
 
   @override
-  String get chatPestQuery => 'I\'m having trouble with pests on my tomato plants, Can you help?';
+  String get chatPestQuery =>
+      'I\'m having trouble with pests on my tomato plants, Can you help?';
 
   @override
-  String get chatPestResponse => 'Of course! To better understand the issue, could you describe the pests or upload a photo of the affected plants?';
+  String get chatPestResponse =>
+      'Of course! To better understand the issue, could you describe the pests or upload a photo of the affected plants?';
 
   @override
-  String get chatAnalyzing => 'Thank you for your message. I\'m analyzing your query and will provide you with the best farming advice!';
+  String get chatAnalyzing =>
+      'Thank you for your message. I\'m analyzing your query and will provide you with the best farming advice!';
 
   @override
-  String get chatInputHint => 'Type your message here...';
+  String get chatInputHint => 'Ask me anything about farming...';
 
   @override
   String get selectAttachment => 'Select Attachment';
@@ -492,10 +518,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noTasksForDay => 'No tasks for this day';
 
   @override
-  String get weatherOptimal => 'Weather conditions are optimal for field operations today.';
+  String get weatherOptimal =>
+      'Weather conditions are optimal for field operations today.';
 
   @override
-  String get weatherSuitable => 'Weather conditions were suitable for field activities.';
+  String get weatherSuitable =>
+      'Weather conditions were suitable for field activities.';
 
   @override
   String get pestAlert => 'Pest Alert';
@@ -507,16 +535,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mediumRisk => 'Medium Risk';
 
   @override
-  String get leafFolderDetected => 'Leaf Folder detected in nearby fields. Consider preventative measures within 48 hours.';
+  String get leafFolderDetected =>
+      'Leaf Folder detected in nearby fields. Consider preventative measures within 48 hours.';
 
   @override
-  String get brownPlantHopper => 'Brown Plant Hopper risks were monitored and controlled.';
+  String get brownPlantHopper =>
+      'Brown Plant Hopper risks were monitored and controlled.';
 
   @override
   String get recommendations => 'Recommendations';
 
   @override
-  String get irrigationOptimal => 'Optimal time for irrigation is before 10:00 AM today';
+  String get irrigationOptimal =>
+      'Optimal time for irrigation is before 10:00 AM today';
 
   @override
   String get fieldIrrigationCompleted => 'Field irrigation was completed';
@@ -528,7 +559,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pestMonitoringConducted => 'Pest monitoring was conducted';
 
   @override
-  String get considerFertilizer => 'Consider fertilizer application in Section B';
+  String get considerFertilizer =>
+      'Consider fertilizer application in Section B';
 
   @override
   String get fieldNutrientsOptimal => 'Field nutrients were at optimal levels';

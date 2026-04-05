@@ -59,7 +59,8 @@ class AppLocalizationsMl extends AppLocalizations {
   String get monsoonAlert => 'മഴക്കാല മുന്നറിയിപ്പ്';
 
   @override
-  String get monsoonMessage => 'കനത്ത മഴയ്ക്കായി നിങ്ങളുടെ വയലുകൾ തയ്യാറാക്കുക. വരാനിരിക്കുന്ന മഴക്കാല മഴയ്ക്കായി ശരിയായ ഡ്രെയിനേജ് ചാനലുകൾ വൃത്തിയാക്കി തയ്യാറാക്കുക.';
+  String get monsoonMessage =>
+      'കനത്ത മഴയ്ക്കായി നിങ്ങളുടെ വയലുകൾ തയ്യാറാക്കുക. വരാനിരിക്കുന്ന മഴക്കാല മഴയ്ക്കായി ശരിയായ ഡ്രെയിനേജ് ചാനലുകൾ വൃത്തിയാക്കി തയ്യാറാക്കുക.';
 
   @override
   String get playAudio => 'ഓഡിയോ പ്ലേ ചെയ്യുക';
@@ -147,7 +148,8 @@ class AppLocalizationsMl extends AppLocalizations {
   String get noTasks => 'ഈ ദിവസത്തിന് ജോലികൾ ഇല്ല';
 
   @override
-  String get futureTaskMessage => 'ഭാവിയിലെ ജോലികൾ അവയുടെ ഷെഡ്യൂൾ ചെയ്ത തീയതിയിൽ ലഭ്യമാകും';
+  String get futureTaskMessage =>
+      'ഭാവിയിലെ ജോലികൾ അവയുടെ ഷെഡ്യൂൾ ചെയ്ത തീയതിയിൽ ലഭ്യമാകും';
 
   @override
   String get dismiss => 'നിരസിക്കുക';
@@ -171,10 +173,12 @@ class AppLocalizationsMl extends AppLocalizations {
   String get riceProject => 'നെൽകൃഷി പ്രോജക്റ്റ്';
 
   @override
-  String get weatherConditionsOptimal => 'ഇന്ന് വയൽ പ്രവർത്തനങ്ങൾക്ക് കാലാവസ്ഥാ സാഹചര്യങ്ങൾ അനുകൂലമാണ്.';
+  String get weatherConditionsOptimal =>
+      'ഇന്ന് വയൽ പ്രവർത്തനങ്ങൾക്ക് കാലാവസ്ഥാ സാഹചര്യങ്ങൾ അനുകൂലമാണ്.';
 
   @override
-  String get weatherConditionsSuitable => 'വയൽ പ്രവർത്തനങ്ങൾക്ക് കാലാവസ്ഥാ സാഹചര്യങ്ങൾ അനുയോജ്യമായിരുന്നു.';
+  String get weatherConditionsSuitable =>
+      'വയൽ പ്രവർത്തനങ്ങൾക്ക് കാലാവസ്ഥാ സാഹചര്യങ്ങൾ അനുയോജ്യമായിരുന്നു.';
 
   @override
   String get soilMoisture => 'മണ്ണിലെ ഈർപ്പം';
@@ -198,7 +202,9 @@ class AppLocalizationsMl extends AppLocalizations {
   String get todaysAdvisory => 'ഇന്നത്തെ ഉപദേശം';
 
   @override
-  String get advisoryFor => 'ഉപദേശം';
+  String advisoryFor(Object date) {
+    return 'ഉപദേശം';
+  }
 
   @override
   String get refresh => 'പുതുക്കുക';
@@ -261,7 +267,8 @@ class AppLocalizationsMl extends AppLocalizations {
   String get messageSent => 'സന്ദേശം അയച്ചു';
 
   @override
-  String get thankYouMessage => 'ഞങ്ങളെ ബന്ധപ്പെട്ടതിന് നന്ദി! 24 മണിക്കൂറിനുള്ളിൽ ഞങ്ങൾ നിങ്ങളെ ബന്ധപ്പെടും.';
+  String get thankYouMessage =>
+      'ഞങ്ങളെ ബന്ധപ്പെട്ടതിന് നന്ദി! 24 മണിക്കൂറിനുള്ളിൽ ഞങ്ങൾ നിങ്ങളെ ബന്ധപ്പെടും.';
 
   @override
   String get fillAllFields => 'ദയവായി എല്ലാ ഫീൽഡുകളും പൂരിപ്പിക്കുക.';
@@ -273,58 +280,81 @@ class AppLocalizationsMl extends AppLocalizations {
   String get malayalam => 'മലയാളം';
 
   @override
+  String get tamil => 'തമിഴ്';
+
+  @override
   String get selectLanguage => 'ഭാഷ തിരഞ്ഞെടുക്കുക';
 
   @override
   String get language => 'ഭാഷ';
 
   @override
+  String get about => 'കുറിച്ച്';
+
+  @override
+  String get aboutSubtitle => 'സ്രഷ്ടാക്കളെയും ആപ്പിനെയും കുറിച്ച് അറിയുക';
+
+  @override
   String get faqLanguage => 'ആപ്പിന്റെ ഭാഷ എങ്ങനെ മാറ്റാം?';
 
   @override
-  String get faqLanguageAnswer => 'സെറ്റിംഗ്സിൽ പോയി ഭാഷ ഓപ്ഷനിൽ ടാപ് ചെയ്യുക. ഇംഗ്ലീഷ് അല്ലെങ്കിൽ മലയാളം തിരഞ്ഞെടുക്കുക. ആപ്പ് നിങ്ങൾ തിരഞ്ഞെടുത്ത ഭാഷയിലേക്ക് തൽക്ഷണം അപ്ഡേറ്റ് ചെയ്യും.';
+  String get faqLanguageAnswer =>
+      'സെറ്റിംഗ്സിൽ പോയി ഭാഷ ഓപ്ഷനിൽ ടാപ് ചെയ്യുക. ഇംഗ്ലീഷ്, മലയാളം അല്ലെങ്കിൽ തമിഴ് തിരഞ്ഞെടുക്കുക. ആപ്പ് നിങ്ങൾ തിരഞ്ഞെടുത്ത ഭാഷയിലേക്ക് തൽക്ഷണം അപ്ഡേറ്റ് ചെയ്യും.';
 
   @override
-  String get faqNotifications => 'അറിയിപ്പുകൾ എങ്ങനെ പ্রവർত്তনক্ഷമമാക്കാം അല്ലെങ്കിൽ പ്രവർത്തനരഹിതമാക്കാം?';
+  String get faqNotifications =>
+      'അറിയിപ്പുകൾ എങ്ങനെ പ্রവർত്তনক্ഷമമാക്കാം അല്ലെങ്കിൽ പ്രവർത്തനരഹിതമാക്കാം?';
 
   @override
-  String get faqNotificationsAnswer => 'സെറ്റിംഗ്സിൽ, അറിയിപ്പുകൾ ഓൺ അല്ലെങ്കിൽ ഓഫ് ആക്കാൻ അറിയിപ്പുകൾ സ്വിച്ച് ഉപയോഗിക്കുക. നിങ്ങളുടെ മുൻഗണന അനുസരിച്ച് നിങ്ങളുടെ പ്രോജക്റ്റുകളെയും പ്രധാന വിവരങ്ങളെയും കുറിച്ചുള്ള അപ്ഡേറ്റുകൾ ലഭിക്കും.';
+  String get faqNotificationsAnswer =>
+      'സെറ്റിംഗ്സിൽ, അറിയിപ്പുകൾ ഓൺ അല്ലെങ്കിൽ ഓഫ് ആക്കാൻ അറിയിപ്പുകൾ സ്വിച്ച് ഉപയോഗിക്കുക. നിങ്ങളുടെ മുൻഗണന അനുസരിച്ച് നിങ്ങളുടെ പ്രോജക്റ്റുകളെയും പ്രധാന വിവരങ്ങളെയും കുറിച്ചുള്ള അപ്ഡേറ്റുകൾ ലഭിക്കും.';
 
   @override
   String get faqProfile => 'എന്റെ പ്രൊഫൈൽ വിവരങ്ങൾ എങ്ങনെ എഡിറ്റ് ചെയ്യാം?';
 
   @override
-  String get faqProfileAnswer => 'സെറ്റിംഗ്സിൽ പോയി നിങ്ങളുടെ പ്രൊഫൈൽ വിഭാഗത്തിൽ എഡിറ്റ് ഐക്കണിൽ ടാപ് ചെയ്യുക. ക്യാമറ ഐക്കണിൽ ടാപ് ചെയ്ത് നിങ്ങളുടെ പേരും പ്രൊഫൈൽ ചിത്രവും മാറ്റാം.';
+  String get faqProfileAnswer =>
+      'സെറ്റിംഗ്സിൽ പോയി നിങ്ങളുടെ പ്രൊഫൈൽ വിഭാഗത്തിൽ എഡിറ്റ് ഐക്കണിൽ ടാപ് ചെയ്യുക. ക്യാമറ ഐക്കണിൽ ടാപ് ചെയ്ത് നിങ്ങളുടെ പേരും പ്രൊഫൈൽ ചിത്രവും മാറ്റാം.';
 
   @override
-  String get faqProjects => 'എന്റെ കാർഷിക പ്രോജക്റ്റുകൾ എങ്ങനെ ചേർക്കാം അല്ലെങ്കിൽ കൈകാര്യം ചെയ്യാം?';
+  String get faqProjects =>
+      'എന്റെ കാർഷിക പ്രോജക്റ്റുകൾ എങ്ങനെ ചേർക്കാം അല്ലെങ്കിൽ കൈകാര്യം ചെയ്യാം?';
 
   @override
-  String get faqProjectsAnswer => 'പുതിയ പ്രോജക്റ്റുകൾ ചേർക്കാൻ പ്രധാന ഡാഷ്ബോർഡ് ഉപയോഗിക്കുക. പ്രോജക്റ്റുകൾ വിഭാഗത്തിൽ നിന്ന് നിങ്ങൾക്ക് പുരോഗതി ട്രാക്ക് ചെയ്യാം, കുറിപ്പുകൾ ചേർക്കാം, ഒന്നിലധികം കാർഷിക പ്രവർത്തനങ്ങൾ കൈകാര്യം ചെയ്യാം.';
+  String get faqProjectsAnswer =>
+      'പുതിയ പ്രോജക്റ്റുകൾ ചേർക്കാൻ പ്രധാന ഡാഷ്ബോർഡ് ഉപയോഗിക്കുക. പ്രോജക്റ്റുകൾ വിഭാഗത്തിൽ നിന്ന് നിങ്ങൾക്ക് പുരോഗതി ട്രാക്ക് ചെയ്യാം, കുറിപ്പുകൾ ചേർക്കാം, ഒന്നിലധികം കാർഷിക പ്രവർത്തനങ്ങൾ കൈകാര്യം ചെയ്യാം.';
 
   @override
-  String get faqPerformance => 'ആപ്പ് സാവധാനം പ്രവർത്തിക്കുകയാണെങ്കിൽ എന്ത് ചെയ്യണം?';
+  String get faqPerformance =>
+      'ആപ്പ് സാവധാനം പ്രവർത്തിക്കുകയാണെങ്കിൽ എന്ത് ചെയ്യണം?';
 
   @override
-  String get faqPerformanceAnswer => 'ആപ്പ് അടച്ച് വീണ്ടും തുറക്കാൻ ശ്രമിക്കുക. പ്രശ്നം തുടരുകയാണെങ്കിൽ, നിങ്ങളുടെ ഉപകരണം റീസ്റ്റാർട്ട് ചെയ്യുക. തുടർച്ചയായുള്ള പ്രശ്നങ്ങൾക്ക്, സപ്പോർട്ടിനെ ബന്ധപ്പെടുക.';
+  String get faqPerformanceAnswer =>
+      'ആപ്പ് അടച്ച് വീണ്ടും തുറക്കാൻ ശ്രമിക്കുക. പ്രശ്നം തുടരുകയാണെങ്കിൽ, നിങ്ങളുടെ ഉപകരണം റീസ്റ്റാർട്ട് ചെയ്യുക. തുടർച്ചയായുള്ള പ്രശ്നങ്ങൾക്ക്, സപ്പോർട്ടിനെ ബന്ധപ്പെടുക.';
 
   @override
-  String get faqFarmingHelp => 'കാർഷിക സാങ്കേതികതകളിൽ എനിക്ക് എങ്ങനെ സഹായം ലഭിക്കും?';
+  String get faqFarmingHelp =>
+      'കാർഷിക സാങ്കേതികതകളിൽ എനിക്ക് എങ്ങനെ സഹായം ലഭിക്കും?';
 
   @override
-  String get faqFarmingHelpAnswer => 'തൽക്ഷണ കാർഷിക ഉപദേശത്തിനായി ചാറ്റ്ബോട്ട് ഫീച്ചർ ഉപയോഗിക്കുക, അല്ലെങ്കിൽ മറ്റ് കർഷകരുമായി ബന്ധപ്പെടാനും അനുഭവങ്ങൾ പങ്കിടാനും ഫോറം വിഭാഗം സന്ദർശിക്കുക.';
+  String get faqFarmingHelpAnswer =>
+      'തൽക്ഷണ കാർഷിക ഉപദേശത്തിനായി ചാറ്റ്ബോട്ട് ഫീച്ചർ ഉപയോഗിക്കുക, അല്ലെങ്കിൽ മറ്റ് കർഷകരുമായി ബന്ധപ്പെടാനും അനുഭവങ്ങൾ പങ്കിടാനും ഫോറം വിഭാഗം സന്ദർശിക്കുക.';
 
   @override
-  String get chatGreeting => 'ഹലോ! നിങ്ങളുടെ കാർഷിക ആവശ്യങ്ങളിൽ ഇന്ന് എനിക്ക് എങ്ങനെ സഹായിക്കാനാകും?';
+  String get chatGreeting =>
+      'ഹലോ! നിങ്ങളുടെ കാർഷിക ആവശ്യങ്ങളിൽ ഇന്ന് എനിക്ക് എങ്ങനെ സഹായിക്കാനാകും?';
 
   @override
-  String get chatPestQuery => 'എന്റെ തക്കാളി ചെടികളിൽ കീടങ്ങളുമായി എനിക്ക് പ്രശ്നമുണ്ട്, നിങ്ങൾക്ക് സഹായിക്കാമോ?';
+  String get chatPestQuery =>
+      'എന്റെ തക്കാളി ചെടികളിൽ കീടങ്ങളുമായി എനിക്ക് പ്രശ്നമുണ്ട്, നിങ്ങൾക്ക് സഹായിക്കാമോ?';
 
   @override
-  String get chatPestResponse => 'തീർച്ചയായും! പ্রശ്നം നന്നായി മനസ്സിലാക്കാൻ, നിങ്ങൾക്ক് കീടങ്ങളെ വിവരിക്കാമോ അല്ലെങ്കിൽ ബാധിച്ച ചെടികളുടെ ഫോട്ടോ അപ്‌ലോഡ് ചെയ্യാമോ?';
+  String get chatPestResponse =>
+      'തീർച്ചയായും! പ্রശ്നം നന്നായി മനസ്സിലാക്കാൻ, നിങ്ങൾക്ক് കീടങ്ങളെ വിവരിക്കാമോ അല്ലെങ്കിൽ ബാധിച്ച ചെടികളുടെ ഫോട്ടോ അപ്‌ലോഡ് ചെയ্യാമോ?';
 
   @override
-  String get chatAnalyzing => 'നിങ്ങളുടെ സന്ദേശത്തിന് നന്ദി. ഞാൻ നിങ്ങളുടെ ചോദ്യം വിശകലനം ചെയ്യുകയും മികച്ച കാർഷിക ഉപദേശം നൽകുകയും ചെയ്യും!';
+  String get chatAnalyzing =>
+      'നിങ്ങളുടെ സന്ദേശത്തിന് നന്ദി. ഞാൻ നിങ്ങളുടെ ചോദ്യം വിശകലനം ചെയ്യുകയും മികച്ച കാർഷിക ഉപദേശം നൽകുകയും ചെയ്യും!';
 
   @override
   String get chatInputHint => 'കാർഷികതയെ കുറിച്ച് എന്തും ചോദിക്കുക...';
@@ -447,7 +477,8 @@ class AppLocalizationsMl extends AppLocalizations {
   String get marketUpdate => 'തെങ്ങിന്റെ വില ഓരോന്നിന് ₹40 എത്തി';
 
   @override
-  String get marketSubtitle => 'പ്രാദേശിക മാർക്കറ്റ് നിരക്കുകൾ അപ്ഡേറ്റ് ചെയ്തു';
+  String get marketSubtitle =>
+      'പ്രാദേശിക മാർക്കറ്റ് നിരക്കുകൾ അപ്ഡേറ്റ് ചെയ്തു';
 
   @override
   String get openNavigationMenu => 'നാവിഗേഷൻ മെനു തുറക്കുക';
@@ -492,10 +523,12 @@ class AppLocalizationsMl extends AppLocalizations {
   String get noTasksForDay => 'ഇന്ന് ജോലികളൊന്നുമില്ല';
 
   @override
-  String get weatherOptimal => 'ഇന്ന് വയലിലെ പ്രവർത്തനങ്ങൾക്ക് കാലാവസ്ഥ അനുകൂലമാണ്.';
+  String get weatherOptimal =>
+      'ഇന്ന് വയലിലെ പ്രവർത്തനങ്ങൾക്ക് കാലാവസ്ഥ അനുകൂലമാണ്.';
 
   @override
-  String get weatherSuitable => 'വയലിലെ പ്രവർത്തനങ്ങൾക്ക് കാലാവസ്ഥ അനുകൂലമായിരുന്നു.';
+  String get weatherSuitable =>
+      'വയലിലെ പ്രവർത്തനങ്ങൾക്ക് കാലാവസ്ഥ അനുകൂലമായിരുന്നു.';
 
   @override
   String get pestAlert => 'കീട മുന്നറിയിപ്പ്';
@@ -507,22 +540,26 @@ class AppLocalizationsMl extends AppLocalizations {
   String get mediumRisk => 'മധ്യത്തരം അപകടസാധ്യത';
 
   @override
-  String get leafFolderDetected => 'സമീപത്തെ വയലുകളിൽ ഇലച്ചുരുട്ടി പുഴു കണ്ടെത്തി. 48 മണിക്കൂറിനുള്ളിൽ പ്രതിരോധ നടപടികൾ പരിഗണിക്കുക.';
+  String get leafFolderDetected =>
+      'സമീപത്തെ വയലുകളിൽ ഇലച്ചുരുട്ടി പുഴു കണ്ടെത്തി. 48 മണിക്കൂറിനുള്ളിൽ പ്രതിരോധ നടപടികൾ പരിഗണിക്കുക.';
 
   @override
-  String get brownPlantHopper => 'തവിട്ട് ചെടിച്ചാട്ടത്തിന്റെ അപകടസാധ്യതകൾ നിരീക്ഷിക്കുകയും നിയന്ത്രിക്കുകയും ചെയ്തു.';
+  String get brownPlantHopper =>
+      'തവിട്ട് ചെടിച്ചാട്ടത്തിന്റെ അപകടസാധ്യതകൾ നിരീക്ഷിക്കുകയും നിയന്ത്രിക്കുകയും ചെയ്തു.';
 
   @override
   String get recommendations => 'ശുപാർശകൾ';
 
   @override
-  String get irrigationOptimal => 'ഇന്ന് രാവിലെ 10:00 മണിക്ക് മുമ്പ് നീർവിതരണത്തിന് അനുയോജ്യമായ സമയം';
+  String get irrigationOptimal =>
+      'ഇന്ന് രാവിലെ 10:00 മണിക്ക് മുമ്പ് നീർവിതരണത്തിന് അനുയോജ്യമായ സമയം';
 
   @override
   String get fieldIrrigationCompleted => 'വയലിലെ നീർവിതരണം പൂർത്തിയായി';
 
   @override
-  String get monitorPestActivity => 'വയലിന്റെ അരികുകളിൽ കീടങ്ങളുടെ പ്രവർത്തനം നിരീക്ഷിക്കുക';
+  String get monitorPestActivity =>
+      'വയലിന്റെ അരികുകളിൽ കീടങ്ങളുടെ പ്രവർത്തനം നിരീക്ഷിക്കുക';
 
   @override
   String get pestMonitoringConducted => 'കീട നിരീക്ഷണം നടത്തി';
@@ -531,7 +568,8 @@ class AppLocalizationsMl extends AppLocalizations {
   String get considerFertilizer => 'വിഭാഗം ബിയിൽ വളപ്രയോഗം പരിഗണിക്കുക';
 
   @override
-  String get fieldNutrientsOptimal => 'വയലിലെ പോഷകങ്ങൾ അനുയോജ്യമായ അളവിലായിരുന്നു';
+  String get fieldNutrientsOptimal =>
+      'വയലിലെ പോഷകങ്ങൾ അനുയോജ്യമായ അളവിലായിരുന്നു';
 
   @override
   String get wasCloudy => 'മേഘാവൃതമായിരുന്നു';

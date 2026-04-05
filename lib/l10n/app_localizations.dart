@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
 import 'app_localizations_ml.dart';
+import 'app_localizations_ta.dart';
 
 // ignore_for_file: type=lint
 
@@ -62,7 +63,8 @@ import 'app_localizations_ml.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -70,7 +72,8 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -82,17 +85,19 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
-    Locale('ml')
+    Locale('ml'),
+    Locale('ta'),
   ];
 
   /// No description provided for @appTitle.
@@ -465,7 +470,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Advisory for'**
-  String get advisoryFor;
+  String advisoryFor(Object date);
 
   /// No description provided for @refresh.
   ///
@@ -611,6 +616,12 @@ abstract class AppLocalizations {
   /// **'മലയാളം'**
   String get malayalam;
 
+  /// No description provided for @tamil.
+  ///
+  /// In en, this message translates to:
+  /// **'Tamil'**
+  String get tamil;
+
   /// No description provided for @selectLanguage.
   ///
   /// In en, this message translates to:
@@ -623,6 +634,18 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get language;
 
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get about;
+
+  /// No description provided for @aboutSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn about the creators and the app'**
+  String get aboutSubtitle;
+
   /// No description provided for @faqLanguage.
   ///
   /// In en, this message translates to:
@@ -632,7 +655,7 @@ abstract class AppLocalizations {
   /// No description provided for @faqLanguageAnswer.
   ///
   /// In en, this message translates to:
-  /// **'Go to Settings and tap on the Language option. Select between English or Malayalam. The app will update to your chosen language instantly.'**
+  /// **'Go to Settings and tap on the Language option. Select from English, Malayalam, or Tamil. The app will update to your chosen language instantly.'**
   String get faqLanguageAnswer;
 
   /// No description provided for @faqNotifications.
@@ -1200,7 +1223,8 @@ abstract class AppLocalizations {
   String get englishLanguage;
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -1209,25 +1233,28 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'ml'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['en', 'ml', 'ta'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
-
-
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en': return AppLocalizationsEn();
-    case 'ml': return AppLocalizationsMl();
+    case 'en':
+      return AppLocalizationsEn();
+    case 'ml':
+      return AppLocalizationsMl();
+    case 'ta':
+      return AppLocalizationsTa();
   }
 
   throw FlutterError(
     'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
     'an issue with the localizations generation tool. Please file an issue '
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.'
+    'that was used.',
   );
 }
