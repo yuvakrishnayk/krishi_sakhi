@@ -198,6 +198,75 @@ class _DashboardScreenState extends State<DashboardScreen>
       }
     }
 
+    final directAlertEntries = _asList(
+      planData['weather_alerts'] ??
+          planData['weatherAlerts'] ??
+          planData['alerts'],
+    );
+    for (final entry in directAlertEntries) {
+      final alert = _asMap(entry);
+      final weather = _asMap(alert['weather']);
+      final temperature = _asMap(
+        alert['temperature'] ?? weather['temperature'],
+      );
+      final minTemp = (temperature['min'] as num?)?.toDouble();
+      final maxTemp = (temperature['max'] as num?)?.toDouble();
+      final humidity =
+          (alert['humidity'] as num?)?.toInt() ??
+          (weather['humidity'] as num?)?.toInt();
+      final rainfall =
+          (alert['rainfall'] as num?)?.toInt() ??
+          (weather['rainfall'] as num?)?.toInt();
+      final windSpeed =
+          (alert['windSpeed'] as num?)?.toInt() ??
+          (weather['windSpeed'] as num?)?.toInt();
+      final condition =
+          alert['condition']?.toString().trim().isNotEmpty == true
+              ? alert['condition'].toString()
+              : alert['title']?.toString().trim().isNotEmpty == true
+              ? alert['title'].toString()
+              : 'Weather alert';
+      final advisory =
+          alert['advisory']?.toString().trim().isNotEmpty == true
+              ? alert['advisory'].toString()
+              : alert['message']?.toString().trim().isNotEmpty == true
+              ? alert['message'].toString()
+              : alert['summary']?.toString().trim().isNotEmpty == true
+              ? alert['summary'].toString()
+              : 'Weather conditions need attention before field work.';
+      final date =
+          alert['date']?.toString().trim().isNotEmpty == true
+              ? alert['date'].toString()
+              : weather['date']?.toString() ?? '';
+      final severity = alert['severity']?.toString().toLowerCase() ?? '';
+      final urgent =
+          alert['urgent'] == true ||
+          severity.contains('high') ||
+          severity.contains('critical') ||
+          advisory.toLowerCase().contains('heat') ||
+          advisory.toLowerCase().contains('storm') ||
+          advisory.toLowerCase().contains('flood');
+
+      alerts.add(
+        _WeatherAlert(
+          monthName: alert['monthName']?.toString() ?? 'Alert',
+          dayLabel:
+              alert['dayLabel']?.toString() ??
+              alert['label']?.toString() ??
+              'Weather',
+          date: date,
+          condition: condition,
+          advisory: advisory,
+          minTemp: minTemp,
+          maxTemp: maxTemp,
+          humidity: humidity,
+          rainfall: rainfall,
+          windSpeed: windSpeed,
+          urgent: urgent,
+        ),
+      );
+    }
+
     return alerts;
   }
 
@@ -290,6 +359,8 @@ class _DashboardScreenState extends State<DashboardScreen>
               children: [
                 _buildHeader(),
                 const SizedBox(height: 14),
+                _buildGeneratedProjectCard(),
+                const SizedBox(height: 16),
                 _buildOverviewCard(),
                 if (_weatherAlerts.isNotEmpty) ...[
                   const SizedBox(height: 16),
@@ -386,6 +457,105 @@ class _DashboardScreenState extends State<DashboardScreen>
                 _landSize == null
                     ? 'N/A'
                     : '${_landSize!.toStringAsFixed(1)} acres',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGeneratedProjectCard() {
+    final project = widget.project;
+    final farmName = _cropName;
+    final location = _locationName;
+    final irrigationText =
+        project == null || project.irrigationMethods.isEmpty
+            ? 'Irrigation not set'
+            : project.irrigationMethods.join(', ');
+    final farmerLevel = project?.farmerLevel;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.dashboard_customize_rounded,
+                  color: Color(0xFF2E7D32),
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Generated project',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1B5E20),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            farmName,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1A2E1A),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            location,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.45,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _summaryText,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.45,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _miniChip('Crop: $farmName', const Color(0xFF2E7D32)),
+              _miniChip('Irrigation: $irrigationText', const Color(0xFF1565C0)),
+              _miniChip(
+                'Level: ${farmerLevel == null ? 'N/A' : farmerLevel + 1}',
+                const Color(0xFF6A1B9A),
               ),
             ],
           ),

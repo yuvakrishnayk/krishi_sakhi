@@ -624,7 +624,37 @@ class _ChatbotScreenState extends State<ChatbotScreen>
       return;
     }
     await _applyTtsLanguage();
-    await _tts.speak(text);
+    await _tts.speak(_markdownToSpeechText(text));
+  }
+
+  String _markdownToSpeechText(String text) {
+    var spoken = text;
+
+    spoken = spoken.replaceAll(RegExp(r'''```[\s\S]*?```'''), '');
+    spoken = spoken.replaceAll(RegExp(r'''`([^`]+)`'''), r'$1');
+    spoken = spoken.replaceAll(RegExp(r'''!\[([^\]]*)\]\(([^)]+)\)'''), r'$1');
+    spoken = spoken.replaceAll(RegExp(r'''\[([^\]]+)\]\(([^)]+)\)'''), r'$1');
+    spoken = spoken.replaceAll(
+      RegExp(r'''^\s{0,3}#{1,6}\s+''', multiLine: true),
+      '',
+    );
+    spoken = spoken.replaceAll(
+      RegExp(r'''^\s*[-*+]\s+''', multiLine: true),
+      '',
+    );
+    spoken = spoken.replaceAll(
+      RegExp(r'''^\s*\d+\.\s+''', multiLine: true),
+      '',
+    );
+    spoken = spoken.replaceAll(RegExp(r'''\*\*([^*]+)\*\*'''), r'$1');
+    spoken = spoken.replaceAll(RegExp(r'''__([^_]+)__'''), r'$1');
+    spoken = spoken.replaceAll(RegExp(r'''\*([^*]+)\*'''), r'$1');
+    spoken = spoken.replaceAll(RegExp(r'''_([^_]+)_'''), r'$1');
+    spoken = spoken.replaceAll('>', '');
+    spoken = spoken.replaceAll(RegExp(r'''\n{3,}'''), '\n\n');
+    spoken = spoken.replaceAll(RegExp(r'''[ \t]+'''), ' ');
+
+    return spoken.trim();
   }
 
   // ─── GROQ API ─────────────────────────

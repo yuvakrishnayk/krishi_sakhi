@@ -64,7 +64,6 @@ class _FormScreensState extends State<FormScreens>
   final _formKey = GlobalKey<FormState>();
 
   // ── Controllers ──────────────────────────────────────────────────────────
-  final _farmNameController = TextEditingController();
   final _locationController = TextEditingController();
   final _acresController = TextEditingController();
   final _cropSearchController = TextEditingController();
@@ -213,7 +212,6 @@ class _FormScreensState extends State<FormScreens>
 
   @override
   void dispose() {
-    _farmNameController.dispose();
     _locationController.dispose();
     _acresController.dispose();
     _cropSearchController.dispose();
@@ -802,23 +800,7 @@ class _FormScreensState extends State<FormScreens>
     );
   }
 
-  // ─── 1. Farm Name ─────────────────────────────────────────────────────────
-  Widget _buildFarmNameField(AppLocalizations loc) {
-    return _CardWrapper(
-      child: TextFormField(
-        controller: _farmNameController,
-        decoration: _inputDecoration(
-          label: loc.farmName,
-          hint: 'e.g. Green Valley Farm',
-          icon: Icons.eco_outlined,
-        ),
-        validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-        onChanged: (_) => setState(() {}),
-      ),
-    );
-  }
-
-  // ─── 2. Location with GPS + Autocomplete ──────────────────────────────────
+  // ─── 1. Location with GPS + Autocomplete ──────────────────────────────────
   Widget _buildLocationField(AppLocalizations loc) {
     return Column(
       children: [
@@ -1724,6 +1706,13 @@ class _FormScreensState extends State<FormScreens>
                                   response.statusCode < 300
                               ? _decodeResponseBody(response.body)
                               : _buildDummyResponse();
+
+                      debugPrint('Advisory status: ${response.statusCode}');
+                      debugPrint('Advisory payload: ${jsonEncode(payload)}');
+                      debugPrint('Advisory raw body: ${response.body}');
+                      debugPrint(
+                        'Advisory parsed response: ${responseData is String ? responseData : jsonEncode(responseData)}',
+                      );
 
                       final project = FarmProject(
                         farmName: _selectedCrop!,
