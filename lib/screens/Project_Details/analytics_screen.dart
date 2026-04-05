@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/models/farm_project.dart';
+import 'package:krishi_sakhi/screens/Project_Details/widgets/project_hero_app_bar.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key, FarmProject? project});
@@ -28,31 +29,65 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4F0),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1B5E20),
-        title: const Text(
-          'Analytics',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            fontSize: 16,
+      body: Column(
+        children: [
+          const ProjectHeroAppBar(
+            title: 'Analytics',
+            subtitle: 'Farm insights and forecasts',
+            leadingIcon: Icons.analytics_rounded,
+            chips: [
+              ProjectHeroChipData(
+                icon: Icons.trending_up_rounded,
+                value: 'Yield',
+              ),
+              ProjectHeroChipData(icon: Icons.cloud_rounded, value: 'Weather'),
+              ProjectHeroChipData(
+                icon: Icons.currency_rupee_rounded,
+                value: 'Expenses',
+              ),
+            ],
           ),
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
-          tabs: const [
-            Tab(text: 'Yield'),
-            Tab(text: 'Weather'),
-            Tab(text: 'Expenses'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [_buildYieldTab(), _buildWeatherTab(), _buildExpensesTab()],
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                color: const Color(0xFF2E7D32).withOpacity(0.14),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              labelColor: const Color(0xFF1B5E20),
+              unselectedLabelColor: Colors.grey.shade600,
+              dividerColor: Colors.transparent,
+              tabs: const [
+                Tab(text: 'Yield'),
+                Tab(text: 'Weather'),
+                Tab(text: 'Expenses'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildYieldTab(),
+                _buildWeatherTab(),
+                _buildExpensesTab(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:krishi_sakhi/models/farm_project.dart';
+import 'package:krishi_sakhi/screens/Project_Details/widgets/project_hero_app_bar.dart';
 import 'package:latlong2/latlong.dart';
 
 enum _MapLayer { satellite, ndvi, moisture }
@@ -190,82 +191,62 @@ class _FieldMapScreenState extends State<FieldMapScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F0),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          _buildSliverAppBar(),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                _buildInteractiveMap(),
-                _buildLayerSelector(),
-                _buildFieldCards(),
-                if (fields.isNotEmpty)
-                  _buildFieldDetails(fields[_selectedField]),
-                const SizedBox(height: 100),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  SliverAppBar _buildSliverAppBar() {
     final totalArea =
         widget.project?.calculatedAreaAcres.toStringAsFixed(1) ?? '3.2';
-    return SliverAppBar(
-      expandedHeight: 0,
-      floating: true,
-      snap: true,
-      backgroundColor: const Color(0xFF1B5E20),
-      systemOverlayStyle: SystemUiOverlayStyle.light,
-      title: Row(
+    return Scaffold(
+      backgroundColor: const Color(0xFFF0F4F0),
+      body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.terrain_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.project?.farmName ?? 'Field Map',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
+          ProjectHeroAppBar(
+            title: widget.project?.farmName ?? 'Field Map',
+            subtitle: 'Satellite and crop health layers',
+            leadingIcon: Icons.terrain_rounded,
+            chips: [
+              ProjectHeroChipData(
+                icon: Icons.landscape_rounded,
+                value: '$totalArea acres total',
               ),
-              Text(
-                '$totalArea acres total',
-                style: const TextStyle(color: Colors.white60, fontSize: 10),
+              ProjectHeroChipData(
+                icon: Icons.layers_rounded,
+                value: _layerLabel,
+              ),
+            ],
+            actions: [
+              GestureDetector(
+                onTap: () => _mapController.move(_center, _zoom),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.gps_fixed_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
               ),
             ],
           ),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                children: [
+                  _buildInteractiveMap(),
+                  _buildLayerSelector(),
+                  _buildFieldCards(),
+                  if (fields.isNotEmpty)
+                    _buildFieldDetails(fields[_selectedField]),
+                  const SizedBox(height: 100),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.gps_fixed_rounded, color: Colors.white),
-          onPressed: () => _mapController.move(_center, _zoom),
-        ),
-        IconButton(
-          icon: const Icon(Icons.fullscreen_rounded, color: Colors.white),
-          onPressed: () {},
-        ),
-      ],
     );
   }
 

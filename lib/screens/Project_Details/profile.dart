@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:krishi_sakhi/screens/Project_Details/widgets/project_hero_app_bar.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -8,76 +8,99 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4F0),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 200,
-            pinned: true,
-            backgroundColor: const Color(0xFF1B5E20),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF1B5E20), Color(0xFF4CAF50)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
+      body: Column(
+        children: [
+          const ProjectHeroAppBar(
+            title: 'Profile',
+            subtitle: 'Ramesh Kumar • Madurai, TN',
+            leadingIcon: Icons.person_rounded,
+            chips: [
+              ProjectHeroChipData(
+                icon: Icons.workspace_premium_rounded,
+                value: 'Top Farmer',
+              ),
+              ProjectHeroChipData(
+                icon: Icons.grass_rounded,
+                value: '4 Seasons',
+              ),
+              ProjectHeroChipData(
+                icon: Icons.verified_rounded,
+                value: '92% Success',
+              ),
+            ],
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 40),
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.2),
-                        border: Border.all(color: Colors.white, width: 3),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'RK',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Ramesh Kumar',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const Text(
-                      'Farmer • Madurai, TN',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
-                    ),
+                    _buildProfileHeroCard(),
+                    const SizedBox(height: 16),
+                    _buildStatRow(),
+                    const SizedBox(height: 16),
+                    _buildBadgesSection(),
+                    const SizedBox(height: 16),
+                    _buildProfileMenu(),
+                    const SizedBox(height: 100),
                   ],
                 ),
               ),
             ),
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _buildStatRow(),
-                  const SizedBox(height: 16),
-                  _buildBadgesSection(),
-                  const SizedBox(height: 16),
-                  _buildProfileMenu(),
-                  const SizedBox(height: 100),
-                ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileHeroCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFE8F5E9),
+              border: Border.all(color: const Color(0xFF2E7D32), width: 2),
+            ),
+            child: const Center(
+              child: Text(
+                'RK',
+                style: TextStyle(
+                  color: Color(0xFF1B5E20),
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Ramesh Kumar',
+            style: TextStyle(
+              color: Color(0xFF1A2E1A),
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const Text(
+            'Farmer • Madurai, TN',
+            style: TextStyle(color: Color(0xFF5A6B5A), fontSize: 13),
           ),
         ],
       ),
