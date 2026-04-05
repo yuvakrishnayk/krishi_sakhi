@@ -166,6 +166,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 24),
                     _buildWeatherSection(context, l10n),
                     const SizedBox(height: 28),
+                    _buildSectionHeader(context, 'Crop Calendar', ''),
+                    const SizedBox(height: 14),
+                    _buildCropCalendarSection(),
+                    const SizedBox(height: 28),
                     _buildSectionHeader(
                       context,
                       l10n.latestNews,
@@ -595,6 +599,226 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
       ],
     );
+  }
+
+  Widget _buildCropCalendarSection() {
+    return FutureBuilder<List<FarmProjectItem>>(
+      future: _projectsPreviewFuture,
+      builder: (context, snapshot) {
+        final projects = snapshot.data ?? const <FarmProjectItem>[];
+        final cropName = projects.isNotEmpty ? projects.first.crop : 'Rice';
+        final calendar = _buildCalendarActivities(cropName);
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFF4CAF50).withOpacity(0.2)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2E7D32).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.event_note_rounded,
+                      size: 20,
+                      color: Color(0xFF2E7D32),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$cropName season timeline',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1B5E20),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Upcoming 4-week task plan',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              ...calendar.map(
+                (item) => Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: item['bg'] as Color,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: (item['color'] as Color).withOpacity(0.35),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: (item['color'] as Color).withOpacity(0.16),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          item['icon'] as IconData,
+                          color: item['color'] as Color,
+                          size: 19,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['title'] as String,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1B5E20),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              item['subtitle'] as String,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade700,
+                                height: 1.3,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        item['date'] as String,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  List<Map<String, Object>> _buildCalendarActivities(String cropName) {
+    final now = DateTime.now();
+    final crop = cropName.toLowerCase();
+
+    final String week1Title;
+    final String week2Title;
+    final String week3Title;
+    final String week4Title;
+
+    if (crop.contains('rice') || crop.contains('paddy')) {
+      week1Title = 'Nursery and water-level check';
+      week2Title = 'Transplanting and spacing';
+      week3Title = 'Top-dressing and weed control';
+      week4Title = 'Pest scouting and field drainage';
+    } else if (crop.contains('wheat')) {
+      week1Title = 'Land prep and seed treatment';
+      week2Title = 'Sowing depth and first irrigation';
+      week3Title = 'Weed check and nutrient split dose';
+      week4Title = 'Rust and aphid monitoring';
+    } else {
+      week1Title = 'Field prep and soil moisture check';
+      week2Title = 'Sowing and germination monitoring';
+      week3Title = 'Nutrient top-up and weed cleanup';
+      week4Title = 'Pest scouting and growth review';
+    }
+
+    return [
+      {
+        'title': week1Title,
+        'subtitle': 'Prepare tools and complete baseline field inspection.',
+        'date': _shortDate(now),
+        'icon': Icons.agriculture_rounded,
+        'color': const Color(0xFF2E7D32),
+        'bg': const Color(0xFFE8F5E9),
+      },
+      {
+        'title': week2Title,
+        'subtitle': 'Focus on uniform crop stand and irrigation rhythm.',
+        'date': _shortDate(now.add(const Duration(days: 7))),
+        'icon': Icons.water_drop_rounded,
+        'color': const Color(0xFF1565C0),
+        'bg': const Color(0xFFE3F2FD),
+      },
+      {
+        'title': week3Title,
+        'subtitle': 'Track growth and resolve early nutrient stress signs.',
+        'date': _shortDate(now.add(const Duration(days: 14))),
+        'icon': Icons.spa_rounded,
+        'color': const Color(0xFF6A1B9A),
+        'bg': const Color(0xFFF3E5F5),
+      },
+      {
+        'title': week4Title,
+        'subtitle': 'Review alerts and plan next month activities.',
+        'date': _shortDate(now.add(const Duration(days: 21))),
+        'icon': Icons.analytics_rounded,
+        'color': const Color(0xFFE65100),
+        'bg': const Color(0xFFFFF3E0),
+      },
+    ];
+  }
+
+  String _shortDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.day}';
   }
 
   Widget _buildNewsPreviewSection() {

@@ -10,6 +10,7 @@ import '../l10n/app_localizations.dart';
 import '../models/farm_project.dart';
 import '../models/home_feed_models.dart';
 import '../services/home_feed_local_storage.dart';
+import 'Project_Details/bottom_nav_proj.dart';
 import 'map_screen.dart';
 import 'projects_list_screen.dart';
 
@@ -1679,21 +1680,13 @@ class _FormScreensState extends State<FormScreens>
                       );
 
                       await _saveProjectToLocalList(project);
-                      final decodedResponse = _buildDummyResponse(project);
-                      final responseBody = const JsonEncoder.withIndent(
-                        '  ',
-                      ).convert(decodedResponse);
+                      _snack('Project saved locally. Opening project...');
 
                       if (!mounted) return;
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder:
-                              (context) => _ApiResponseScreen(
-                                project: project,
-                                responseBody: responseBody,
-                                parsedResponse: decodedResponse,
-                              ),
+                          builder: (_) => ProjectScreen(project: project),
                         ),
                       );
                     } catch (e) {
