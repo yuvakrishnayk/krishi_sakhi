@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:krishi_sakhi/screens/Project_Details/widgets/project_hero_app_bar.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class InventoryScreen extends StatelessWidget {
+  const InventoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -11,21 +11,21 @@ class ProfileScreen extends StatelessWidget {
       body: Column(
         children: [
           const ProjectHeroAppBar(
-            title: 'Profile',
-            subtitle: 'Ramesh Kumar • Madurai, TN',
-            leadingIcon: Icons.person_rounded,
+            title: 'Inventory & Rates',
+            subtitle: 'Ramesh Farm Stock • Madurai, TN',
+            leadingIcon: Icons.inventory_2_rounded,
             chips: [
               ProjectHeroChipData(
-                icon: Icons.workspace_premium_rounded,
-                value: 'Top Farmer',
+                icon: Icons.category_rounded,
+                value: '12 Items',
               ),
               ProjectHeroChipData(
-                icon: Icons.grass_rounded,
-                value: '4 Seasons',
+                icon: Icons.warning_rounded,
+                value: '2 Low Stock',
               ),
               ProjectHeroChipData(
-                icon: Icons.verified_rounded,
-                value: '92% Success',
+                icon: Icons.trending_up_rounded,
+                value: 'Updated Today',
               ),
             ],
           ),
@@ -35,13 +35,13 @@ class ProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    _buildProfileHeroCard(),
+                    _buildInventorySummaryCard(),
                     const SizedBox(height: 16),
-                    _buildStatRow(),
+                    _buildInventoryList(),
                     const SizedBox(height: 16),
-                    _buildBadgesSection(),
+                    _buildMarketRates(),
                     const SizedBox(height: 16),
-                    _buildProfileMenu(),
+                    _buildActionButtons(),
                     const SizedBox(height: 100),
                   ],
                 ),
@@ -53,119 +53,250 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileHeroCard() {
+  Widget _buildInventorySummaryCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2E7D32), Color(0xFF81C784)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Total Stock Value 📦',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'Est. ₹ 45,200',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 10),
+          Text(
+            'Alert: Urea Fertilizer is running low ⚠️',
+            style: TextStyle(
+              color: Colors.white70,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildInventoryList() {
+    final inventoryItems = [
+      {'item': 'Wheat Seeds (Premium)', 'qty': '50 kg', 'status': 'Good'},
+      {'item': 'Urea Fertilizer', 'qty': '10 kg', 'status': 'Low'},
+      {'item': 'Organic Pesticide', 'qty': '5 Liters', 'status': 'Good'},
+      {'item': 'Neem Oil', 'qty': '2 Liters', 'status': 'Good'},
+    ];
+
+    return _buildSectionCard(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFFE8F5E9),
-              border: Border.all(color: const Color(0xFF2E7D32), width: 2),
-            ),
-            child: const Center(
-              child: Text(
-                'RK',
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Current Stock',
                 style: TextStyle(
-                  color: Color(0xFF1B5E20),
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1A2E1A),
+                ),
+              ),
+              Text(
+                'See All',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2E7D32),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...inventoryItems.map(
+            (item) => ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                backgroundColor:
+                    item['status'] == 'Low'
+                        ? Colors.red.shade50
+                        : const Color(0xFFE8F5E9),
+                child: Icon(
+                  Icons.eco,
+                  color:
+                      item['status'] == 'Low'
+                          ? Colors.red
+                          : const Color(0xFF2E7D32),
+                  size: 20,
+                ),
+              ),
+              title: Text(
+                item['item'] as String,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                item['status'] == 'Low' ? 'Refill needed' : 'In stock',
+                style: TextStyle(
+                  color: item['status'] == 'Low' ? Colors.red : Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+              trailing: Text(
+                item['qty'] as String,
+                style: const TextStyle(
+                  color: Color(0xFF1A2E1A),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMarketRates() {
+    final rates = [
+      {'crop': 'Wheat', 'price': '₹2,500', 'unit': '/ quintal', 'trend': 'up'},
+      {
+        'crop': 'Rice (Paddy)',
+        'price': '₹3,100',
+        'unit': '/ quintal',
+        'trend': 'down',
+      },
+      {'crop': 'Maize', 'price': '₹2,100', 'unit': '/ quintal', 'trend': 'up'},
+    ];
+
+    return _buildSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           const Text(
-            'Ramesh Kumar',
+            'Today\'s Market Rates (Mandi)',
             style: TextStyle(
-              color: Color(0xFF1A2E1A),
-              fontSize: 20,
+              fontSize: 16,
               fontWeight: FontWeight.w800,
+              color: Color(0xFF1A2E1A),
             ),
           ),
-          const Text(
-            'Farmer • Madurai, TN',
-            style: TextStyle(color: Color(0xFF5A6B5A), fontSize: 13),
+          const SizedBox(height: 10),
+          ...rates.map(
+            (rate) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        rate['trend'] == 'up'
+                            ? Icons.trending_up
+                            : Icons.trending_down,
+                        color:
+                            rate['trend'] == 'up' ? Colors.green : Colors.red,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        rate['crop'] as String,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  RichText(
+                    text: TextSpan(
+                      text: rate['price'] as String,
+                      style: const TextStyle(
+                        color: Color(0xFF2E7D32),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: ' ${rate['unit']}',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontWeight: FontWeight.normal,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatRow() {
-    return Row(
-      children: [
-        _buildProfileStat('3.2', 'Total Acres', Icons.landscape_rounded),
-        _buildProfileStat('2', 'Active Fields', Icons.eco_rounded),
-        _buildProfileStat('4', 'Seasons', Icons.calendar_today_rounded),
-        _buildProfileStat('92%', 'Success Rate', Icons.trending_up_rounded),
-      ],
-    );
-  }
-
-  Widget _buildProfileStat(String value, String label, IconData icon) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: const Color(0xFF2E7D32), size: 20),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-                color: Color(0xFF1A2E1A),
-              ),
-            ),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
-            ),
-          ],
-        ),
+  Widget _buildActionButtons() {
+    return _buildSectionCard(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _btn(Icons.add_box, 'Add Stock'),
+          _btn(Icons.qr_code_scanner, 'Scan Item'),
+          _btn(Icons.bar_chart, 'History'),
+        ],
       ),
     );
   }
 
-  Widget _buildBadgesSection() {
-    final badges = [
-      {'label': 'Top Farmer', 'icon': '🏆', 'color': const Color(0xFFFFF8E1)},
-      {'label': 'Water Saver', 'icon': '💧', 'color': const Color(0xFFE3F2FD)},
-      {'label': 'Eco Warrior', 'icon': '🌿', 'color': const Color(0xFFE8F5E9)},
-      {'label': '4 Seasons', 'icon': '🌾', 'color': const Color(0xFFFCE4EC)},
-    ];
+  Widget _btn(IconData icon, String label) {
+    return Column(
+      children: [
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8F5E9),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: const Color(0xFF2E7D32), size: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey.shade700,
+          ),
+        ),
+      ],
+    );
+  }
 
+  Widget _buildSectionCard({required Widget child}) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -178,160 +309,7 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Achievements',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1A2E1A),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children:
-                badges.map((b) {
-                  return Column(
-                    children: [
-                      Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: b['color'] as Color,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            b['icon'] as String,
-                            style: const TextStyle(fontSize: 24),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        b['label'] as String,
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileMenu() {
-    final items = [
-      {
-        'icon': Icons.person_outline_rounded,
-        'title': 'Edit Profile',
-        'sub': 'Update your info',
-      },
-      {
-        'icon': Icons.notifications_outlined,
-        'title': 'Notifications',
-        'sub': 'Manage alerts',
-      },
-      {
-        'icon': Icons.language_rounded,
-        'title': 'Language',
-        'sub': 'Tamil / English',
-      },
-      {
-        'icon': Icons.support_agent_rounded,
-        'title': 'Support',
-        'sub': 'Get help from KVK',
-      },
-      {
-        'icon': Icons.share_rounded,
-        'title': 'Share App',
-        'sub': 'Refer a farmer',
-      },
-      {
-        'icon': Icons.logout_rounded,
-        'title': 'Logout',
-        'sub': 'Sign out safely',
-      },
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children:
-            items.asMap().entries.map((entry) {
-              final i = entry.key;
-              final item = entry.value;
-              final isLast = i == items.length - 1;
-              return Column(
-                children: [
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color:
-                            isLast
-                                ? const Color(0xFFFFEBEE)
-                                : const Color(0xFFE8F5E9),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        item['icon'] as IconData,
-                        color:
-                            isLast
-                                ? const Color(0xFFD32F2F)
-                                : const Color(0xFF2E7D32),
-                        size: 20,
-                      ),
-                    ),
-                    title: Text(
-                      item['title'] as String,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color:
-                            isLast
-                                ? const Color(0xFFD32F2F)
-                                : Colors.grey.shade800,
-                      ),
-                    ),
-                    subtitle: Text(
-                      item['sub'] as String,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                    trailing: const Icon(
-                      Icons.chevron_right_rounded,
-                      color: Colors.grey,
-                      size: 20,
-                    ),
-                    onTap: () {},
-                  ),
-                  if (!isLast)
-                    Divider(height: 1, indent: 70, color: Colors.grey.shade100),
-                ],
-              );
-            }).toList(),
-      ),
+      child: child,
     );
   }
 }
