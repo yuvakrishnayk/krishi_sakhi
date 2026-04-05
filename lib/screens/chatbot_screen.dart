@@ -145,8 +145,220 @@ Your role:
 - If you don't know something, honestly say so and suggest consulting a local Krishi Sevak.
 - Always be warm, empathetic, and encouraging to the farmer.
 - Keep answers concise (3–5 sentences) unless a detailed explanation is needed.
+- Always reply in the selected language for this chat.
+- Never mix in another language unless the user explicitly asks for translation.
 ${lang.systemPromptHint}
 ''';
+
+String _localizedGreeting(_Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      return '🌱 வணக்கம்! நான் KrishiSakhi, உங்கள் தனிப்பட்ட விவசாய உதவியாளர்.\n\nஇதுபற்றி என்னிடம் கேளுங்கள்:\n• பயிர்கள் & பூச்சிகள்\n• வானிலை & பாசனம்\n• சந்தை விலை\n• அரசு திட்டங்கள்\n\nநீங்கள் உங்கள் மொழியிலேயே பேசலாம்! 🎤';
+    case 'ml':
+      return '🌱 നമസ്കാരം! ഞാൻ KrishiSakhi, നിങ്ങളുടെ വ്യക്തിഗത കൃഷി സഹായിയാണ്.\n\nഎന്നോട് ഇതെക്കുറിച്ച് ചോദിക്കാം:\n• വിളകൾ & കീടങ്ങൾ\n• കാലാവസ്ഥ & ജലസേചനം\n• വിപണി വിലകൾ\n• സർക്കാർ പദ്ധതികൾ\n\nനിങ്ങൾക്ക് നിങ്ങളുടെ ഭാഷയിൽ തന്നെ സംസാരിക്കാം! 🎤';
+    default:
+      return '🌱 Vanakkam! I am KrishiSakhi, your personal farming assistant.\n\nAsk me anything about:\n• Crops & pests\n• Weather & irrigation\n• Market prices\n• Government schemes\n\nYou can also speak in your language! 🎤';
+  }
+}
+
+String _localizedAppBarSubtitle(_Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      return 'விவசாயிகளுக்கான ஸ்மார்ட் உதவியாளர் • ${lang.flag} ${lang.name}';
+    case 'ml':
+      return 'കർഷകർക്കുള്ള സ്മാർട്ട് സഹായകൻ • ${lang.flag} ${lang.name}';
+    default:
+      return 'Farmer\'s Smart Assistant • ${lang.flag} ${lang.name}';
+  }
+}
+
+String _localizedInputHint(_Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      return 'பயிர்கள், பூச்சிகள், சந்தை பற்றி கேளுங்கள்...';
+    case 'ml':
+      return 'വിളകൾ, കീടങ്ങൾ, വിപണി എന്നിവയെക്കുറിച്ച് ചോദിക്കൂ...';
+    default:
+      return 'Ask about crops, pests, market...';
+  }
+}
+
+String _localizedListeningText(_Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      return 'கேட்டு கொண்டிருக்கிறது... இப்போது பேசுங்கள்';
+    case 'ml':
+      return 'കേൾക്കുന്നു... ഇനി സംസാരിക്കൂ';
+    default:
+      return 'Listening... speak now';
+  }
+}
+
+String _localizedAttachmentTitle(_Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      return 'படத்தை இணைக்கவும்';
+    case 'ml':
+      return 'ചിത്രം ചേർക്കുക';
+    default:
+      return 'Attach Image';
+  }
+}
+
+String _localizedAttachmentSubtitle(_Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      return 'AI பகுப்பாய்வுக்காக உங்கள் பயிர் படத்தை பதிவேற்றுங்கள்';
+    case 'ml':
+      return 'AI വിശകലനത്തിനായി നിങ്ങളുടെ വിളയുടെ ചിത്രം അപ്‌ലോഡ് ചെയ്യുക';
+    default:
+      return 'Upload your crop image for AI analysis';
+  }
+}
+
+String _localizedSelectLanguageTitle(_Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      return 'மொழியைத் தேர்ந்தெடுக்கவும்';
+    case 'ml':
+      return 'ഭാഷ തിരഞ്ഞെടുക്കുക';
+    default:
+      return 'Select Language';
+  }
+}
+
+String _localizedClearChatTitle(_Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      return 'அரட்டை அழிக்கவும்';
+    case 'ml':
+      return 'ചാറ്റ് മായ്ക്കുക';
+    default:
+      return 'Clear Chat';
+  }
+}
+
+String _localizedClearChatContent(_Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      return 'நீங்கள் அனைத்து செய்திகளையும் அழிக்க விரும்புகிறீர்களா?';
+    case 'ml':
+      return 'എല്ലാ സന്ദേശങ്ങളും മായ്ക്കണമെന്നു നിങ്ങൾക്ക് ഉറപ്പാണോ?';
+    default:
+      return 'Are you sure you want to clear all messages?';
+  }
+}
+
+String _localizedCancelLabel(_Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      return 'ரத்து';
+    case 'ml':
+      return 'റദ്ദാക്കുക';
+    default:
+      return 'Cancel';
+  }
+}
+
+String _localizedClearLabel(_Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      return 'அழி';
+    case 'ml':
+      return 'മായ്ക്കുക';
+    default:
+      return 'Clear';
+  }
+}
+
+String _localizedImagePrompt(_Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      return 'இந்த பயிர் படத்தைப் பார்த்து, தெரியும் நோய்கள், பூச்சிகள், அல்லது பிரச்சினைகள் ஏதேனும் உள்ளதா என்பதைச் சொல்லுங்கள்.';
+    case 'ml':
+      return 'ഈ വിളയുടെ ചിത്രം പരിശോധിച്ച് കാണുന്ന രോഗങ്ങൾ, കീടങ്ങൾ, അല്ലെങ്കിൽ പ്രശ്നങ്ങൾ ഉണ്ടോ എന്ന് പറയുക.';
+    default:
+      return 'Please analyze this crop image and tell me if there are any diseases, pests, or issues visible.';
+  }
+}
+
+String _localizedQuickActionLabel(_QuickActionData action, _Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      switch (action.labelEn) {
+        case 'Weather':
+          return 'வானிலை';
+        case 'Pests':
+          return 'பூச்சிகள்';
+        case 'Market':
+          return 'சந்தை';
+        case 'Crops':
+          return 'பயிர்கள்';
+        case 'Schemes':
+          return 'திட்டங்கள்';
+        case 'Irrigation':
+          return 'பாசனம்';
+      }
+      break;
+    case 'ml':
+      switch (action.labelEn) {
+        case 'Weather':
+          return 'കാലാവസ്ഥ';
+        case 'Pests':
+          return 'കീടങ്ങൾ';
+        case 'Market':
+          return 'വിപണി';
+        case 'Crops':
+          return 'വിളകൾ';
+        case 'Schemes':
+          return 'പദ്ധതികൾ';
+        case 'Irrigation':
+          return 'ജലസേചനം';
+      }
+      break;
+  }
+
+  return action.labelEn;
+}
+
+String _localizedQuickActionPrompt(_QuickActionData action, _Lang lang) {
+  switch (lang.code) {
+    case 'ta':
+      switch (action.labelEn) {
+        case 'Weather':
+          return 'இந்தியாவின் வழக்கமான பருவமழை வானிலையை வைத்து இன்று என் வயலில் நான் என்ன செய்ய வேண்டும்?';
+        case 'Pests':
+          return 'என் பயிர்களில் மஞ்சள் இலைகள் உள்ளன, மேலும் சிறிய பூச்சிகள் தெரிகின்றன. இது எந்த பூச்சியாக இருக்கலாம், அதை எப்படி கட்டுப்படுத்துவது?';
+        case 'Market':
+          return 'அரிசி மற்றும் கோதுமைக்கான தற்போதைய சந்தை நிலை என்ன? நல்ல விலை பெற என் விளைபொருளை எங்கே விற்க வேண்டும்?';
+        case 'Crops':
+          return 'இந்த பருவத்தில் தமிழ்நாட்டில் வளர்க்க சிறந்த பயிர்கள் எவை, எந்த உரங்களை பயன்படுத்த வேண்டும்?';
+        case 'Schemes':
+          return 'இப்போது விவசாயிகளுக்கு என்ன அரசு திட்டங்கள் உள்ளன? PM-KISAN-க்கு எப்படி விண்ணப்பிப்பது?';
+        case 'Irrigation':
+          return 'என் தக்காளி பயிருக்கு சொட்டு பாசனத்தை எப்படி அமைக்க வேண்டும்? சிறந்த நீர்ப்பாசன அட்டவணை என்ன?';
+      }
+      break;
+    case 'ml':
+      switch (action.labelEn) {
+        case 'Weather':
+          return 'ഇന്ത്യയിലെ സാധാരണ മൺസൂൺ കാലാവസ്ഥയെ അടിസ്ഥാനമാക്കി ഇന്ന് എന്റെ വയലിൽ ഞാൻ എന്ത് ചെയ്യണം?';
+        case 'Pests':
+          return 'എന്റെ വിളകളിൽ മഞ്ഞ ഇലകൾ കാണുന്നു, ചെറുകീടങ്ങളും കാണുന്നു. ഇത് ഏത് കീടമായിരിക്കാം, എങ്ങനെ നിയന്ത്രിക്കാം?';
+        case 'Market':
+          return 'അരി, ഗോതമ്പ് എന്നിവയ്ക്കുള്ള നിലവിലെ വിപണി നില എന്താണ്? നല്ല വില ലഭിക്കാൻ എന്റെ ഉൽപ്പന്നങ്ങൾ എവിടെ വിൽക്കണം?';
+        case 'Crops':
+          return 'ഈ സീസണിൽ തമിഴ്നാട്ടിൽ വളർത്താൻ ഏറ്റവും നല്ല വിളകൾ ഏതാണ്, ഏത് വളങ്ങൾ ഉപയോഗിക്കണം?';
+        case 'Schemes':
+          return 'ഇപ്പോൾ കർഷകര്ക്ക് ലഭ്യമായ സർക്കാർ പദ്ധതികൾ ഏതൊക്കെ? PM-KISAN-ന് എങ്ങനെ അപേക്ഷിക്കാം?';
+        case 'Irrigation':
+          return 'എന്റെ തക്കാളി വിളയ്ക്ക് drip irrigation എങ്ങനെ സജ്ജീകരിക്കണം? മികച്ച വെള്ളമൊഴിക്കല്‍ സമയക്രമം എന്താണ്?';
+      }
+      break;
+  }
+
+  return action.promptEn;
+}
 
 // ─────────────────────────────────────────
 //  QUICK ACTION CONFIG
@@ -290,8 +502,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
   void _addGreeting() {
     _messages.add(
       _Msg(
-        text:
-            '🌱 Vanakkam! I am KrishiSakhi, your personal farming assistant.\n\nAsk me anything about:\n• Crops & pests\n• Weather & irrigation\n• Market prices\n• Government schemes\n\nYou can also speak in your language! 🎤',
+        text: _localizedGreeting(_selectedLang),
         isUser: false,
         time: DateFormat('hh:mm a').format(DateTime.now()),
       ),
@@ -530,8 +741,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
       if (picked != null) {
         final file = File(picked.path);
         await _sendMessage(
-          overrideText:
-              'Please analyze this crop image and tell me if there are any diseases, pests, or issues visible.',
+          overrideText: _localizedImagePrompt(_selectedLang),
           imageFile: file,
         );
       }
@@ -563,9 +773,9 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'Attach Image',
-                  style: TextStyle(
+                Text(
+                  _localizedAttachmentTitle(_selectedLang),
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1B5E20),
@@ -573,7 +783,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Upload your crop image for AI analysis',
+                  _localizedAttachmentSubtitle(_selectedLang),
                   style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 24),
@@ -662,9 +872,9 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'Select Language',
-                  style: TextStyle(
+                Text(
+                  _localizedSelectLanguageTitle(_selectedLang),
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1B5E20),
@@ -709,7 +919,16 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                                 ? const Color(0xFF2E7D32).withOpacity(0.06)
                                 : null,
                         onTap: () async {
-                          setState(() => _selectedLang = lang);
+                          setState(() {
+                            _selectedLang = lang;
+                            if (_history.isEmpty && _messages.isNotEmpty) {
+                              _messages[0] = _Msg(
+                                text: _localizedGreeting(lang),
+                                isUser: false,
+                                time: _messages[0].time,
+                              );
+                            }
+                          });
                           await _applyTtsLanguage();
                           Navigator.pop(context);
                           _showSnack(
@@ -752,12 +971,12 @@ class _ChatbotScreenState extends State<ChatbotScreen>
       context: context,
       builder:
           (_) => AlertDialog(
-            title: const Text('Clear Chat'),
-            content: const Text('Are you sure you want to clear all messages?'),
+            title: Text(_localizedClearChatTitle(_selectedLang)),
+            content: Text(_localizedClearChatContent(_selectedLang)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(_localizedCancelLabel(_selectedLang)),
               ),
               TextButton(
                 onPressed: () {
@@ -768,7 +987,10 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                   });
                   Navigator.pop(context);
                 },
-                child: const Text('Clear', style: TextStyle(color: Colors.red)),
+                child: Text(
+                  _localizedClearLabel(_selectedLang),
+                  style: const TextStyle(color: Colors.red),
+                ),
               ),
             ],
           ),
@@ -837,7 +1059,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                   ),
                 ),
                 Text(
-                  'Farmer\'s Smart Assistant • ${_selectedLang.flag} ${_selectedLang.name}',
+                  _localizedAppBarSubtitle(_selectedLang),
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.75),
                     fontSize: 11,
@@ -913,9 +1135,15 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                   padding: const EdgeInsets.only(right: 8),
                   child: _QuickChip(
                     icon: qa.icon,
-                    label: qa.labelEn,
+                    label: _localizedQuickActionLabel(qa, _selectedLang),
                     color: qa.color,
-                    onTap: () => _sendMessage(overrideText: qa.promptEn),
+                    onTap:
+                        () => _sendMessage(
+                          overrideText: _localizedQuickActionPrompt(
+                            qa,
+                            _selectedLang,
+                          ),
+                        ),
                   ),
                 );
               },
@@ -975,7 +1203,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                       child: Text(
                         _listeningText.isNotEmpty
                             ? _listeningText
-                            : 'Listening... speak now',
+                            : _localizedListeningText(_selectedLang),
                         style: TextStyle(
                           color: Colors.red[700],
                           fontSize: 13,
@@ -1026,7 +1254,7 @@ class _ChatbotScreenState extends State<ChatbotScreen>
                       textCapitalization: TextCapitalization.sentences,
                       onSubmitted: (_) => _sendMessage(),
                       decoration: InputDecoration(
-                        hintText: 'Ask about crops, pests, market...',
+                        hintText: _localizedInputHint(_selectedLang),
                         hintStyle: TextStyle(
                           color: Colors.grey[400],
                           fontSize: 14,
