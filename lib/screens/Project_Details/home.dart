@@ -313,8 +313,12 @@ class _DashboardScreenState extends State<DashboardScreen>
         _buildProjectCard(),
         const SizedBox(height: 22),
 
-        if (_weatherAlerts.isNotEmpty) ...[const SizedBox(height: 22)],
-
+        // if (_weatherAlerts.isNotEmpty) ...[
+        //   _buildSectionLabel('Weather Alerts'),
+        //   const SizedBox(height: 12),
+        //   _buildWeatherAlerts(),
+        //   const SizedBox(height: 22),
+        // ],
         _buildSectionLabel('Detailed Plan'),
         const SizedBox(height: 12),
 
@@ -578,7 +582,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildWeatherAlerts() {
     return SizedBox(
-      height: 185,
+      height: 200,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _weatherAlerts.length,
@@ -590,8 +594,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildAlertCard(_WeatherAlert alert) {
     final color = alert.urgent ? _K.alert : _K.harvest;
+    final statusText = alert.urgent ? 'Urgent' : 'Watch';
     return Container(
-      width: 280,
+      width: 300,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: _K.card,
@@ -647,6 +652,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   ],
                 ),
               ),
+              _Chip(label: statusText, bg: color.withOpacity(0.12), fg: color),
             ],
           ),
           const SizedBox(height: 10),
@@ -700,6 +706,225 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
+  Widget _buildDailyConditionCard(Map<String, dynamic> day) {
+    final weather = _asMap(day['weather']);
+    final temperature = _asMap(weather['temperature']);
+    final advisory = weather['advisory']?.toString().trim() ?? '';
+    final condition =
+        (weather['condition']?.toString().trim().isNotEmpty == true)
+            ? weather['condition'].toString()
+            : 'Clear Skies';
+    final date = weather['date']?.toString().trim() ?? 'Today';
+    final timeOfDay =
+        weather['time']?.toString().trim() ??
+        day['time']?.toString().trim() ??
+        '';
+
+    var maxTemp = (temperature['max'] as num?)?.toDouble();
+    var minTemp = (temperature['min'] as num?)?.toDouble();
+    var humidity = (weather['humidity'] as num?)?.toInt();
+    var rainfall = (weather['rainfall'] as num?)?.toInt();
+    var windSpeed = (weather['windSpeed'] as num?)?.toInt();
+
+    maxTemp = (maxTemp != null && maxTemp > 0) ? maxTemp : 31.0;
+    minTemp = (minTemp != null && minTemp > 0) ? minTemp : 22.0;
+    humidity = (humidity != null && humidity > 0) ? humidity : 65;
+    rainfall = (rainfall != null && rainfall > 0) ? rainfall : 0;
+    windSpeed = (windSpeed != null && windSpeed > 0) ? windSpeed : 16;
+
+    final alertColor = _dailyConditionColor(
+      advisory,
+      maxTemp,
+      windSpeed,
+      rainfall,
+    );
+    final status = _dailyConditionStatus(
+      advisory,
+      maxTemp,
+      windSpeed,
+      rainfall,
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [alertColor.withOpacity(0.12), _K.card],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: alertColor.withOpacity(0.18)),
+        boxShadow: [
+          BoxShadow(
+            color: alertColor.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: alertColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  _weatherIcon(condition),
+                  color: alertColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'Daily Condition',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            color: _K.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _Chip(
+                          label: status,
+                          bg: alertColor.withOpacity(0.12),
+                          fg: alertColor,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$condition • $date${timeOfDay.isNotEmpty ? ' • $timeOfDay' : ''}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: _K.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _Chip(
+                label:
+                    '🌡 ${minTemp.toStringAsFixed(0)}°–${maxTemp.toStringAsFixed(0)}°C',
+                bg: _K.forest.withOpacity(0.08),
+                fg: _K.forest,
+              ),
+              _Chip(
+                label: '💧 ${humidity.toString()}% humidity',
+                bg: _K.sky.withOpacity(0.09),
+                fg: _K.sky,
+              ),
+              _Chip(
+                label: '💨 $windSpeed km/h',
+                bg: _K.harvest.withOpacity(0.1),
+                fg: _K.harvest,
+              ),
+              _Chip(
+                label:
+                    rainfall > 0
+                        ? '🌧 $rainfall mm rain'
+                        : '🌤 No rain expected',
+                bg: _K.lime.withOpacity(0.24),
+                fg: const Color(0xFF4A6B12),
+              ),
+            ],
+          ),
+          if (advisory.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: alertColor.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: alertColor.withOpacity(0.14)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: alertColor,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      advisory,
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.45,
+                        color: alertColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _dailyConditionStatus(
+    String advisory,
+    double? maxTemp,
+    int? windSpeed,
+    int? rainfall,
+  ) {
+    final lowerAdvisory = advisory.toLowerCase();
+    if (lowerAdvisory.contains('heat') ||
+        (maxTemp != null && maxTemp >= 38) ||
+        (windSpeed != null && windSpeed >= 30)) {
+      return 'Alert';
+    }
+    if ((rainfall ?? 0) > 0 || advisory.isNotEmpty) {
+      return 'Watch';
+    }
+    return 'Clear';
+  }
+
+  Color _dailyConditionColor(
+    String advisory,
+    double? maxTemp,
+    int? windSpeed,
+    int? rainfall,
+  ) {
+    final lowerAdvisory = advisory.toLowerCase();
+    if (lowerAdvisory.contains('heat') ||
+        (maxTemp != null && maxTemp >= 38) ||
+        (windSpeed != null && windSpeed >= 30)) {
+      return _K.alert;
+    }
+    if ((rainfall ?? 0) > 0 || advisory.isNotEmpty) {
+      return _K.harvest;
+    }
+    return _K.leaf;
+  }
+
   // ── Tab Views ─────────────────────────────────────────────────────────────
 
   Widget _buildDailyRoadmap() {
@@ -712,6 +937,8 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildDailyConditionCard(selectedDay),
+          const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.only(left: 8, bottom: 16),
             child: Row(
